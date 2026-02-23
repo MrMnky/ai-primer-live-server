@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Risk Radar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  :root {
+    --gable: #1B2F3C; --turquoise: #00FFBC; --dodger: #00B1FF;
+    --cerulean: #0084B2; --seapink: #EFACA8; --bittersweet: #FF5F5F;
+    --meadow: #17CE95; --cornflower: #6161FF; --moonraker: #C5B6F1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', system-ui, sans-serif;
+    background: var(--gable); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden; padding: 20px;
+  }
+  .container { width: 100%; max-width: 750px; }
+  h2 { font-size: 0.75rem; font-weight: 600; color: var(--turquoise);
+       letter-spacing: 1.5px; text-transform: uppercase; text-align: center;
+       margin-bottom: 16px; }
+
+  .risks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .risk {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 16px; cursor: pointer;
+    transition: all 0.3s ease; text-align: center;
+  }
+  .risk:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-2px); }
+  .risk.active { transform: translateY(-3px); }
+  .risk-icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+  .risk-name { font-weight: 600; font-size: 0.82rem; margin-bottom: 4px; }
+  .risk-severity {
+    display: flex; gap: 3px; justify-content: center; margin-top: 6px;
+  }
+  .severity-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+  .severity-dot.filled { background: var(--bittersweet); }
+  .severity-dot.med { background: #FFB347; }
+  .severity-dot.low { background: var(--meadow); }
+
+  .detail-panel {
+    margin-top: 14px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+    padding: 20px; min-height: 100px;
+    transition: all 0.3s ease;
+  }
+  .detail-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+  .detail-desc { font-size: 0.82rem; opacity: 0.7; line-height: 1.6; margin-bottom: 10px; }
+  .detail-mitigation {
+    padding: 10px 14px; background: rgba(23,206,149,0.08);
+    border: 1px solid rgba(23,206,149,0.2); border-radius: 8px;
+    font-size: 0.78rem; line-height: 1.5;
+  }
+  .detail-mitigation strong { color: var(--meadow); }
+  .placeholder { text-align: center; opacity: 0.3; padding: 20px; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>AI Risk Radar</h2>
+  <div class="risks" id="risks"></div>
+  <div class="detail-panel" id="detail">
+    <div class="placeholder">Tap a risk to learn more and see how to mitigate it</div>
+  </div>
+</div>
+
+<script>
+const RISKS = [
+  {
+    icon: '🌀', name: 'Hallucinations', severity: 3,
+    color: '#FF5F5F',
+    desc: 'AI can generate confident, plausible-sounding information that is completely wrong. It optimises for plausibility, not truth.',
+    mitigation: 'Always verify AI output against trusted sources. Never publish AI-generated content without human review. Treat AI like a keen intern — enthusiastic but needs checking.'
+  },
+  {
+    icon: '⚖️', name: 'Bias', severity: 3,
+    color: '#FF5F5F',
+    desc: 'AI models learn from human data, which contains historical biases around gender, race, culture, and more. The AI doesn\'t know it\'s biased.',
+    mitigation: 'Review AI output for fairness. Use diverse perspectives when designing prompts. Be especially careful with HR, recruitment, and customer-facing content.'
+  },
+  {
+    icon: '🔒', name: 'Data Security', severity: 3,
+    color: '#FF5F5F',
+    desc: 'Information shared with AI tools may be stored, used for training, or exposed. Confidential data requires careful handling.',
+    mitigation: 'Never share passwords, API keys, or classified data with AI. Check your tool\'s data policy. Use enterprise versions with data protection guarantees.'
+  },
+  {
+    icon: '🧠', name: 'Over-reliance', severity: 2,
+    color: '#FFB347',
+    desc: 'Teams can become dependent on AI output without developing the judgment to evaluate it. Skills atrophy when not practised.',
+    mitigation: 'Maintain human expertise in your core domains. Use AI to augment thinking, not replace it. Regularly practice critical evaluation of AI output.'
+  },
+  {
+    icon: '📋', name: 'Regulation', severity: 2,
+    color: '#FFB347',
+    desc: 'The EU AI Act and other frameworks are creating legal requirements for AI use. Non-compliance carries significant penalties.',
+    mitigation: 'Stay informed about AI regulation in your sector. Document your AI usage. Build governance early — it\'s much harder to retrofit.'
+  },
+  {
+    icon: '🎭', name: 'Deepfakes', severity: 2,
+    color: '#FFB347',
+    desc: 'AI-generated images, audio, and video are increasingly realistic and can be used for fraud, misinformation, or impersonation.',
+    mitigation: 'Verify sources of media content. Be sceptical of unexpected urgent requests. Establish verification protocols for high-stakes communications.'
+  }
+];
+
+let active = -1;
+
+function render() {
+  const el = document.getElementById('risks');
+  el.innerHTML = RISKS.map((r, i) => {
+    const dots = Array(3).fill(0).map((_, d) => {
+      const cls = d < r.severity ?
+        (r.severity === 3 ? 'filled' : r.severity === 2 ? 'med' : 'low') : '';
+      return `<div class="severity-dot ${cls}"></div>`;
+    }).join('');
+    return `<div class="risk ${i === active ? 'active' : ''}"
+                 onclick="select(${i})"
+                 style="${i === active ? `border-color:${r.color};background:${r.color}08` : ''}">
+      <span class="risk-icon">${r.icon}</span>
+      <div class="risk-name">${r.name}</div>
+      <div class="risk-severity">${dots}</div>
+    </div>`;
+  }).join('');
+
+  const detail = document.getElementById('detail');
+  if (active >= 0) {
+    const r = RISKS[active];
+    detail.innerHTML = `
+      <div class="detail-title" style="color:${r.color}">${r.icon} ${r.name}</div>
+      <div class="detail-desc">${r.desc}</div>
+      <div class="detail-mitigation"><strong>Mitigation:</strong> ${r.mitigation}</div>
+    `;
+  }
+}
+
+function select(i) {
+  active = active === i ? -1 : i;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

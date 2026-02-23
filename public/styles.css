@@ -254,6 +254,20 @@ html, body {
   margin-bottom: 16px;
 }
 
+/* --- Section Divider Slide --- */
+.slide[data-type="section"] {
+  text-align: center;
+  align-items: center;
+}
+
+.slide[data-type="section"] .slide__title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.slide[data-type="section"] .slide__subtitle {
+  max-width: 500px;
+}
+
 /* --- Image / Video Containers --- */
 .slide__media {
   width: 100%;

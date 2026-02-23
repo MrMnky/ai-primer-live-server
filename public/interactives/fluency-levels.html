@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Fluency Levels</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  :root {
+    --gable: #1B2F3C; --turquoise: #00FFBC; --dodger: #00B1FF;
+    --cerulean: #0084B2; --meadow: #17CE95; --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', system-ui, sans-serif;
+    background: var(--gable); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden; padding: 20px;
+  }
+  .container { width: 100%; max-width: 750px; }
+  .levels { display: flex; flex-direction: column; gap: 0; }
+
+  .level {
+    display: flex; align-items: stretch; cursor: pointer;
+    transition: all 0.3s ease; position: relative;
+  }
+  .level-bar {
+    width: 6px; border-radius: 3px; margin-right: 20px;
+    transition: all 0.3s ease; flex-shrink: 0;
+  }
+  .level-content {
+    padding: 16px 0; flex: 1; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .level:last-child .level-content { border-bottom: none; }
+
+  .level-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .level-num {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 0.75rem;
+    font-weight: 700; flex-shrink: 0; transition: all 0.3s;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4);
+  }
+  .level.active .level-num { color: var(--gable); }
+  .level-title { font-weight: 700; font-size: 1rem; transition: color 0.3s; }
+  .level-subtitle { font-size: 0.75rem; opacity: 0.4; font-weight: 600;
+                    letter-spacing: 0.5px; }
+
+  .level-detail {
+    max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s;
+    opacity: 0;
+  }
+  .level.active .level-detail { max-height: 200px; opacity: 1; }
+
+  .level-desc {
+    font-size: 0.85rem; opacity: 0.7; line-height: 1.6; margin: 8px 0;
+    padding-left: 40px;
+  }
+  .level-examples {
+    display: flex; flex-wrap: wrap; gap: 6px; padding-left: 40px;
+  }
+  .ex-tag {
+    padding: 3px 10px; border-radius: 16px; font-size: 0.7rem;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+  }
+  .time-badge {
+    font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); opacity: 0.5; margin-left: auto;
+  }
+
+  .progress-track {
+    margin-top: 20px; height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px; transition: width 1s ease;
+    background: linear-gradient(90deg, var(--meadow), var(--dodger), var(--cornflower));
+  }
+  .progress-labels {
+    display: flex; justify-content: space-between; margin-top: 6px;
+    font-size: 0.65rem; opacity: 0.3;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="levels" id="levels"></div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="progress-labels">
+    <span>Days</span><span>Weeks</span><span>Months</span><span>Years</span>
+  </div>
+</div>
+
+<script>
+const LEVELS = [
+  {
+    num: 1, title: 'Basic Literacy', subtitle: 'THE TASK EXECUTOR',
+    color: '#17CE95',
+    desc: 'Using AI to execute specific, defined jobs. "AI is a tool. I use it for specific tasks."',
+    examples: ['Drafting emails', 'Fixing grammar', 'Translating', 'Formatting text'],
+    time: 'Days to weeks', progress: 20
+  },
+  {
+    num: 2, title: 'Fluency', subtitle: 'THE THOUGHT PARTNER',
+    color: '#00B1FF',
+    desc: 'Collaborating with AI for cognitive support and iteration. "AI is a collaborator. We think together."',
+    examples: ['Brainstorming strategies', 'Critiquing ideas', 'Role-playing scenarios', 'Working through problems'],
+    time: 'Weeks to months', progress: 55
+  },
+  {
+    num: 3, title: 'Expertise', subtitle: 'THE SYSTEM ARCHITECT',
+    color: '#6161FF',
+    desc: 'Designing and managing complex human + AI workflows. "I design systems that leverage AI strategically."',
+    examples: ['Automated workflows', 'Custom AI agents', 'Human-in-the-loop processes', 'Training others'],
+    time: 'Months to years', progress: 90
+  }
+];
+
+let active = -1;
+
+function render() {
+  const el = document.getElementById('levels');
+  el.innerHTML = LEVELS.map((l, i) => `
+    <div class="level ${i === active ? 'active' : ''}" onclick="toggle(${i})">
+      <div class="level-bar" style="background:${i === active ? l.color : 'rgba(255,255,255,0.08)'}"></div>
+      <div class="level-content">
+        <div class="level-header">
+          <div class="level-num" style="${i === active ? `background:${l.color}` : ''}">${l.num}</div>
+          <div>
+            <div class="level-title" style="${i === active ? `color:${l.color}` : ''}">${l.title}</div>
+            <div class="level-subtitle">${l.subtitle}</div>
+          </div>
+          <span class="time-badge">${l.time}</span>
+        </div>
+        <div class="level-detail">
+          <div class="level-desc">${l.desc}</div>
+          <div class="level-examples">
+            ${l.examples.map(ex => `<span class="ex-tag">${ex}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const fill = document.getElementById('progressFill');
+  fill.style.width = active >= 0 ? LEVELS[active].progress + '%' : '0%';
+}
+
+function toggle(i) {
+  active = active === i ? -1 : i;
+  render();
+}
+
+render();
+// Auto-reveal sequence
+let autoStep = 0;
+function autoReveal() {
+  if (autoStep >= 3) return;
+  active = autoStep;
+  render();
+  autoStep++;
+  setTimeout(autoReveal, 2200);
+}
+setTimeout(autoReveal, 1200);
+</script>
+</body>
+</html>

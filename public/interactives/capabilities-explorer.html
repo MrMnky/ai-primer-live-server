@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Capabilities Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  :root {
+    --gable: #1B2F3C; --turquoise: #00FFBC; --dodger: #00B1FF;
+    --cerulean: #0084B2; --malibu: #5CD5FF; --meadow: #17CE95;
+    --cornflower: #6161FF; --moonraker: #C5B6F1; --seapink: #EFACA8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', system-ui, sans-serif;
+    background: #fff; color: var(--gable);
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden; padding: 20px;
+  }
+  .container { width: 100%; max-width: 780px; }
+  .toggle-row {
+    display: flex; gap: 0; margin-bottom: 20px;
+    background: #F5F7F9; border-radius: 10px; overflow: hidden;
+  }
+  .toggle-btn {
+    flex: 1; padding: 10px 16px; text-align: center; cursor: pointer;
+    font-family: 'Poppins', sans-serif; font-size: 0.8rem; font-weight: 600;
+    border: none; background: transparent; color: var(--gable);
+    transition: all 0.2s; opacity: 0.5;
+  }
+  .toggle-btn.active {
+    background: var(--gable); color: #fff; opacity: 1;
+    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .capabilities {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .cap-card {
+    padding: 14px 16px; border-radius: 10px; border: 1px solid #E8EAED;
+    transition: all 0.3s ease; cursor: default;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .cap-card.good { border-left: 3px solid var(--meadow); }
+  .cap-card.caution { border-left: 3px solid var(--seapink); }
+  .cap-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+  .cap-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
+  .cap-desc { font-size: 0.72rem; opacity: 0.6; line-height: 1.4; }
+
+  .cap-card { opacity: 0; transform: translateY(10px); animation: fadeUp 0.4s ease forwards; }
+  .cap-card:nth-child(1) { animation-delay: 0.1s; }
+  .cap-card:nth-child(2) { animation-delay: 0.15s; }
+  .cap-card:nth-child(3) { animation-delay: 0.2s; }
+  .cap-card:nth-child(4) { animation-delay: 0.25s; }
+  .cap-card:nth-child(5) { animation-delay: 0.3s; }
+  .cap-card:nth-child(6) { animation-delay: 0.35s; }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .footer-note {
+    text-align: center; font-size: 0.7rem; opacity: 0.35;
+    margin-top: 16px; font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="toggle-row" id="toggleRow"></div>
+  <div class="capabilities" id="capabilities"></div>
+  <div class="footer-note">AI is great at generating options. Humans are great at judgment. The best results come from collaboration.</div>
+</div>
+
+<script>
+const TABS = [
+  {
+    label: 'AI excels at',
+    items: [
+      { icon: '✍️', title: 'Language & Writing', desc: 'Drafting, editing, summarising, translating, explaining complex topics', type: 'good' },
+      { icon: '💡', title: 'Brainstorming', desc: 'Generating options, exploring angles, role-playing scenarios', type: 'good' },
+      { icon: '🔎', title: 'Analysis & Critique', desc: 'Reviewing arguments, identifying weaknesses, stress-testing ideas', type: 'good' },
+      { icon: '💻', title: 'Code & Technical', desc: 'Writing code, debugging, explaining technical concepts', type: 'good' },
+      { icon: '🏷️', title: 'Categorisation', desc: 'Sorting information, extracting key points, classifying content', type: 'good' },
+      { icon: '🔄', title: 'Iteration', desc: 'Taking feedback and improving work across multiple rounds', type: 'good' },
+    ]
+  },
+  {
+    label: 'Humans needed',
+    items: [
+      { icon: '✅', title: 'Fact-Checking', desc: 'AI can hallucinate — human verification is essential for accuracy', type: 'caution' },
+      { icon: '🧩', title: 'Novel Reasoning', desc: 'Multi-step logic and truly new problems still need human thinking', type: 'caution' },
+      { icon: '❤️', title: 'Emotional Judgment', desc: 'Ethical decisions and emotional context require human understanding', type: 'caution' },
+      { icon: '⚖️', title: 'High-Stakes Decisions', desc: 'Medical, legal, and financial decisions need human accountability', type: 'caution' },
+    ]
+  }
+];
+
+let activeTab = 0;
+
+function render() {
+  const row = document.getElementById('toggleRow');
+  row.innerHTML = TABS.map((t, i) =>
+    `<button class="toggle-btn ${i === activeTab ? 'active' : ''}" onclick="setTab(${i})">${t.label}</button>`
+  ).join('');
+
+  const caps = document.getElementById('capabilities');
+  caps.innerHTML = TABS[activeTab].items.map(c => `
+    <div class="cap-card ${c.type}">
+      <span class="cap-icon">${c.icon}</span>
+      <div>
+        <div class="cap-title">${c.title}</div>
+        <div class="cap-desc">${c.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setTab(i) {
+  activeTab = i;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

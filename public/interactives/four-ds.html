@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The 4 Ds of AI Fluency</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  :root {
+    --gable: #1B2F3C; --turquoise: #00FFBC; --dodger: #00B1FF;
+    --cerulean: #0084B2; --malibu: #5CD5FF; --meadow: #17CE95;
+    --cornflower: #6161FF; --moonraker: #C5B6F1; --seapink: #EFACA8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', system-ui, sans-serif;
+    background: var(--gable); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden; padding: 20px;
+  }
+  .container { width: 100%; max-width: 800px; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 20px;
+  }
+  .card {
+    background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 20px 16px; text-align: center;
+    cursor: pointer; transition: all 0.3s ease; position: relative;
+    overflow: hidden;
+  }
+  .card:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-2px); }
+  .card.active { border-color: var(--turquoise); background: rgba(0,255,188,0.06);
+                 transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,255,188,0.1); }
+  .card-icon {
+    font-size: 2rem; margin-bottom: 10px; display: block;
+    transition: transform 0.3s ease;
+  }
+  .card.active .card-icon { transform: scale(1.15); }
+  .card-title {
+    font-weight: 700; font-size: 1rem; margin-bottom: 4px;
+    transition: color 0.3s;
+  }
+  .card.active .card-title { color: var(--turquoise); }
+  .card-sub { font-size: 0.7rem; opacity: 0.5; }
+
+  .detail-panel {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 24px; min-height: 140px;
+    transition: all 0.3s ease;
+  }
+  .detail-panel h3 { font-size: 0.95rem; margin-bottom: 10px; }
+  .detail-panel h3 span { color: var(--turquoise); }
+  .detail-question {
+    font-size: 0.9rem; opacity: 0.85; line-height: 1.6; margin-bottom: 12px;
+    font-style: italic;
+  }
+  .detail-examples {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .example-tag {
+    padding: 4px 12px; border-radius: 20px; font-size: 0.72rem;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .hint { text-align: center; font-size: 0.75rem; opacity: 0.35; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="grid" id="grid"></div>
+  <div class="detail-panel" id="detail">
+    <div style="text-align:center;opacity:0.4;padding:30px 0;">
+      Click a card above to explore each dimension of AI fluency
+    </div>
+  </div>
+  <div class="hint">The 4 Ds — a framework for thinking about any AI task</div>
+</div>
+
+<script>
+const DS = [
+  {
+    icon: '🎯', title: 'Delegation', sub: 'Who does what?',
+    color: '#00FFBC',
+    question: 'What should humans do, what should AI do? Where is AI genuinely better at this task? Where do humans need to stay in the loop?',
+    examples: ['Drafting vs approving', 'Data sorting vs interpreting', 'Generating options vs choosing', 'First pass vs final check']
+  },
+  {
+    icon: '📝', title: 'Description', sub: 'Can you explain it?',
+    color: '#00B1FF',
+    question: 'Can we clearly explain what we want? What context does the AI need? How should it behave? The clearer your brief, the better the output.',
+    examples: ['Clear prompts', 'Role setting', 'Providing examples', 'Defining constraints']
+  },
+  {
+    icon: '🔍', title: 'Discernment', sub: 'Is it any good?',
+    color: '#6161FF',
+    question: 'Can we judge whether the output is any good? Do I have the knowledge and skill to verify it\'s correct? Can I spot hallucinations?',
+    examples: ['Fact-checking output', 'Spotting bias', 'Verifying accuracy', 'Assessing quality']
+  },
+  {
+    icon: '🛡️', title: 'Diligence', sub: 'Are we being responsible?',
+    color: '#17CE95',
+    question: 'Are we considering security, ethics, transparency, and ownership? Are we using AI within our values and policies?',
+    examples: ['Data privacy', 'Bias mitigation', 'Transparency', 'Accountability']
+  }
+];
+
+let activeCard = -1;
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = DS.map((d, i) => `
+    <div class="card ${i === activeCard ? 'active' : ''}" onclick="selectCard(${i})" style="${i === activeCard ? `border-color:${d.color}` : ''}">
+      <span class="card-icon">${d.icon}</span>
+      <div class="card-title">${d.title}</div>
+      <div class="card-sub">${d.sub}</div>
+    </div>
+  `).join('');
+
+  const detail = document.getElementById('detail');
+  if (activeCard >= 0) {
+    const d = DS[activeCard];
+    detail.innerHTML = `
+      <h3><span>${d.title}:</span> ${d.sub}</h3>
+      <div class="detail-question">"${d.question}"</div>
+      <div class="detail-examples">
+        ${d.examples.map(ex => `<span class="example-tag" style="border-color:${d.color}40;background:${d.color}10">${ex}</span>`).join('')}
+      </div>
+    `;
+  }
+}
+
+function selectCard(i) {
+  activeCard = activeCard === i ? -1 : i;
+  render();
+}
+
+// Auto-cycle on load
+let autoCycle = 0;
+function cycle() {
+  if (autoCycle >= 4) return;
+  activeCard = autoCycle;
+  render();
+  autoCycle++;
+  setTimeout(cycle, 2500);
+}
+render();
+setTimeout(cycle, 1500);
+</script>
+</body>
+</html>

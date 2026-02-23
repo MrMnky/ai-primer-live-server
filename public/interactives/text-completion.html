@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Text Prediction Works</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  :root {
+    --gable: #1B2F3C; --turquoise: #00FFBC; --dodger: #00B1FF;
+    --cerulean: #0084B2; --malibu: #5CD5FF; --meadow: #17CE95;
+    --cornflower: #6161FF; --moonraker: #C5B6F1; --seapink: #EFACA8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', system-ui, sans-serif;
+    background: var(--gable); color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100vh; overflow: hidden;
+    padding: 20px;
+  }
+  .container { width: 100%; max-width: 700px; text-align: center; }
+  h2 { font-size: 1rem; font-weight: 600; color: var(--turquoise); letter-spacing: 1.5px;
+       text-transform: uppercase; margin-bottom: 12px; }
+  .sentence-display {
+    background: rgba(255,255,255,0.06); border-radius: 12px; padding: 20px 24px;
+    min-height: 60px; font-size: 1.15rem; line-height: 1.6; margin-bottom: 20px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    justify-content: center; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .token { display: inline-block; padding: 2px 6px; border-radius: 4px;
+           transition: all 0.3s ease; }
+  .token.new { animation: tokenPop 0.4s ease; background: rgba(0,255,188,0.15); }
+  @keyframes tokenPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .token.cursor { border-right: 2px solid var(--turquoise);
+                  animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { border-color: transparent; } }
+
+  .wheel-area {
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; margin-bottom: 16px; min-height: 200px;
+  }
+  .wheel-container { position: relative; width: 180px; height: 180px; }
+  svg.wheel { width: 180px; height: 180px; }
+  .wheel-pointer {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 14px solid var(--turquoise);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); z-index: 5;
+  }
+  .candidates {
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: left; min-width: 200px;
+  }
+  .candidate {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
+    transition: all 0.3s ease; background: rgba(255,255,255,0.04);
+    border: 1px solid transparent;
+  }
+  .candidate.winner {
+    background: rgba(0,255,188,0.12); border-color: var(--turquoise);
+    font-weight: 600;
+  }
+  .candidate .bar {
+    height: 6px; border-radius: 3px; transition: width 0.6s ease;
+    min-width: 2px;
+  }
+  .candidate .pct { font-size: 0.7rem; opacity: 0.5; min-width: 32px; text-align: right; }
+  .candidate .word { min-width: 80px; }
+
+  .controls {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 20px; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; background: transparent; color: #fff;
+    font-family: 'Poppins', sans-serif; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--dodger); background: rgba(0,177,255,0.1); }
+  .btn.primary { background: var(--cerulean); border-color: var(--cerulean); }
+  .btn.primary:hover { background: var(--dodger); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .prompt-chips {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .chip {
+    padding: 5px 14px; border-radius: 20px; font-size: 0.75rem;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer; transition: all 0.2s; color: #fff;
+    font-family: 'Poppins', sans-serif;
+  }
+  .chip:hover, .chip.active { border-color: var(--dodger); background: rgba(0,177,255,0.1); }
+  .annotation {
+    font-size: 0.75rem; opacity: 0.5; margin-top: 12px; max-width: 500px;
+    margin-left: auto; margin-right: auto; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Next-Token Prediction</h2>
+  <div class="prompt-chips" id="promptChips"></div>
+  <div class="sentence-display" id="sentenceDisplay"></div>
+  <div class="wheel-area">
+    <div class="wheel-container">
+      <div class="wheel-pointer"></div>
+      <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
+    </div>
+    <div class="candidates" id="candidates"></div>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="btnNext" onclick="nextStep()">Predict Next Word</button>
+    <button class="btn" id="btnReset" onclick="resetDemo()">Reset</button>
+    <button class="btn" id="btnAuto" onclick="autoPlay()">▶ Auto</button>
+  </div>
+  <div class="annotation" id="annotation"></div>
+</div>
+
+<script>
+const COLORS = ['#00FFBC','#00B1FF','#5CD5FF','#6161FF','#17CE95','#C5B6F1','#EFACA8','#0084B2'];
+
+const EXAMPLES = [
+  {
+    label: 'Business email',
+    seed: ['I', 'hope', 'this'],
+    steps: [
+      { candidates: [{w:'message',p:0.35},{w:'email',p:0.28},{w:'finds',p:0.22},{w:'note',p:0.15}], pick: 0 },
+      { candidates: [{w:'finds',p:0.55},{w:'reaches',p:0.25},{w:'gets',p:0.12},{w:'brings',p:0.08}], pick: 0 },
+      { candidates: [{w:'you',p:0.72},{w:'everyone',p:0.15},{w:'the',p:0.08},{w:'your',p:0.05}], pick: 0 },
+      { candidates: [{w:'well',p:0.65},{w:'in',p:0.15},{w:'at',p:0.10},{w:'during',p:0.10}], pick: 0 },
+    ]
+  },
+  {
+    label: 'Creative story',
+    seed: ['The', 'old', 'lighthouse'],
+    steps: [
+      { candidates: [{w:'keeper',p:0.30},{w:'stood',p:0.28},{w:'on',p:0.22},{w:'had',p:0.20}], pick: 1 },
+      { candidates: [{w:'alone',p:0.32},{w:'tall',p:0.28},{w:'silent',p:0.22},{w:'dark',p:0.18}], pick: 0 },
+      { candidates: [{w:'on',p:0.35},{w:'against',p:0.30},{w:'above',p:0.20},{w:'beside',p:0.15}], pick: 1 },
+      { candidates: [{w:'the',p:0.60},{w:'a',p:0.20},{w:'stormy',p:0.12},{w:'dark',p:0.08}], pick: 0 },
+      { candidates: [{w:'storm',p:0.35},{w:'cliffs',p:0.25},{w:'sky',p:0.22},{w:'waves',p:0.18}], pick: 0 },
+    ]
+  },
+  {
+    label: 'AI explanation',
+    seed: ['Artificial', 'intelligence', 'is'],
+    steps: [
+      { candidates: [{w:'the',p:0.30},{w:'a',p:0.28},{w:'essentially',p:0.22},{w:'not',p:0.20}], pick: 0 },
+      { candidates: [{w:'ability',p:0.32},{w:'science',p:0.25},{w:'simulation',p:0.23},{w:'study',p:0.20}], pick: 2 },
+      { candidates: [{w:'of',p:0.70},{w:'that',p:0.15},{w:'where',p:0.10},{w:'which',p:0.05}], pick: 0 },
+      { candidates: [{w:'human',p:0.40},{w:'intelligent',p:0.30},{w:'cognitive',p:0.18},{w:'natural',p:0.12}], pick: 0 },
+      { candidates: [{w:'intelligence',p:0.45},{w:'thinking',p:0.25},{w:'reasoning',p:0.18},{w:'behaviour',p:0.12}], pick: 0 },
+    ]
+  }
+];
+
+let currentExample = 0;
+let step = 0;
+let tokens = [];
+let spinning = false;
+let autoTimer = null;
+
+function init() {
+  renderChips();
+  resetDemo();
+}
+
+function renderChips() {
+  const el = document.getElementById('promptChips');
+  el.innerHTML = EXAMPLES.map((ex, i) =>
+    `<div class="chip ${i === currentExample ? 'active' : ''}" onclick="selectExample(${i})">${ex.label}</div>`
+  ).join('');
+}
+
+function selectExample(i) {
+  if (spinning) return;
+  currentExample = i;
+  renderChips();
+  resetDemo();
+}
+
+function resetDemo() {
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+  const ex = EXAMPLES[currentExample];
+  step = 0;
+  tokens = [...ex.seed];
+  renderSentence();
+  renderWheel(null);
+  renderCandidates(null);
+  document.getElementById('annotation').textContent =
+    `Click "Predict Next Word" to see how the AI picks the next token. Each word is a probability — the model doesn't "know" the answer, it picks the most likely next word.`;
+  document.getElementById('btnNext').disabled = false;
+}
+
+function renderSentence() {
+  const el = document.getElementById('sentenceDisplay');
+  el.innerHTML = tokens.map((t, i) =>
+    `<span class="token${i >= EXAMPLES[currentExample].seed.length ? ' new' : ''}">${t}</span>`
+  ).join(' ') + '<span class="token cursor">&nbsp;</span>';
+}
+
+function nextStep() {
+  if (spinning) return;
+  const ex = EXAMPLES[currentExample];
+  if (step >= ex.steps.length) return;
+
+  const s = ex.steps[step];
+  spinning = true;
+  document.getElementById('btnNext').disabled = true;
+
+  // Show candidates
+  renderCandidates(s, -1);
+
+  // Spin wheel
+  spinWheel(s, () => {
+    tokens.push(s.candidates[s.pick].w);
+    renderSentence();
+    renderCandidates(s, s.pick);
+    step++;
+    spinning = false;
+    if (step >= ex.steps.length) {
+      document.getElementById('annotation').textContent =
+        `Done! The model predicted ${ex.steps.length} tokens to build this sentence. Each step was a probability distribution — no understanding, just patterns.`;
+    } else {
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('annotation').textContent =
+        `Step ${step}/${ex.steps.length}: The model chose "${s.candidates[s.pick].w}" (${Math.round(s.candidates[s.pick].p * 100)}% probable). Not always the top pick — that's temperature at work.`;
+    }
+  });
+}
+
+function spinWheel(stepData, callback) {
+  const svg = document.getElementById('wheel');
+  const cx = 100, cy = 100, r = 85;
+  let segments = '';
+  let cumAngle = 0;
+
+  stepData.candidates.forEach((c, i) => {
+    const angle = c.p * 360;
+    const startAngle = cumAngle;
+    const endAngle = cumAngle + angle;
+    const x1 = cx + r * Math.cos((startAngle - 90) * Math.PI / 180);
+    const y1 = cy + r * Math.sin((startAngle - 90) * Math.PI / 180);
+    const x2 = cx + r * Math.cos((endAngle - 90) * Math.PI / 180);
+    const y2 = cy + r * Math.sin((endAngle - 90) * Math.PI / 180);
+    const largeArc = angle > 180 ? 1 : 0;
+
+    segments += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${COLORS[i % COLORS.length]}" opacity="0.8"/>`;
+
+    // Label
+    const midAngle = (startAngle + endAngle) / 2;
+    const lx = cx + (r * 0.6) * Math.cos((midAngle - 90) * Math.PI / 180);
+    const ly = cy + (r * 0.6) * Math.sin((midAngle - 90) * Math.PI / 180);
+    if (angle > 30) {
+      segments += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" fill="#1B2F3C" font-family="Poppins" font-size="10" font-weight="600">${c.w}</text>`;
+    }
+    cumAngle += angle;
+  });
+
+  // Calculate target angle for the picked word
+  let targetCum = 0;
+  for (let i = 0; i < stepData.pick; i++) targetCum += stepData.candidates[i].p * 360;
+  targetCum += (stepData.candidates[stepData.pick].p * 360) / 2;
+  // The pointer is at top (0°), so we need to rotate so targetCum aligns with top
+  const spins = 3;
+  const targetRotation = spins * 360 + (360 - targetCum);
+
+  svg.innerHTML = `<g id="wheelGroup" style="transform-origin:100px 100px;transition:transform 2s cubic-bezier(0.17,0.67,0.12,0.99)">${segments}</g>`;
+
+  requestAnimationFrame(() => {
+    const g = document.getElementById('wheelGroup');
+    g.style.transform = `rotate(${targetRotation}deg)`;
+  });
+
+  setTimeout(callback, 2200);
+}
+
+function renderWheel(stepData) {
+  const svg = document.getElementById('wheel');
+  if (!stepData) {
+    svg.innerHTML = `<circle cx="100" cy="100" r="85" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+      <text x="100" y="100" text-anchor="middle" dominant-baseline="central" fill="rgba(255,255,255,0.3)" font-family="Poppins" font-size="12">Ready</text>`;
+    return;
+  }
+}
+
+function renderCandidates(stepData, winnerId) {
+  const el = document.getElementById('candidates');
+  if (!stepData) {
+    el.innerHTML = '<div style="opacity:0.3;font-size:0.8rem;">Candidates will appear here</div>';
+    return;
+  }
+  el.innerHTML = stepData.candidates.map((c, i) =>
+    `<div class="candidate${i === winnerId ? ' winner' : ''}">
+      <span class="word">${c.w}</span>
+      <span class="bar" style="width:${c.p * 120}px;background:${COLORS[i % COLORS.length]}"></span>
+      <span class="pct">${Math.round(c.p * 100)}%</span>
+    </div>`
+  ).join('');
+}
+
+function autoPlay() {
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; return; }
+  function tick() {
+    const ex = EXAMPLES[currentExample];
+    if (step >= ex.steps.length) return;
+    nextStep();
+    autoTimer = setTimeout(tick, 2800);
+  }
+  tick();
+}
+
+init();
+</script>
+</body>
+</html>

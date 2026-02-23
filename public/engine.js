@@ -55,10 +55,12 @@
   function renderSlide(slide, index) {
     const themeClass = `slide--${slide.theme || 'dark'}`;
     const typeClass = slide.type === 'cover' ? 'slide--cover' :
-                      slide.type === 'split' ? 'slide--split' : '';
+                      slide.type === 'split' ? 'slide--split' :
+                      slide.type === 'section' ? 'slide--cover' : '';
 
     const div = el('div', `slide ${themeClass} ${typeClass}`.trim());
     div.dataset.index = index;
+    div.dataset.type = slide.type;
 
     let html = '';
 

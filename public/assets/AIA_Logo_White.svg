@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" viewBox="842.5 -45 315.6 210.6" width="315.6" height="210.6">
+  <defs/>
+  <g id="Final_Logo" fill-opacity="1" fill="none" stroke="none" stroke-dasharray="none" stroke-opacity="1">
+    <title>Final Logo</title>
+    <g id="Final_Logo_Layer_1">
+      <title>Layer 1</title>
+      <g id="Group_3">
+        <g id="Graphic_8">
+          <path d="M 1080.7 112.72412 L 1158.1 139.16206 L 1080.7 165.6 Z" fill="#FFFFFF"/>
+        </g>
+        <g id="Graphic_7">
+          <path d="M 1080.7 33.86206 L 1158.1 60.3 L 1080.7 86.73794 Z" fill="#FFFFFF"/>
+        </g>
+        <g id="Graphic_6">
+          <path d="M 1080.7 -45 L 1158.1 -18.56206 L 1080.7 7.875879 Z" fill="#FFFFFF"/>
+        </g>
+        <g id="Graphic_5">
+          <title>A</title>
+          <path d="M 987.4 128.4 L 948.3 11.600002 L 896.2 165.6 L 842.5 165.6 L 918.7 -45 L 978.1 -45 L 1054.3 165.6 L 1e3 165.6 Z" fill="#FFFFFF"/>
+        </g>
+        <g id="Graphic_4">
+          <path d="M 909.7 68 L 987.1 94.43794 L 909.7 120.87588 Z" fill="#FFFFFF"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

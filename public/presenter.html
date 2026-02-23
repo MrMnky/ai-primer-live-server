@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presenter — AI Primer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Presenter-specific overrides */
+    body { background: #111; }
+    .setup-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+    .setup-screen h1 {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+    }
+    .setup-screen .session-code {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 3rem;
+      letter-spacing: 8px;
+      color: var(--bright-turquoise);
+      margin: 16px 0 8px;
+    }
+    .setup-screen .session-url {
+      font-size: 0.9rem;
+      opacity: 0.5;
+      margin-bottom: 32px;
+    }
+    .setup-screen .qr-placeholder {
+      width: 200px;
+      height: 200px;
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="setup-screen" id="setup">
+      <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:100px;margin-bottom:24px;opacity:0.7">
+      <h1>Starting Presenter Session...</h1>
+      <p style="opacity:0.5;margin-bottom:16px">Creating session and generating join code</p>
+      <div id="session-info" style="display:none">
+        <div class="session-code" id="session-code"></div>
+        <div class="session-url" id="session-url"></div>
+        <div class="qr-placeholder" id="qr-area">QR code area</div>
+        <p style="opacity:0.4;font-size:0.85rem;margin-bottom:24px" id="participant-count">Waiting for participants...</p>
+        <button class="btn btn--primary" id="start-btn" onclick="startPresentation()">Start Presentation</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="engine.js"></script>
+  <script src="slides/ai-primer-demo.js"></script>
+  <script>
+    let sessionCode = null;
+    let currentUser = null;
+
+    // Auth check — must be a presenter
+    (async () => {
+      PrimerAuth.init();
+      const session = await PrimerAuth.requirePresenter('/login.html');
+      if (!session) return; // redirected
+      currentUser = await PrimerAuth.getProfile();
+      createSession();
+    })();
+
+    // Create session on load
+    async function createSession() {
+      try {
+        const res = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'AI Primer',
+            presenterName: currentUser?.full_name || 'Presenter',
+            slideCount: AI_PRIMER_SLIDES.length,
+          }),
+        });
+        const data = await res.json();
+        sessionCode = data.code;
+
+        document.getElementById('session-code').textContent = sessionCode;
+        document.getElementById('session-url').textContent = window.location.origin + '/join.html';
+        document.getElementById('session-info').style.display = 'block';
+
+        // Generate simple QR (use a library or API in production)
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/join.html?code=' + sessionCode)}`;
+        document.getElementById('qr-area').innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width:100%;height:100%;border-radius:12px">`;
+
+      } catch (err) {
+        console.error('Failed to create session:', err);
+        document.querySelector('.setup-screen h1').textContent = 'Running in offline mode';
+        document.getElementById('session-info').style.display = 'block';
+        document.getElementById('session-code').textContent = 'OFFLINE';
+        document.getElementById('session-url').textContent = 'No server connection — slides will work, sync won\'t';
+      }
+    }
+
+    function startPresentation() {
+      document.getElementById('setup').remove();
+
+      AIPrimer.init({
+        slides: AI_PRIMER_SLIDES,
+        mode: 'presenter',
+        containerId: 'app',
+        sessionCode: sessionCode,
+      });
+    }
+
+  </script>
+</body>
+</html>

@@ -417,8 +417,8 @@
       return;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    state.socket = io(window.location.origin, {
+    const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || window.location.origin;
+    state.socket = io(serverUrl, {
       query: {
         sessionCode,
         mode,

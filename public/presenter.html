@@ -89,7 +89,8 @@
     // Create session on load
     async function createSession() {
       try {
-        const res = await fetch('/api/sessions', {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(serverUrl + '/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

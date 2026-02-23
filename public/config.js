@@ -10,7 +10,7 @@ const CONFIG = {
   // Server URL for API calls and WebSocket connections.
   // Leave empty for local dev (same origin). Set to deployed
   // server URL for production (e.g. 'https://ai-primer-live.up.railway.app')
-  SERVER_URL: '',
+  SERVER_URL: 'https://ai-primer-live-production.up.railway.app',
 
   // Replace with your Supabase project values
   SUPABASE_URL: 'https://YOUR_PROJECT.supabase.co',

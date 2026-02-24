@@ -38,6 +38,8 @@
   //   quiz: { question: '...', options: ['A', 'B', 'C', 'D'], correct: 0 },
   //   poll: { question: '...', options: ['Opt 1', 'Opt 2', 'Opt 3'] },
   //   textInput: { prompt: '...', placeholder: '...' },
+  //   mediaLayout: 'video' | 'interactive' | 'full' | 'background',
+  //   results: { sourceSlideIndex: N, responseType: 'poll' | 'quiz' | 'text' },
   //   build: ['step1', 'step2']  // progressive reveal steps (future)
   // }
 
@@ -56,7 +58,9 @@
     const themeClass = `slide--${slide.theme || 'dark'}`;
     const typeClass = slide.type === 'cover' ? 'slide--cover' :
                       slide.type === 'split' ? 'slide--split' :
-                      slide.type === 'section' ? 'slide--cover' : '';
+                      slide.type === 'section' ? 'slide--cover' :
+                      slide.type === 'full-media' ? 'slide--full-media' :
+                      slide.type === 'results' ? '' : '';
 
     const div = el('div', `slide ${themeClass} ${typeClass}`.trim());
     div.dataset.index = index;
@@ -80,8 +84,19 @@
       html += `<img class="slide__logo" src="assets/${logoFile}" alt="AI Accelerator">`;
     }
 
+    // Background media: render before content (absolute positioned via CSS)
+    if (slide.media && slide.mediaLayout === 'background') {
+      html += `<div class="slide__media slide__media--background">`;
+      if (slide.media.type === 'image') {
+        html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy">`;
+      } else if (slide.media.type === 'video') {
+        html += `<video src="${slide.media.src}" autoplay muted loop playsinline></video>`;
+      }
+      html += '</div>';
+    }
+
     // For split layout, wrap content in a div
-    if (slide.type === 'split') {
+    if (slide.type === 'split' || slide.type === 'full-media') {
       html += '<div class="slide__content">';
     }
 
@@ -131,21 +146,36 @@
       html += renderTextInput(slide.textInput, index);
     }
 
-    if (slide.type === 'split') {
+    if (slide.type === 'split' || slide.type === 'full-media') {
       html += '</div>'; // close .slide__content
     }
 
-    // Media (image, video, iframe)
-    if (slide.media) {
-      html += '<div class="slide__media">';
+    // Media (image, video, iframe) with layout variant classes
+    // Skip if already rendered as background
+    if (slide.media && slide.mediaLayout !== 'background') {
+      const layoutClass = slide.mediaLayout ? ` slide__media--${slide.mediaLayout}` : '';
+      html += `<div class="slide__media${layoutClass}">`;
       if (slide.media.type === 'image') {
         html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy">`;
       } else if (slide.media.type === 'video') {
-        html += `<video src="${slide.media.src}" controls playsinline></video>`;
+        const videoSrc = slide.media.src;
+        // Support YouTube URLs as iframes
+        if (videoSrc.includes('youtube.com') || videoSrc.includes('youtu.be')) {
+          const vid = videoSrc.includes('youtu.be') ? videoSrc.split('/').pop() :
+                      new URL(videoSrc).searchParams.get('v') || videoSrc.split('/').pop();
+          html += `<iframe src="https://www.youtube.com/embed/${vid}?rel=0" allowfullscreen frameborder="0"></iframe>`;
+        } else {
+          html += `<video src="${videoSrc}" controls playsinline></video>`;
+        }
       } else if (slide.media.type === 'iframe') {
         html += `<iframe src="${slide.media.src}" allowfullscreen></iframe>`;
       }
       html += '</div>';
+    }
+
+    // Results (aggregated responses display)
+    if (slide.results) {
+      html += renderResults(slide.results, index);
     }
 
     div.innerHTML = html;
@@ -391,6 +421,89 @@
     if (totalEl) totalEl.textContent = `${results.total} response${results.total !== 1 ? 's' : ''}`;
   }
 
+  // --- Results Renderer ---
+  function renderResults(results, slideIndex) {
+    // results = { sourceSlideIndex: N, responseType: 'poll' | 'quiz' | 'text' }
+    const sourceSlide = state.slides[results.sourceSlideIndex];
+    if (!sourceSlide) return '';
+
+    let html = `<div class="results" data-results-slide="${slideIndex}" data-source="${results.sourceSlideIndex}" data-response-type="${results.responseType}">`;
+
+    if (results.responseType === 'poll' || results.responseType === 'quiz') {
+      const options = results.responseType === 'poll'
+        ? (sourceSlide.poll?.options || [])
+        : (sourceSlide.quiz?.options || []);
+      const correctIdx = results.responseType === 'quiz' ? sourceSlide.quiz?.correct : -1;
+
+      html += `<div class="results__bars">`;
+      options.forEach((opt, i) => {
+        const correctClass = (correctIdx >= 0 && i === correctIdx) ? ' correct' : '';
+        html += `<div class="results__bar-item">`;
+        html += `<div class="results__bar-label">${opt}</div>`;
+        html += `<div class="results__bar-track">`;
+        html += `<div class="results__bar-fill${correctClass}" data-option="${i}" style="width:0%"></div>`;
+        html += `</div>`;
+        html += `<div class="results__bar-pct" data-option="${i}">0%</div>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+      html += `<div class="results__total" data-source="${results.sourceSlideIndex}">0 responses</div>`;
+    }
+
+    if (results.responseType === 'text') {
+      html += `<div class="results__wordcloud" data-source="${results.sourceSlideIndex}"></div>`;
+      html += `<div class="results__wall" data-source="${results.sourceSlideIndex}"></div>`;
+      html += `<div class="results__total" data-source="${results.sourceSlideIndex}">0 responses</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+  }
+
+  // --- Quiz Results Update ---
+  function updateQuizResults(slideIndex, results) {
+    // results = { options: [count, ...], total: N }
+    // Find results slides that reference this slideIndex
+    document.querySelectorAll(`.results[data-source="${slideIndex}"][data-response-type="quiz"]`).forEach(container => {
+      const total = results.total || 1;
+      results.options.forEach((count, i) => {
+        const pct = Math.round((count / total) * 100);
+        const fill = container.querySelector(`.results__bar-fill[data-option="${i}"]`);
+        const pctLabel = container.querySelector(`.results__bar-pct[data-option="${i}"]`);
+        if (fill) fill.style.width = pct + '%';
+        if (pctLabel) pctLabel.textContent = pct + '%';
+      });
+      const totalEl = container.querySelector('.results__total');
+      if (totalEl) totalEl.textContent = `${results.total} response${results.total !== 1 ? 's' : ''}`;
+    });
+  }
+
+  // --- Text Results Update ---
+  function updateTextResults(slideIndex, results) {
+    // results = { words: [{word, count}, ...], texts: [{name, text}, ...], total: N }
+    document.querySelectorAll(`.results[data-source="${slideIndex}"][data-response-type="text"]`).forEach(container => {
+      // Word cloud
+      const cloud = container.querySelector('.results__wordcloud');
+      if (cloud && results.words) {
+        cloud.innerHTML = results.words.slice(0, 30).map((w, i) => {
+          const tier = i < 3 ? 1 : i < 7 ? 2 : i < 12 ? 3 : i < 20 ? 4 : 5;
+          return `<span class="results__word results__word--${tier}" style="animation-delay:${i * 0.05}s">${w.word}</span>`;
+        }).join('');
+      }
+
+      // Response wall (latest 10)
+      const wall = container.querySelector('.results__wall');
+      if (wall && results.texts) {
+        wall.innerHTML = results.texts.slice(-10).reverse().map(t =>
+          `<div class="results__wall-item"><span class="results__wall-name">${t.name}</span> ${t.text.substring(0, 100)}${t.text.length > 100 ? '…' : ''}</div>`
+        ).join('');
+      }
+
+      const totalEl = container.querySelector('.results__total');
+      if (totalEl) totalEl.textContent = `${results.total} response${results.total !== 1 ? 's' : ''}`;
+    });
+  }
+
   // --- Presenter View Helpers ---
   function updatePresenterNotes(index) {
     const notesEl = qs('.presenter-notes__content');
@@ -462,9 +575,17 @@
       });
     }
 
-    // Everyone: receive poll updates
+    // Everyone: receive aggregated results updates
     state.socket.on('poll-update', (data) => {
       updatePollResults(data.slideIndex, data.results);
+    });
+
+    state.socket.on('quiz-update', (data) => {
+      updateQuizResults(data.slideIndex, data.results);
+    });
+
+    state.socket.on('text-update', (data) => {
+      updateTextResults(data.slideIndex, data.results);
     });
   }
 

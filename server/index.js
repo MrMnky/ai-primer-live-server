@@ -216,6 +216,62 @@ io.on('connection', (socket) => {
         results: { options, total: pollResponses.length },
       });
     }
+
+    // Quiz aggregation (same pattern as polls)
+    if (data.type === 'quiz') {
+      const quizResponses = store.responses.filter(
+        r => r.sessionCode === sessionCode && r.slideIndex === data.slideIndex && r.type === 'quiz'
+      );
+
+      const counts = {};
+      quizResponses.forEach(r => {
+        counts[r.data.option] = (counts[r.data.option] || 0) + 1;
+      });
+
+      const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
+      const options = [];
+      for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
+
+      io.to(sessionCode).emit('quiz-update', {
+        slideIndex: data.slideIndex,
+        results: { options, total: quizResponses.length },
+      });
+    }
+
+    // Text aggregation (word frequency + response wall)
+    if (data.type === 'text') {
+      const textResponses = store.responses.filter(
+        r => r.sessionCode === sessionCode && r.slideIndex === data.slideIndex && r.type === 'text'
+      );
+
+      // Build word frequency map
+      const wordCounts = {};
+      const stopWords = new Set(['the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','can','could','and','but','or','nor','for','yet','so','in','on','at','to','of','by','with','from','up','out','it','its','i','we','they','you','he','she','my','our','their','your','his','her','this','that','these','those','not','no','all','each','every','both','few','more','most','other','some','such','than','too','very']);
+
+      textResponses.forEach(r => {
+        const text = (r.data.text || '').toLowerCase().replace(/[^a-z0-9\s'-]/g, '');
+        text.split(/\s+/).forEach(w => {
+          if (w.length > 2 && !stopWords.has(w)) {
+            wordCounts[w] = (wordCounts[w] || 0) + 1;
+          }
+        });
+      });
+
+      const words = Object.entries(wordCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 30)
+        .map(([word, count]) => ({ word, count }));
+
+      const texts = textResponses.map(r => ({
+        name: r.participantName || 'Anonymous',
+        text: r.data.text || '',
+      }));
+
+      io.to(sessionCode).emit('text-update', {
+        slideIndex: data.slideIndex,
+        results: { words, texts, total: textResponses.length },
+      });
+    }
   });
 
   // Disconnect

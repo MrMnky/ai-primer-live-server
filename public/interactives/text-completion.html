@@ -16,8 +16,11 @@
     font-family: 'Poppins', system-ui, sans-serif;
     background: var(--gable); color: #fff;
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; height: 100vh; overflow: hidden;
+    justify-content: center; min-height: 100vh; overflow: auto;
     padding: 20px;
+  }
+  html.in-iframe, html.in-iframe body {
+    height: 100%; min-height: 0;
   }
   .container { width: 100%; max-width: 700px; text-align: center; }
   h2 { font-size: 1rem; font-weight: 600; color: var(--turquoise); letter-spacing: 1.5px;
@@ -126,6 +129,7 @@
 </div>
 
 <script>
+if (window.self !== window.top) document.documentElement.classList.add('in-iframe');
 const COLORS = ['#00FFBC','#00B1FF','#5CD5FF','#6161FF','#17CE95','#C5B6F1','#EFACA8','#0084B2'];
 
 const EXAMPLES = [

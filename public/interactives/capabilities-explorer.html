@@ -16,7 +16,10 @@
     font-family: 'Poppins', system-ui, sans-serif;
     background: #fff; color: var(--gable);
     display: flex; align-items: center; justify-content: center;
-    height: 100vh; overflow: hidden; padding: 20px;
+    min-height: 100vh; overflow: auto; padding: 20px;
+  }
+  html.in-iframe, html.in-iframe body {
+    height: 100%; min-height: 0;
   }
   .container { width: 100%; max-width: 780px; }
   .toggle-row {
@@ -73,6 +76,7 @@
 </div>
 
 <script>
+if (window.self !== window.top) document.documentElement.classList.add('in-iframe');
 const TABS = [
   {
     label: 'AI excels at',

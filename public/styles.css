@@ -286,9 +286,68 @@ html, body {
 
 .slide__media iframe {
   width: 100%;
-  aspect-ratio: 16/9;
   border: none;
   border-radius: 12px;
+}
+
+/* Video iframes (YouTube, MP4) — keep 16:9 */
+.slide__media--video iframe,
+.slide__media--16-9 iframe {
+  aspect-ratio: 16/9;
+}
+
+/* Interactive iframes — fill available height, no forced aspect */
+.slide__media--interactive {
+  max-width: none;
+  overflow: visible;
+}
+
+.slide__media--interactive iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+}
+
+/* Background media — behind slide text */
+.slide__media--background {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; margin-top: 0; max-width: none;
+  border-radius: 0;
+}
+
+.slide__media--background img,
+.slide__media--background video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.slide__media--background + .slide__content,
+.slide__media--background ~ * {
+  position: relative; z-index: 1;
+}
+
+/* Full-media slide — media fills below title */
+.slide--full-media {
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
+.slide--full-media .slide__content {
+  flex-shrink: 0;
+}
+
+.slide--full-media .slide__media {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  margin-top: 16px;
+  min-height: 0;
+}
+
+.slide--full-media .slide__media iframe {
+  width: 100%; height: 100%;
 }
 
 /* --- Split Layout (text + image side by side) --- */
@@ -308,6 +367,12 @@ html, body {
   flex: 1;
   min-width: 0;
   margin-top: 0;
+}
+
+/* Split with interactive: stretch media to full slide height */
+.slide--split .slide__media--interactive {
+  align-self: stretch;
+  height: auto;
 }
 
 /* --- Interactive Components --- */
@@ -829,6 +894,161 @@ html, body {
 .response-item__name {
   font-weight: var(--fw-semibold);
   color: var(--dodger-blue);
+}
+
+/* --- Results Slides (Mentimeter-style feedback) --- */
+.results {
+  margin-top: 32px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.results__title {
+  font-weight: var(--fw-semibold);
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+}
+
+.results__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.results__bar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results__bar-label {
+  min-width: 140px;
+  font-size: 0.85rem;
+  font-weight: var(--fw-semibold);
+  flex-shrink: 0;
+}
+
+.results__bar-track {
+  flex: 1;
+  height: 36px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.slide--light .results__bar-track {
+  background: var(--light-bg);
+}
+
+.results__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dodger-blue), var(--malibu));
+  border-radius: 8px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  min-width: 0;
+}
+
+.results__bar-fill.correct {
+  background: linear-gradient(90deg, var(--mountain-meadow), var(--bright-turquoise));
+}
+
+.results__bar-pct {
+  font-size: 0.8rem;
+  font-weight: var(--fw-semibold);
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.results__bar-count {
+  min-width: 36px;
+  text-align: right;
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
+.results__total {
+  font-size: 0.8rem;
+  opacity: 0.4;
+  margin-top: 12px;
+}
+
+/* Word cloud */
+.results__wordcloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  min-height: 200px;
+}
+
+.slide--light .results__wordcloud {
+  background: var(--light-bg);
+  border-color: var(--alto);
+}
+
+.results__word {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: var(--fw-semibold);
+  color: var(--white);
+  transition: all 0.3s ease;
+  animation: wordPop 0.4s ease backwards;
+}
+
+.slide--light .results__word {
+  color: var(--gable-green);
+}
+
+@keyframes wordPop {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.results__word--1 { font-size: 1.4rem; background: rgba(0,177,255,0.2); }
+.results__word--2 { font-size: 1.15rem; background: rgba(97,97,255,0.2); }
+.results__word--3 { font-size: 1rem; background: rgba(23,206,149,0.2); }
+.results__word--4 { font-size: 0.85rem; background: rgba(92,213,255,0.15); }
+.results__word--5 { font-size: 0.8rem; background: rgba(255,255,255,0.08); }
+
+/* Response wall (full text responses) */
+.results__wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.results__wall-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  animation: wordPop 0.4s ease backwards;
+}
+
+.slide--light .results__wall-item {
+  background: var(--light-bg);
+  border-color: var(--alto);
+}
+
+.results__wall-name {
+  font-weight: var(--fw-semibold);
+  font-size: 0.75rem;
+  color: var(--dodger-blue);
+  margin-bottom: 6px;
 }
 
 /* --- Mobile Overrides --- */

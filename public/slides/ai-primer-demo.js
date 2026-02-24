@@ -123,6 +123,7 @@ const AI_PRIMER_SLIDES = [
     title: 'See it in action: next-token prediction',
     body: '<p>This is how AI writes. One word at a time, each chosen from a probability distribution. It doesn\'t plan a sentence — it predicts the next most likely word, then the next, then the next.</p>',
     media: { type: 'iframe', src: 'interactives/text-completion.html' },
+    mediaLayout: 'interactive',
     notes: `This interactive demo shows the prediction process in real time. Click through each step to show how the model selects from candidate words based on probability. Use the different example prompts (business email, creative story, AI explanation) to show it works across contexts. Key teaching point: "No understanding. No planning. Just probability."`,
   },
 
@@ -182,6 +183,7 @@ const AI_PRIMER_SLIDES = [
     title: 'The AI risk landscape',
     body: '<p>Every powerful technology comes with risks. AI is no different. The difference is how prepared you are.</p><p>Explore the six key risk areas your team needs to understand.</p>',
     media: { type: 'iframe', src: 'interactives/risk-radar.html' },
+    mediaLayout: 'interactive',
     notes: `Walk through each risk on the radar. Start with hallucinations — it's the most common and most relatable. Ask: "Has anyone had AI confidently tell them something wrong?" Usually gets good stories. Then cover bias and data security. Save regulation and deepfakes for lighter treatment unless the audience is in a regulated sector.`,
   },
 
@@ -393,11 +395,23 @@ const AI_PRIMER_SLIDES = [
   },
 
 
+  // 26. Results — prompts word cloud
+  {
+    type: 'content',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'What the room is thinking',
+    body: '<p>A live view of the prompts you\'ve been writing — showing the themes, tasks, and roles emerging across the group.</p>',
+    results: { sourceSlideIndex: 24, responseType: 'text' },
+    notes: `Show the word cloud and response wall from the prompt-writing exercise. Look for patterns: are people mostly thinking about emails? Reports? Strategy? Use this to validate: "You're all already thinking about real, practical use cases. That's the whole point." Read 2-3 good ones aloud.`,
+  },
+
+
   // ============================================
-  // SECTION 6: APPLYING AI (4 slides)
+  // SECTION 6: APPLYING AI (5 slides)
   // ============================================
 
-  // 26. Section divider
+  // 27. Section divider (Applying AI)
   {
     type: 'section',
     theme: 'gradient',
@@ -407,7 +421,7 @@ const AI_PRIMER_SLIDES = [
     notes: `Transition: "You now know what AI is, how it works, the risks, and how to talk to it. This section is about putting it all together — expanding your sense of what's possible and giving you a framework for deciding where to start."`,
   },
 
-  // 27. Interactive — capabilities explorer
+  // 28. Interactive — capabilities explorer
   {
     type: 'split',
     theme: 'light',
@@ -415,6 +429,7 @@ const AI_PRIMER_SLIDES = [
     title: 'What AI can (and can\'t) do',
     body: '<p>Most people\'s idea of what AI can do is narrower than reality. Explore the capabilities where AI genuinely excels — and where you still need humans in the loop.</p>',
     media: { type: 'iframe', src: 'interactives/capabilities-explorer.html' },
+    mediaLayout: 'interactive',
     notes: `Use the toggle between "AI excels at" and "Humans needed" to expand people's thinking. Key message: "AI is great at generating options and exploring angles. Humans are great at judgment and decision-making. The best results come from collaboration."`,
   },
 
@@ -426,6 +441,7 @@ const AI_PRIMER_SLIDES = [
     title: 'The 4 Ds: your decision framework',
     body: '<p>Before applying AI to any task, run it through four questions. This framework helps you decide what to delegate, how to describe it, whether you can judge the output, and if you\'re being responsible.</p>',
     media: { type: 'iframe', src: 'interactives/four-ds.html' },
+    mediaLayout: 'interactive',
     notes: `The 4 Ds is the practical expression of everything they've learned. Walk through each D with the interactive. Delegation maps to System 1/2. Description maps to prompting. Discernment maps to risk awareness. Diligence maps to human-in-the-loop. Ask: "Can anyone think of a task that fails one of these tests?"`,
   },
 
@@ -470,6 +486,7 @@ const AI_PRIMER_SLIDES = [
     title: 'Three levels of AI fluency',
     body: '<p>AI fluency is knowing when and how to use AI — and crucially, when not to. It\'s judgment. It\'s confidence grounded in understanding.</p><p>Progression means moving from "What can AI do for me?" to "How do we build together?"</p>',
     media: { type: 'iframe', src: 'interactives/fluency-levels.html' },
+    mediaLayout: 'interactive',
     notes: `Walk through the three levels. Most attendees after this workshop are moving from Literacy to Fluency. Emphasise that fluency is where most value happens — you don't need to be an architect to get massive benefit. The interactive auto-reveals, then they can click to explore.`,
   },
 
@@ -491,7 +508,18 @@ const AI_PRIMER_SLIDES = [
     notes: `This mirrors the opening poll and shows progression. Compare the results: most people should have moved at least one level from where they started. If the room started at "Curious but cautious" and is now at "Basic Literacy / Moving to Fluency", that's a great outcome.`,
   },
 
-  // 33. Five takeaways
+  // 33. Results — closing poll
+  {
+    type: 'content',
+    theme: 'dark',
+    sectionLabel: 'AI FLUENCY',
+    title: 'Your self-assessment',
+    body: '<p>Here\'s how the room sees itself after today\'s session.</p>',
+    results: { sourceSlideIndex: 32, responseType: 'poll' },
+    notes: `Show the closing poll results. Compare to the opening poll (slide 4). In most sessions, the room shifts significantly — from "Curious but cautious" to "Moving to Fluency". Call this out: "Look at how much has changed in just a few hours." This validates the workshop.`,
+  },
+
+  // 34. Five takeaways
   {
     type: 'content',
     theme: 'dark',

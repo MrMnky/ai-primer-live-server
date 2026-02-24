@@ -1051,6 +1051,482 @@ html, body {
   margin-bottom: 6px;
 }
 
+/* --- Lobby Screen (unified entry) --- */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--gable-green);
+  color: var(--white);
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.lobby__logo {
+  width: 100px;
+  margin-bottom: 32px;
+  opacity: 0.7;
+}
+
+.lobby__title {
+  font-weight: var(--fw-bold);
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.lobby__subtitle {
+  font-size: 0.95rem;
+  opacity: 0.5;
+  margin-bottom: 40px;
+}
+
+.lobby__cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 640px;
+  width: 100%;
+}
+
+.lobby__card {
+  flex: 1;
+  min-width: 240px;
+  max-width: 300px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.lobby__card:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+
+.lobby__card-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+
+.lobby__card-title {
+  font-weight: var(--fw-bold);
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.lobby__card-desc {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  line-height: 1.5;
+}
+
+.lobby__user-info {
+  margin-top: 32px;
+  font-size: 0.8rem;
+  opacity: 0.3;
+}
+
+.lobby__user-info a {
+  color: var(--dodger-blue);
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.lobby__user-info a:hover { text-decoration: underline; }
+
+/* --- Setup Screen (presenter session creation) --- */
+.setup-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--white);
+  text-align: center;
+  padding: 32px 24px;
+  background: var(--gable-green);
+}
+
+.setup-screen__title {
+  font-weight: var(--fw-bold);
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.setup-screen__subtitle {
+  font-size: 0.9rem;
+  opacity: 0.5;
+  margin-bottom: 32px;
+}
+
+.setup-screen__code {
+  font-weight: var(--fw-bold);
+  font-size: 3.5rem;
+  letter-spacing: 10px;
+  color: var(--bright-turquoise);
+  margin-bottom: 8px;
+}
+
+.setup-screen__url {
+  font-size: 0.85rem;
+  opacity: 0.4;
+  margin-bottom: 28px;
+}
+
+.setup-screen__qr {
+  width: 200px;
+  height: 200px;
+  background: var(--white);
+  border-radius: 12px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.setup-screen__qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.setup-screen__participants {
+  font-size: 0.9rem;
+  opacity: 0.6;
+  margin-bottom: 24px;
+}
+
+.setup-screen__participants strong {
+  color: var(--bright-turquoise);
+  font-size: 1.1rem;
+}
+
+.setup-screen__back {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  opacity: 0.3;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-family: var(--font-family);
+}
+
+.setup-screen__back:hover { opacity: 0.6; }
+
+/* --- Auth Inline (login form inside lobby) --- */
+.auth-inline {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-inline .auth-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 36px 32px;
+}
+
+.auth-inline .auth-field {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.auth-inline .auth-field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.5;
+  margin-bottom: 6px;
+}
+
+.auth-inline .auth-field input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+  transition: border-color 0.2s;
+}
+
+.auth-inline .auth-field input:focus {
+  outline: none;
+  border-color: var(--dodger-blue);
+}
+
+.auth-inline .auth-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.auth-inline .auth-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: var(--fw-semibold);
+  color: var(--white);
+  opacity: 0.4;
+  cursor: pointer;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: var(--font-family);
+  transition: all 0.2s;
+}
+
+.auth-inline .auth-tab.active {
+  opacity: 1;
+  border-bottom-color: var(--dodger-blue);
+}
+
+.auth-inline .auth-divider {
+  text-align: center;
+  margin: 16px 0;
+  font-size: 0.8rem;
+  opacity: 0.3;
+}
+
+.auth-inline .auth-error {
+  color: var(--bittersweet);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  display: none;
+}
+
+.auth-inline .auth-success {
+  color: var(--mountain-meadow);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  display: none;
+}
+
+.auth-inline .auth-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.85rem;
+}
+
+.auth-inline .auth-link a {
+  color: var(--dodger-blue);
+  text-decoration: none;
+}
+
+.auth-inline .auth-form { display: none; }
+.auth-inline .auth-form.active { display: block; }
+
+/* --- Session Panel (presenter overlay during presentation) --- */
+.session-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: calc(100vh - 52px); /* leave room for controls bar */
+  background: #1a1a1a;
+  border-left: 1px solid #333;
+  z-index: 500;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  color: var(--white);
+  overflow-y: auto;
+}
+
+.session-panel.open {
+  transform: translateX(0);
+}
+
+.session-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+}
+
+.session-panel__header-title {
+  font-weight: var(--fw-semibold);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.6;
+}
+
+.session-panel__close {
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.4;
+  padding: 4px 8px;
+  font-family: var(--font-family);
+}
+
+.session-panel__close:hover { opacity: 0.8; }
+
+.session-panel__section {
+  padding: 20px;
+  border-bottom: 1px solid #282828;
+}
+
+.session-panel__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.4;
+  margin-bottom: 10px;
+}
+
+.session-panel__code {
+  font-weight: var(--fw-bold);
+  font-size: 2.4rem;
+  letter-spacing: 8px;
+  color: var(--bright-turquoise);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.session-panel__url {
+  font-size: 0.75rem;
+  opacity: 0.3;
+  text-align: center;
+  word-break: break-all;
+}
+
+.session-panel__qr {
+  width: 150px;
+  height: 150px;
+  background: var(--white);
+  border-radius: 10px;
+  margin: 12px auto 0;
+  overflow: hidden;
+}
+
+.session-panel__qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.session-panel__stat-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.session-panel__stat {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+}
+
+.session-panel__stat-number {
+  font-weight: var(--fw-bold);
+  font-size: 1.4rem;
+  color: var(--dodger-blue);
+}
+
+.session-panel__stat-label {
+  font-size: 0.7rem;
+  opacity: 0.4;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.session-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.session-panel__status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mountain-meadow);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.session-panel__participant-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.session-panel__participant {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #222;
+}
+
+.session-panel__participant-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--deep-cerulean);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-semibold);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.session-panel__participant-name {
+  opacity: 0.8;
+}
+
+.session-panel__empty {
+  font-size: 0.85rem;
+  opacity: 0.3;
+  font-style: italic;
+}
+
+/* Session button in presenter controls */
+.presenter-controls__session-btn {
+  padding: 6px 14px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--white);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presenter-controls__session-btn:hover {
+  background: #333;
+}
+
+.presenter-controls__session-btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mountain-meadow);
+}
+
 /* --- Mobile Overrides --- */
 @media (max-width: 768px) {
   .slide {

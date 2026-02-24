@@ -87,7 +87,7 @@
     if (isLocalDev()) { window.location.href = '/'; return; }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    window.location.href = '/login.html';
+    window.location.href = '/';
   }
 
   // --- Get Current User ---
@@ -157,7 +157,7 @@
 
     const isPresenter = await hasRole('presenter');
     if (!isPresenter) {
-      window.location.href = '/join.html';
+      window.location.href = '/';
       return null;
     }
     return session;

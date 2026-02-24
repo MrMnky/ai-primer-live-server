@@ -261,10 +261,15 @@
       state.socket.emit('slide-change', { slideIndex: index });
     }
 
-    // If presenter, update notes panel
+    // If presenter, update notes panel + controls
     if (state.mode === 'presenter') {
       updatePresenterNotes(index);
       updatePresenterNextPreview(index);
+      // Update slide counter in controls bar
+      const slideInfo = qs('.presenter-controls__slide-info');
+      if (slideInfo) slideInfo.textContent = `${index + 1} / ${state.slides.length}`;
+      // Update session panel slide progress
+      updateSessionPanel();
     }
   }
 
@@ -611,6 +616,94 @@
   function updateParticipantCount() {
     const countEl = qs('.presenter-controls__participant-count');
     if (countEl) countEl.textContent = state.participants.length;
+    updateSessionPanel();
+  }
+
+  // --- Session Panel (slide-out drawer for presenter) ---
+  function renderSessionPanel() {
+    const panel = el('div', 'session-panel');
+    panel.id = 'session-panel';
+
+    const joinUrl = window.location.origin + '/?code=' + (state.sessionCode || '');
+    const qrUrl = state.sessionCode
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`
+      : '';
+
+    panel.innerHTML = `
+      <div class="session-panel__header">
+        <span>Session Info</span>
+        <button class="session-panel__close" onclick="AIPrimer.toggleSessionPanel()">&times;</button>
+      </div>
+
+      <div class="session-panel__code">${state.sessionCode || '—'}</div>
+
+      ${qrUrl ? `<div class="session-panel__qr"><img src="${qrUrl}" alt="QR Code"></div>` : ''}
+
+      <div class="session-panel__url">${joinUrl}</div>
+
+      <div class="session-panel__stat-row">
+        <div class="session-panel__stat">
+          <div class="session-panel__stat-number" id="sp-participant-count">${state.participants.length}</div>
+          <div class="session-panel__stat-label">Participants</div>
+        </div>
+        <div class="session-panel__stat">
+          <div class="session-panel__stat-number" id="sp-slide-progress">${state.currentSlide + 1}/${state.slides.length}</div>
+          <div class="session-panel__stat-label">Slide</div>
+        </div>
+      </div>
+
+      <div class="session-panel__status">
+        <span class="session-panel__status-dot"></span>
+        <span id="sp-connection-status">${state.connected ? 'Connected' : 'Connecting...'}</span>
+      </div>
+
+      <div class="session-panel__participant-list" id="sp-participant-list">
+        ${state.participants.map(p =>
+          `<div class="session-panel__participant">
+            <div class="session-panel__participant-avatar">${(p.name || 'A').charAt(0).toUpperCase()}</div>
+            <span>${p.name || 'Anonymous'}</span>
+          </div>`
+        ).join('')}
+      </div>
+    `;
+
+    return panel;
+  }
+
+  function toggleSessionPanel() {
+    let panel = document.getElementById('session-panel');
+    if (!panel) {
+      // First open — build and attach
+      panel = renderSessionPanel();
+      const layout = qs('.presenter-layout');
+      if (layout) layout.appendChild(panel);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => panel.classList.add('open'));
+      });
+    } else {
+      panel.classList.toggle('open');
+    }
+  }
+
+  function updateSessionPanel() {
+    const countEl = document.getElementById('sp-participant-count');
+    if (countEl) countEl.textContent = state.participants.length;
+
+    const slideEl = document.getElementById('sp-slide-progress');
+    if (slideEl) slideEl.textContent = `${state.currentSlide + 1}/${state.slides.length}`;
+
+    const statusEl = document.getElementById('sp-connection-status');
+    if (statusEl) statusEl.textContent = state.connected ? 'Connected' : 'Disconnected';
+
+    const listEl = document.getElementById('sp-participant-list');
+    if (listEl) {
+      listEl.innerHTML = state.participants.map(p =>
+        `<div class="session-panel__participant">
+          <div class="session-panel__participant-avatar">${(p.name || 'A').charAt(0).toUpperCase()}</div>
+          <span>${p.name || 'Anonymous'}</span>
+        </div>`
+      ).join('') || '<div style="opacity:0.3;font-size:0.8rem;padding:8px">No participants yet</div>';
+    }
   }
 
   // --- Initialisation ---
@@ -696,12 +789,18 @@
             <button class="presenter-controls__btn" onclick="AIPrimer.next()">Next &#9654;</button>
           </div>
           <div class="presenter-controls__stats">
+            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleSessionPanel()" title="Session info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              Session
+            </button>
             <div class="presenter-controls__stat">
               <span class="presenter-controls__stat-dot"></span>
               <span><span class="presenter-controls__participant-count">0</span> participants</span>
             </div>
-            <div class="presenter-controls__stat">
-              Session: <strong style="margin-left:4px">${state.sessionCode || '—'}</strong>
+            <div class="presenter-controls__stat presenter-controls__session-code">
+              ${state.sessionCode || ''}
             </div>
           </div>
         </div>
@@ -725,5 +824,6 @@
   AIPrimer.prev = prev;
   AIPrimer.goToSlide = goToSlide;
   AIPrimer.getState = () => ({ ...state });
+  AIPrimer.toggleSessionPanel = toggleSessionPanel;
 
 })();

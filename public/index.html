@@ -7,26 +7,437 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
 
+    <!-- ========== SCREEN 1: AUTH (login / signup) ========== -->
+    <div class="lobby" id="screen-auth" style="display:none">
+      <img class="lobby__logo" src="assets/AIA_Logo_White.svg" alt="AI Accelerator">
+      <h1 class="lobby__title">AI Primer</h1>
+      <p class="lobby__subtitle">Sign in to continue</p>
+
+      <div class="auth-inline" id="auth-card">
+        <div class="auth-inline__tabs">
+          <button class="auth-inline__tab active" data-tab="signin" onclick="switchAuthTab('signin')">Sign In</button>
+          <button class="auth-inline__tab" data-tab="signup" onclick="switchAuthTab('signup')">Create Account</button>
+        </div>
+
+        <!-- Sign In -->
+        <form class="auth-inline__form active" id="signin-form" onsubmit="handleSignIn(event)">
+          <div class="auth-inline__field">
+            <label>Email</label>
+            <input type="email" id="signin-email" required autocomplete="email">
+          </div>
+          <div class="auth-inline__field">
+            <label>Password</label>
+            <input type="password" id="signin-password" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn--primary" id="signin-btn" style="width:100%;margin-top:8px">Sign In</button>
+          <div style="text-align:center;margin:16px 0;font-size:0.8rem;opacity:0.3">or</div>
+          <button type="button" class="btn btn--secondary" style="width:100%" onclick="handleMagicLink()">Send Magic Link</button>
+          <div class="auth-inline__error" id="signin-error"></div>
+          <div class="auth-inline__success" id="signin-success"></div>
+        </form>
+
+        <!-- Sign Up -->
+        <form class="auth-inline__form" id="signup-form" onsubmit="handleSignUp(event)">
+          <div class="auth-inline__field">
+            <label>Full Name</label>
+            <input type="text" id="signup-name" required autocomplete="name">
+          </div>
+          <div class="auth-inline__field">
+            <label>Email</label>
+            <input type="email" id="signup-email" required autocomplete="email">
+          </div>
+          <div class="auth-inline__field">
+            <label>Organisation</label>
+            <input type="text" id="signup-org" autocomplete="organization">
+          </div>
+          <div class="auth-inline__field">
+            <label>Password</label>
+            <input type="password" id="signup-password" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn--primary" id="signup-btn" style="width:100%;margin-top:8px">Create Account</button>
+          <div class="auth-inline__error" id="signup-error"></div>
+          <div class="auth-inline__success" id="signup-success"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== SCREEN 2: LOBBY (presenter / admin) ========== -->
+    <div class="lobby" id="screen-lobby" style="display:none">
+      <img class="lobby__logo" src="assets/AIA_Logo_White.svg" alt="AI Accelerator">
+      <h1 class="lobby__title">AI Primer</h1>
+      <p class="lobby__subtitle" id="lobby-greeting">Welcome back</p>
+
+      <div class="lobby__cards">
+        <div class="lobby__card" onclick="startLiveSession()">
+          <div class="lobby__card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
+          </div>
+          <div class="lobby__card-title">Start Live Session</div>
+          <div class="lobby__card-desc">Present to a live audience with real-time interaction</div>
+        </div>
+        <div class="lobby__card" onclick="startPreview()">
+          <div class="lobby__card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="lobby__card-title">Preview Deck</div>
+          <div class="lobby__card-desc">Self-paced walkthrough — no live session</div>
+        </div>
+      </div>
+
+      <button class="lobby__signout" onclick="PrimerAuth.signOut()">Sign Out</button>
+    </div>
+
+    <!-- ========== SCREEN 3: PRESENTER SETUP (code + QR + wait) ========== -->
+    <div class="setup-screen" id="screen-setup" style="display:none">
+      <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:100px;margin-bottom:24px;opacity:0.7">
+      <h1 id="setup-heading">Creating session...</h1>
+      <p style="opacity:0.5;margin-bottom:16px" id="setup-subtext">Generating join code</p>
+      <div id="setup-info" style="display:none">
+        <div class="setup-screen__code" id="setup-code"></div>
+        <div class="setup-screen__url" id="setup-url"></div>
+        <div class="setup-screen__qr" id="setup-qr">QR code area</div>
+        <p style="opacity:0.4;font-size:0.85rem;margin-bottom:24px" id="setup-participants">Waiting for participants...</p>
+        <button class="btn btn--primary" id="setup-begin" onclick="beginPresentation()">Begin Presentation</button>
+      </div>
+      <button class="lobby__signout" style="margin-top:32px" onclick="cancelSetup()">Cancel</button>
+    </div>
+
+    <!-- ========== SCREEN 4: PARTICIPANT JOIN ========== -->
+    <div class="lobby" id="screen-join" style="display:none">
+      <img class="lobby__logo" src="assets/AIA_Logo_White.svg" alt="AI Accelerator">
+      <h1 class="lobby__title">AI Primer</h1>
+      <p class="lobby__subtitle">Enter the session code to join</p>
+
+      <input
+        class="join-screen__input"
+        id="join-code"
+        type="text"
+        maxlength="5"
+        placeholder="CODE"
+        autocomplete="off"
+        autocapitalize="characters"
+      >
+      <input
+        class="join-screen__name-input"
+        id="join-name"
+        type="text"
+        placeholder="Your name"
+        autocomplete="off"
+      >
+      <button class="btn btn--primary" id="join-btn" style="width:100%;max-width:340px" onclick="joinSession()">Join Session</button>
+      <p id="join-error" style="color:var(--bittersweet);margin-top:16px;font-size:0.85rem;display:none"></p>
+
+      <button class="lobby__signout" onclick="PrimerAuth.signOut()">Sign Out</button>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <script src="engine.js"></script>
   <script src="slides/standard-slides.js"></script>
   <script src="slides/ai-primer-demo.js"></script>
   <script>
+    /* ===========================================
+       AI Primer Live — Unified Entry Point
+       =========================================== */
+
+    let currentUser = null;
+    let currentProfile = null;
+    let sessionCode = null;
+    let setupSocket = null;
+
+    // --- Screen management ---
+    function showScreen(id) {
+      document.querySelectorAll('#app > div').forEach(el => el.style.display = 'none');
+      const screen = document.getElementById(id);
+      if (screen) screen.style.display = '';
+    }
+
+    // --- Boot sequence ---
     (async () => {
       PrimerAuth.init();
-      const session = await PrimerAuth.requireAuth('/login.html');
-      if (!session) return;
 
+      // Check for existing session
+      const session = await PrimerAuth.getSession();
+      if (!session) {
+        showScreen('screen-auth');
+        return;
+      }
+
+      // User is logged in — determine role
+      currentProfile = await PrimerAuth.getProfile();
+      currentUser = await PrimerAuth.getUser();
+
+      routeToLobby();
+    })();
+
+    function routeToLobby() {
+      const isPresenter = currentProfile &&
+        (currentProfile.role === 'presenter' || currentProfile.role === 'admin');
+
+      if (isPresenter) {
+        // Presenter/Admin → lobby with options
+        const name = currentProfile.full_name || 'Presenter';
+        document.getElementById('lobby-greeting').textContent = `Welcome, ${name.split(' ')[0]}`;
+        showScreen('screen-lobby');
+      } else {
+        // Participant → join screen
+        const nameInput = document.getElementById('join-name');
+        if (currentProfile?.full_name) {
+          nameInput.value = currentProfile.full_name;
+        }
+        // Pre-fill code from URL param
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('code')) {
+          document.getElementById('join-code').value = params.get('code');
+        }
+        showScreen('screen-join');
+      }
+    }
+
+    // ==========================
+    //  AUTH HANDLERS
+    // ==========================
+    function switchAuthTab(tab) {
+      document.querySelectorAll('.auth-inline__tab').forEach(t =>
+        t.classList.toggle('active', t.dataset.tab === tab)
+      );
+      document.querySelectorAll('.auth-inline__form').forEach(f => f.classList.remove('active'));
+      document.getElementById(tab + '-form').classList.add('active');
+    }
+
+    async function handleSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value;
+      const password = document.getElementById('signin-password').value;
+      const errorEl = document.getElementById('signin-error');
+      const btn = document.getElementById('signin-btn');
+
+      btn.textContent = 'Signing in...';
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+
+      try {
+        await PrimerAuth.signIn(email, password);
+        currentProfile = await PrimerAuth.getProfile();
+        currentUser = await PrimerAuth.getUser();
+        routeToLobby();
+      } catch (err) {
+        errorEl.textContent = err.message || 'Sign in failed. Check your email and password.';
+        errorEl.style.display = 'block';
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+      }
+    }
+
+    async function handleSignUp(e) {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const errorEl = document.getElementById('signup-error');
+      const successEl = document.getElementById('signup-success');
+      const btn = document.getElementById('signup-btn');
+
+      btn.textContent = 'Creating account...';
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      try {
+        await PrimerAuth.signUp(email, password, name, 'participant');
+        successEl.textContent = 'Account created! Check your email to confirm, then sign in.';
+        successEl.style.display = 'block';
+        btn.textContent = 'Account Created';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Sign up failed. Try again.';
+        errorEl.style.display = 'block';
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+      }
+    }
+
+    async function handleMagicLink() {
+      const email = document.getElementById('signin-email').value;
+      const errorEl = document.getElementById('signin-error');
+      const successEl = document.getElementById('signin-success');
+
+      if (!email) {
+        errorEl.textContent = 'Enter your email address first.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        await PrimerAuth.sendMagicLink(email);
+        errorEl.style.display = 'none';
+        successEl.textContent = 'Magic link sent! Check your inbox.';
+        successEl.style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Failed to send magic link.';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // ==========================
+    //  PRESENTER: START LIVE
+    // ==========================
+    async function startLiveSession() {
+      showScreen('screen-setup');
+      try {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(serverUrl + '/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'AI Primer',
+            presenterName: currentProfile?.full_name || 'Presenter',
+            slideCount: AI_PRIMER_SLIDES.length,
+          }),
+        });
+        const data = await res.json();
+        sessionCode = data.code;
+
+        document.getElementById('setup-code').textContent = sessionCode;
+        document.getElementById('setup-url').textContent = window.location.origin + '/?code=' + sessionCode;
+        document.getElementById('setup-info').style.display = 'block';
+        document.getElementById('setup-heading').textContent = 'Session Ready';
+        document.getElementById('setup-subtext').textContent = 'Share this code with your audience';
+
+        // QR code
+        const joinUrl = window.location.origin + '/?code=' + sessionCode;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+        document.getElementById('setup-qr').innerHTML =
+          `<img src="${qrUrl}" alt="QR Code" style="width:100%;height:100%;border-radius:12px">`;
+
+        // Listen for early joiners
+        listenForParticipants();
+
+      } catch (err) {
+        console.error('Failed to create session:', err);
+        document.getElementById('setup-heading').textContent = 'Offline Mode';
+        document.getElementById('setup-subtext').textContent = 'No server — slides work, sync won\'t';
+        document.getElementById('setup-info').style.display = 'block';
+        document.getElementById('setup-code').textContent = 'OFFLINE';
+        document.getElementById('setup-url').textContent = '';
+        sessionCode = null;
+      }
+    }
+
+    function listenForParticipants() {
+      if (!sessionCode) return;
+      const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+      setupSocket = io(serverUrl || window.location.origin);
+      setupSocket.emit('presenter-join', { sessionCode });
+
+      let participantCount = 0;
+      setupSocket.on('participant-joined', (data) => {
+        participantCount++;
+        document.getElementById('setup-participants').textContent =
+          `${participantCount} participant${participantCount !== 1 ? 's' : ''} joined`;
+      });
+      setupSocket.on('participant-left', () => {
+        participantCount = Math.max(0, participantCount - 1);
+        document.getElementById('setup-participants').textContent =
+          participantCount > 0
+            ? `${participantCount} participant${participantCount !== 1 ? 's' : ''} joined`
+            : 'Waiting for participants...';
+      });
+    }
+
+    function beginPresentation() {
+      // Disconnect setup socket (engine.js creates its own)
+      if (setupSocket) { setupSocket.disconnect(); setupSocket = null; }
+
+      // Remove all lobby screens
+      document.querySelectorAll('#app > div').forEach(el => el.remove());
+
+      AIPrimer.init({
+        slides: AI_PRIMER_SLIDES,
+        mode: 'presenter',
+        containerId: 'app',
+        sessionCode: sessionCode,
+      });
+    }
+
+    function cancelSetup() {
+      if (setupSocket) { setupSocket.disconnect(); setupSocket = null; }
+      sessionCode = null;
+      routeToLobby();
+    }
+
+    // ==========================
+    //  PRESENTER: PREVIEW
+    // ==========================
+    function startPreview() {
+      document.querySelectorAll('#app > div').forEach(el => el.remove());
       AIPrimer.init({
         slides: AI_PRIMER_SLIDES,
         mode: 'self',
         containerId: 'app',
       });
-    })();
+    }
+
+    // ==========================
+    //  PARTICIPANT: JOIN
+    // ==========================
+    async function joinSession() {
+      const code = document.getElementById('join-code').value.trim().toUpperCase();
+      const name = document.getElementById('join-name').value.trim() || currentProfile?.full_name || 'Anonymous';
+      const errorEl = document.getElementById('join-error');
+
+      if (!code || code.length < 4) {
+        errorEl.textContent = 'Please enter a valid session code.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Validate session exists
+      try {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(`${serverUrl}/api/sessions/${code}`);
+        if (!res.ok) {
+          errorEl.textContent = 'Session not found. Check the code and try again.';
+          errorEl.style.display = 'block';
+          return;
+        }
+      } catch (err) {
+        errorEl.textContent = 'Cannot connect to server. Please try again.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Launch participant view
+      document.querySelectorAll('#app > div').forEach(el => el.remove());
+      AIPrimer.init({
+        slides: AI_PRIMER_SLIDES,
+        mode: 'participant',
+        containerId: 'app',
+        sessionCode: code,
+        participantName: name,
+      });
+    }
+
+    // --- Join screen key handling ---
+    document.getElementById('join-code').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('join-name').focus();
+    });
+    document.getElementById('join-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') joinSession();
+    });
+    document.getElementById('join-code').addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase();
+    });
   </script>
 </body>
 </html>

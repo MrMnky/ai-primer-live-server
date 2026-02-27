@@ -70,6 +70,19 @@ function generateCode() {
 
 // --- API Routes ---
 
+// List all sessions (newest first)
+app.get('/api/sessions', (req, res) => {
+  const status = req.query.status; // optional filter
+  let sessions = Object.values(store.sessions);
+  if (status) sessions = sessions.filter(s => s.status === status);
+  sessions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  res.json(sessions.map(s => ({
+    ...s,
+    participantCount: (liveParticipants[s.code] || []).length,
+  })));
+});
+
 // Create session
 app.post('/api/sessions', (req, res) => {
   const { title, presenterName, slideCount } = req.body;
@@ -158,6 +171,13 @@ io.on('connection', (socket) => {
   if (mode === 'presenter') {
     socket.join(`${sessionCode}:presenter`);
     console.log(`Presenter connected: ${sessionCode}`);
+
+    // Send current session state so presenter can resume
+    socket.emit('session-state', {
+      currentSlide: store.sessions[sessionCode].currentSlide,
+      status: store.sessions[sessionCode].status,
+      participants: (liveParticipants[sessionCode] || []).map(p => ({ id: p.id, name: p.name })),
+    });
   }
 
   if (mode === 'participant') {
@@ -186,6 +206,33 @@ io.on('connection', (socket) => {
     saveStore(store);
     io.to(sessionCode).emit('session-start');
     console.log(`Session ${sessionCode} started by presenter`);
+  });
+
+  // Presenter pauses session (steps out temporarily)
+  socket.on('session-pause', () => {
+    if (mode !== 'presenter') return;
+    store.sessions[sessionCode].status = 'paused';
+    saveStore(store);
+    io.to(sessionCode).emit('session-pause');
+    console.log(`Session ${sessionCode} paused`);
+  });
+
+  // Presenter resumes session
+  socket.on('session-resume', () => {
+    if (mode !== 'presenter') return;
+    store.sessions[sessionCode].status = 'started';
+    saveStore(store);
+    io.to(sessionCode).emit('session-resume');
+    console.log(`Session ${sessionCode} resumed`);
+  });
+
+  // Presenter ends session
+  socket.on('session-end', () => {
+    if (mode !== 'presenter') return;
+    store.sessions[sessionCode].status = 'ended';
+    saveStore(store);
+    io.to(sessionCode).emit('session-end');
+    console.log(`Session ${sessionCode} ended`);
   });
 
   // Presenter changes slide

@@ -339,6 +339,8 @@
   // --- Interactive Component Handlers ---
   window.AIPrimer = window.AIPrimer || {};
 
+  AIPrimer.getSocket = function () { return state.socket; };
+
   AIPrimer.selectQuizOption = function (slideIndex, optionIndex) {
     const quiz = state.slides[slideIndex].quiz;
     if (!quiz) return;
@@ -550,6 +552,7 @@
     state.socket.on('connect', () => {
       state.connected = true;
       console.log('Connected to session:', sessionCode);
+      if (state.onSocketReady) state.onSocketReady(state.socket);
     });
 
     state.socket.on('disconnect', () => {
@@ -563,8 +566,19 @@
       });
     }
 
-    // Presenter: receive responses
+    // Presenter: receive responses and session state for reconnection
     if (mode === 'presenter') {
+      state.socket.on('session-state', (data) => {
+        // Resume at the correct slide if reconnecting
+        if (data.currentSlide && data.currentSlide !== state.currentSlide) {
+          goToSlide(data.currentSlide);
+        }
+        if (data.participants) {
+          state.participants = data.participants;
+          updateParticipantCount();
+        }
+      });
+
       state.socket.on('response', (data) => {
         handleIncomingResponse(data);
       });
@@ -714,6 +728,7 @@
     state.sessionCode = config.sessionCode || null;
     state.participantName = config.participantName || null;
     state.participantId = config.participantId || generateId();
+    state.onSocketReady = config.onSocketReady || null;
 
     const container = document.getElementById(config.containerId || 'app');
 

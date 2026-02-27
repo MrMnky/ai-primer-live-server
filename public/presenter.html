@@ -6,8 +6,99 @@
   <title>Presenter — AI Primer</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    /* Presenter-specific overrides */
     body { background: #111; }
+
+    /* --- Dashboard --- */
+    .dashboard {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      color: #fff;
+    }
+    .dashboard__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .dashboard__title {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 1.3rem;
+    }
+    .dashboard__subtitle {
+      font-size: 0.85rem;
+      opacity: 0.4;
+      margin-top: 4px;
+    }
+    .session-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .session-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s;
+    }
+    .session-card:hover { background: rgba(255,255,255,0.08); }
+    .session-card--ended { opacity: 0.4; }
+    .session-card__info { flex: 1; }
+    .session-card__code {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 1.1rem;
+      letter-spacing: 3px;
+      color: var(--bright-turquoise);
+    }
+    .session-card--ended .session-card__code { color: #666; }
+    .session-card__meta {
+      font-size: 0.8rem;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+    .session-card__badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 12px;
+    }
+    .badge--active { background: rgba(0,177,255,0.2); color: #00B1FF; }
+    .badge--started { background: rgba(0,255,188,0.2); color: #00FFBC; }
+    .badge--paused { background: rgba(255,193,7,0.2); color: #FFC107; }
+    .badge--ended { background: rgba(255,255,255,0.1); color: #666; }
+    .session-card__actions { display: flex; gap: 8px; }
+    .session-card__btn {
+      font-family: var(--font-family);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .session-card__btn:hover { opacity: 0.8; }
+    .session-card__btn--primary { background: var(--bright-turquoise); color: #1B2F3C; }
+    .session-card__btn--secondary { background: rgba(255,255,255,0.1); color: #fff; }
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      opacity: 0.3;
+      font-size: 0.9rem;
+    }
+
+    /* --- Setup Screen --- */
     .setup-screen {
       display: flex;
       flex-direction: column;
@@ -49,23 +140,46 @@
       color: #333;
       font-size: 0.8rem;
     }
+    .setup-back {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-family: var(--font-family);
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 12px;
+    }
+    .setup-back:hover { color: #fff; }
+
+    /* --- Presenter exit button (overlay on slide view) --- */
+    .presenter-exit-btn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 100;
+      font-family: var(--font-family);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .presenter-exit-btn:hover {
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+    }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div class="setup-screen" id="setup">
-      <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:100px;margin-bottom:24px;opacity:0.7">
-      <h1>Starting Presenter Session...</h1>
-      <p style="opacity:0.5;margin-bottom:16px">Creating session and generating join code</p>
-      <div id="session-info" style="display:none">
-        <div class="session-code" id="session-code"></div>
-        <div class="session-url" id="session-url"></div>
-        <div class="qr-placeholder" id="qr-area">QR code area</div>
-        <p style="opacity:0.4;font-size:0.85rem;margin-bottom:24px" id="participant-count">Waiting for participants...</p>
-        <button class="btn btn--primary" id="start-btn" onclick="startPresentation()">Start Presentation</button>
-      </div>
-    </div>
-  </div>
+  <div id="app"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -82,22 +196,99 @@
   <script src="slides/section-7-close.js"></script>
   <script src="slides/all-slides.js"></script>
   <script>
-    let sessionCode = null;
     let currentUser = null;
+    let activeSessionCode = null;
+    let setupSocket = null;
+    const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
 
-    // Auth check — must be a presenter
+    // --- Auth ---
     (async () => {
       PrimerAuth.init();
       const session = await PrimerAuth.requirePresenter('/');
-      if (!session) return; // redirected
+      if (!session) return;
       currentUser = await PrimerAuth.getProfile();
-      createSession();
+      showDashboard();
     })();
 
-    // Create session on load
-    async function createSession() {
+    // --- Dashboard View ---
+    async function showDashboard() {
+      activeSessionCode = null;
+      if (setupSocket) { setupSocket.disconnect(); setupSocket = null; }
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="dashboard" id="dashboard">
+          <div class="dashboard__header">
+            <div>
+              <div class="dashboard__title">Presenter Dashboard</div>
+              <div class="dashboard__subtitle">AI Primer Live</div>
+            </div>
+            <button class="btn btn--primary" onclick="createNewSession()">+ New Session</button>
+          </div>
+          <div id="session-list" class="session-list">
+            <div class="empty-state">Loading sessions...</div>
+          </div>
+        </div>
+      `;
+      await refreshSessionList();
+    }
+
+    async function refreshSessionList() {
       try {
-        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(`${serverUrl}/api/sessions`);
+        const sessions = await res.json();
+        const listEl = document.getElementById('session-list');
+        if (!listEl) return;
+
+        // Filter out sessions older than 24 hours that are ended
+        const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+        const recent = sessions.filter(s =>
+          s.status !== 'ended' || new Date(s.createdAt).getTime() > cutoff
+        );
+
+        if (recent.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No sessions yet. Create one to get started.</div>';
+          return;
+        }
+
+        listEl.innerHTML = recent.map(s => {
+          const time = new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const date = new Date(s.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short' });
+          const badgeClass = `badge--${s.status}`;
+          const statusLabel = s.status === 'active' ? 'Waiting' : s.status.charAt(0).toUpperCase() + s.status.slice(1);
+          const isEnded = s.status === 'ended';
+          const cardClass = isEnded ? 'session-card session-card--ended' : 'session-card';
+
+          let actions = '';
+          if (s.status === 'active') {
+            actions = `<button class="session-card__btn session-card__btn--primary" onclick="openSetup('${s.code}')">Open</button>`;
+          } else if (s.status === 'started' || s.status === 'paused') {
+            actions = `<button class="session-card__btn session-card__btn--primary" onclick="resumeSession('${s.code}')">Resume</button>`;
+          } else if (s.status === 'ended') {
+            actions = `<button class="session-card__btn session-card__btn--secondary" onclick="exportSession('${s.code}')">Export</button>`;
+          }
+
+          return `
+            <div class="${cardClass}">
+              <div class="session-card__info">
+                <span class="session-card__code">${s.code}</span>
+                <span class="session-card__badge ${badgeClass}">${statusLabel}</span>
+                <div class="session-card__meta">${date} ${time} · ${s.participantCount || 0} participant${s.participantCount === 1 ? '' : 's'} · Slide ${s.currentSlide + 1}/${s.slideCount}</div>
+              </div>
+              <div class="session-card__actions">${actions}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load sessions:', err);
+        const listEl = document.getElementById('session-list');
+        if (listEl) listEl.innerHTML = '<div class="empty-state">Cannot connect to server.</div>';
+      }
+    }
+
+    // --- Create New Session ---
+    async function createNewSession() {
+      try {
         const res = await fetch(serverUrl + '/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,68 +299,134 @@
           }),
         });
         const data = await res.json();
-        sessionCode = data.code;
-
-        document.getElementById('session-code').textContent = sessionCode;
-        document.getElementById('session-url').textContent = window.location.origin + '/join.html';
-        document.getElementById('session-info').style.display = 'block';
-
-        // Generate simple QR (use a library or API in production)
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/join.html?code=' + sessionCode)}`;
-        document.getElementById('qr-area').innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width:100%;height:100%;border-radius:12px">`;
-
-        // Connect socket so we see participants joining the lobby
-        connectSetupSocket(sessionCode);
-
+        openSetup(data.code);
       } catch (err) {
         console.error('Failed to create session:', err);
-        document.querySelector('.setup-screen h1').textContent = 'Running in offline mode';
-        document.getElementById('session-info').style.display = 'block';
-        document.getElementById('session-code').textContent = 'OFFLINE';
-        document.getElementById('session-url').textContent = 'No server connection — slides will work, sync won\'t';
+        alert('Could not create session. Check server connection.');
       }
     }
 
-    let setupSocket = null;
+    // --- Setup View (waiting for participants) ---
+    function openSetup(code) {
+      activeSessionCode = code;
+      const app = document.getElementById('app');
+
+      const joinUrl = window.location.origin + '/join.html';
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl + '?code=' + code)}`;
+
+      app.innerHTML = `
+        <button class="setup-back" onclick="showDashboard()">← Dashboard</button>
+        <div class="setup-screen" id="setup">
+          <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:100px;margin-bottom:24px;opacity:0.7">
+          <h1>Session Ready</h1>
+          <p style="opacity:0.5;margin-bottom:16px">Share the code or QR with participants</p>
+          <div class="session-code">${code}</div>
+          <div class="session-url">${joinUrl}</div>
+          <div class="qr-placeholder"><img src="${qrUrl}" alt="QR Code" style="width:100%;height:100%;border-radius:12px"></div>
+          <p style="opacity:0.4;font-size:0.85rem;margin-bottom:24px" id="participant-count">Waiting for participants...</p>
+          <button class="btn btn--primary" onclick="startPresentation()">Start Presentation</button>
+        </div>
+      `;
+
+      connectSetupSocket(code);
+    }
 
     function connectSetupSocket(code) {
-      const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || window.location.origin;
-      setupSocket = io(serverUrl, {
+      if (setupSocket) setupSocket.disconnect();
+      const socketUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || window.location.origin;
+      setupSocket = io(socketUrl, {
         query: { sessionCode: code, mode: 'presenter', participantName: currentUser?.full_name || 'Presenter' }
       });
 
       setupSocket.on('participant-joined', (data) => {
-        const count = data.participants ? data.participants.length : 0;
-        document.getElementById('participant-count').textContent =
-          count === 0 ? 'Waiting for participants...' :
-          count === 1 ? '1 participant connected' :
-          `${count} participants connected`;
+        updateSetupParticipantCount(data.participants);
       });
-
       setupSocket.on('participant-left', (data) => {
-        const count = data.participants ? data.participants.length : 0;
-        document.getElementById('participant-count').textContent =
-          count === 0 ? 'Waiting for participants...' :
-          count === 1 ? '1 participant connected' :
-          `${count} participants connected`;
+        updateSetupParticipantCount(data.participants);
       });
     }
 
+    function updateSetupParticipantCount(participants) {
+      const count = participants ? participants.length : 0;
+      const el = document.getElementById('participant-count');
+      if (el) {
+        el.textContent = count === 0 ? 'Waiting for participants...' :
+          count === 1 ? '1 participant connected' :
+          `${count} participants connected`;
+      }
+    }
+
+    // --- Start Presentation ---
     function startPresentation() {
-      // Tell participants to leave the lobby
       if (setupSocket) {
         setupSocket.emit('session-start');
         setupSocket.disconnect();
+        setupSocket = null;
       }
+      launchPresenterView(activeSessionCode);
+    }
 
-      document.getElementById('setup').remove();
+    // --- Resume Session (from dashboard) ---
+    function resumeSession(code) {
+      activeSessionCode = code;
+      launchPresenterView(code);
+    }
+
+    // --- Launch Presenter View ---
+    function launchPresenterView(code) {
+      const app = document.getElementById('app');
+      app.innerHTML = '';
+
+      // Add exit button
+      const exitBtn = document.createElement('button');
+      exitBtn.className = 'presenter-exit-btn';
+      exitBtn.textContent = '⏸ Pause & Exit';
+      exitBtn.onclick = () => pauseAndExit(code);
+      document.body.appendChild(exitBtn);
 
       AIPrimer.init({
         slides: AI_PRIMER_SLIDES,
         mode: 'presenter',
         containerId: 'app',
-        sessionCode: sessionCode,
+        sessionCode: code,
+        onSocketReady: (socket) => {
+          // Emit resume if we're rejoining a paused session
+          socket.emit('session-resume');
+        },
       });
+    }
+
+    // --- Pause & Exit ---
+    function pauseAndExit(code) {
+      // Tell engine's socket to pause
+      if (typeof AIPrimer !== 'undefined' && AIPrimer.getSocket && AIPrimer.getSocket()) {
+        AIPrimer.getSocket().emit('session-pause');
+        AIPrimer.getSocket().disconnect();
+      }
+
+      // Remove exit button
+      const exitBtn = document.querySelector('.presenter-exit-btn');
+      if (exitBtn) exitBtn.remove();
+
+      showDashboard();
+    }
+
+    // --- Export Session ---
+    async function exportSession(code) {
+      try {
+        const res = await fetch(`${serverUrl}/api/sessions/${code}/export`);
+        const data = await res.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `session-${code}-export.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Export failed:', err);
+        alert('Could not export session data.');
+      }
     }
 
   </script>

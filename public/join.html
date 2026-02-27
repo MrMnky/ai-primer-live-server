@@ -40,6 +40,29 @@
       0%, 100% { transform: scale(1); opacity: 0.3; }
       50% { transform: scale(1.3); opacity: 0.6; }
     }
+    .session-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(27,47,60,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+    .session-overlay h2 {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+    .session-overlay p {
+      opacity: 0.5;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -160,10 +183,18 @@
         query: { sessionCode: code, mode: 'participant', participantName: name, participantId: 'p-' + Date.now() }
       });
 
+      // Reject ended sessions
+      if (sessionData.status === 'ended') {
+        errorEl.textContent = 'This session has ended.';
+        errorEl.style.display = 'block';
+        document.getElementById('app').appendChild(document.getElementById('join-screen') || (() => { location.reload(); return document.body; })());
+        return;
+      }
+
       // If session already started, go straight in
       if (sessionData.status === 'started') {
-        startParticipantView(code, name);
         lobbySocket.disconnect();
+        startParticipantView(code, name);
         return;
       }
 
@@ -172,6 +203,33 @@
         lobbySocket.disconnect();
         startParticipantView(code, name);
       });
+
+      // If session ends while in lobby
+      lobbySocket.on('session-end', () => {
+        lobbySocket.disconnect();
+        const lobby = document.getElementById('lobby-screen');
+        if (lobby) {
+          lobby.innerHTML = `
+            <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:16px;opacity:0.7">
+            <h2 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Session Ended</h2>
+            <p style="opacity:0.5;">Thank you for joining!</p>
+          `;
+        }
+      });
+    }
+
+    function showOverlay(message, subtitle) {
+      removeOverlay();
+      const overlay = document.createElement('div');
+      overlay.className = 'session-overlay';
+      overlay.id = 'session-overlay';
+      overlay.innerHTML = `<h2>${message}</h2><p>${subtitle}</p>`;
+      document.body.appendChild(overlay);
+    }
+
+    function removeOverlay() {
+      const existing = document.getElementById('session-overlay');
+      if (existing) existing.remove();
     }
 
     function startParticipantView(code, name) {
@@ -184,6 +242,17 @@
         containerId: 'app',
         sessionCode: code,
         participantName: name,
+        onSocketReady: (socket) => {
+          socket.on('session-pause', () => {
+            showOverlay('Presenter has paused', 'Sit tight — the session will resume shortly...');
+          });
+          socket.on('session-resume', () => {
+            removeOverlay();
+          });
+          socket.on('session-end', () => {
+            showOverlay('Session Ended', 'Thank you for joining!');
+          });
+        },
       });
     }
 

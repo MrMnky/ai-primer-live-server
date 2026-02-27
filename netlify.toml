@@ -1,2 +1,5 @@
 [build]
   publish = "public"
+
+[build.processing.html]
+  pretty_urls = false

@@ -88,7 +88,7 @@
     // Auth check — must be a presenter
     (async () => {
       PrimerAuth.init();
-      const session = await PrimerAuth.requirePresenter('/login.html');
+      const session = await PrimerAuth.requirePresenter('/');
       if (!session) return; // redirected
       currentUser = await PrimerAuth.getProfile();
       createSession();
@@ -97,7 +97,8 @@
     // Create session on load
     async function createSession() {
       try {
-        const res = await fetch('/api/sessions', {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(serverUrl + '/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

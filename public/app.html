@@ -25,7 +25,7 @@
   <script>
     (async () => {
       PrimerAuth.init();
-      const session = await PrimerAuth.requireAuth('/login.html');
+      const session = await PrimerAuth.requireAuth('/');
       if (!session) return;
 
       AIPrimer.init({

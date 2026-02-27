@@ -57,7 +57,7 @@
     // Auth check — must be logged in (any role)
     (async () => {
       PrimerAuth.init();
-      const session = await PrimerAuth.requireAuth('/login.html');
+      const session = await PrimerAuth.requireAuth('/');
       if (!session) return;
       currentUser = await PrimerAuth.getProfile();
 
@@ -86,7 +86,8 @@
 
       // Validate session exists
       try {
-        const res = await fetch(`/api/sessions/${code}`);
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(`${serverUrl}/api/sessions/${code}`);
         if (!res.ok) {
           errorEl.textContent = 'Session not found. Check the code and try again.';
           errorEl.style.display = 'block';

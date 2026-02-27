@@ -54,16 +54,19 @@
   <script>
     let currentUser = null;
 
-    // Auth check — must be logged in (any role)
+    // Optional auth — pre-fill name if logged in, but don't require it
     (async () => {
-      PrimerAuth.init();
-      const session = await PrimerAuth.requireAuth('/');
-      if (!session) return;
-      currentUser = await PrimerAuth.getProfile();
-
-      // Pre-fill name from profile
-      if (currentUser?.full_name) {
-        document.getElementById('name-input').value = currentUser.full_name;
+      try {
+        PrimerAuth.init();
+        const session = await PrimerAuth.getSession();
+        if (session) {
+          currentUser = await PrimerAuth.getProfile();
+          if (currentUser?.full_name) {
+            document.getElementById('name-input').value = currentUser.full_name;
+          }
+        }
+      } catch (e) {
+        // No auth — that's fine for participants
       }
     })();
 

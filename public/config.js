@@ -11,6 +11,10 @@ const CONFIG = {
   SUPABASE_URL: 'https://vwrwdzdievlmftrfusna.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3cndkemRpZXZsbWZ0cmZ1c25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Mjc5OTAsImV4cCI6MjA4NzQwMzk5MH0.bOxPyq0QIH6I4X8DWdaiKByBMOUtsNdpA-Dj1bUUgUE',
 
+  // WebSocket server URL (Railway deployment)
+  // Update this after deploying the server to Railway
+  SERVER_URL: '',
+
   // Local dev mode — set to true to skip auth entirely
   LOCAL_DEV: false,
 };

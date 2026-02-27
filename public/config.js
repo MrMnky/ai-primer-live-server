@@ -12,5 +12,5 @@ const CONFIG = {
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3cndkemRpZXZsbWZ0cmZ1c25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Mjc5OTAsImV4cCI6MjA4NzQwMzk5MH0.bOxPyq0QIH6I4X8DWdaiKByBMOUtsNdpA-Dj1bUUgUE',
 
   // Local dev mode — set to true to skip auth entirely
-  LOCAL_DEV: true,
+  LOCAL_DEV: false,
 };

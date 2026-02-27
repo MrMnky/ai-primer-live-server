@@ -1,172 +1,315 @@
 # AI Primer Live — Project Context
 
 **Created:** 23 February 2026
-**Status:** MVP built with auth system, ready for content porting
-**Location:** `projects/ai-primer-live/`
-**GitHub:** `MrMnky/ai-primer-live` (private repo)
-**Netlify:** Connected to GitHub for static frontend deployment
-**Supabase:** Connected — handles auth and database (PostgreSQL)
+**Last updated:** 27 February 2026
+**Status:** Full slide content ported, auth working, presenter dashboard built, WebSocket server needs hosting
+**GitHub (org):** `AI-Accelerator-Ltd/AI-Primer-Live`
+**GitHub (personal):** `MrMnky/AI-Primer-Live` (mirror — kept in sync)
+**Netlify:** `ai-primer-live.netlify.app` — auto-deploys from GitHub (static frontend)
+**Supabase:** `vwrwdzdievlmftrfusna.supabase.co` — handles auth (PostgreSQL)
+**Railway:** Needs fresh deployment (see Deployment section below)
 
 ---
 
 ## What This Is
 
-An interactive HTML/JS presentation platform that replaces the 171-slide Keynote AI Primer deck with a live, web-based experience. The presenter controls the flow while participants follow along on their phones, answering quizzes, polls, and open-text questions in real time. All responses are captured to a database for post-workshop analysis.
+An interactive HTML/JS presentation platform that replaces the 171-slide Keynote AI Primer deck with a live, web-based experience. The presenter controls the flow while participants follow along on their phones, answering quizzes, polls, and open-text questions in real time. All responses are captured for post-workshop analysis.
 
 ## Why We Built It
 
 The Keynote deck is static. Mike can't collect audience input, run live polls, or adapt based on what the room is thinking. This platform gives the AI Primer interactivity, a mobile-friendly participant experience, and a data trail of every session.
 
-## Architecture Decisions
+---
 
-These decisions were made in the initial planning conversation:
+## Architecture
 
-| Decision | Choice | Reasoning |
-|----------|--------|-----------|
-| **Frontend framework** | Vanilla HTML/CSS/JS | Simple for Claude to generate and iterate. No build step needed. Easy for the team to understand. |
-| **Database (local)** | JSON file store (Node.js) | Minimal dependencies, full ownership, zero native compilation issues. Used for local dev. |
-| **Database (production)** | Supabase (PostgreSQL) | Hosted PostgreSQL with built-in auth, Row Level Security, magic links. Free tier covers workshop scale. |
-| **Authentication** | Supabase Auth | Email/password and magic link login. Role-based: admin, presenter, participant. RLS policies enforce data access. |
-| **Real-time sync** | Socket.io (WebSockets) | Essential requirement — presenter drives the experience. Participants follow in lockstep. |
-| **Slide authoring** | JSON objects in JS files | Each slide is a plain object: type, theme, title, body, notes, interactive config. Claude generates these directly. |
-| **Brand system** | CSS custom properties | Full AIA palette (Gable Green, Turquoise, Dodger Blue, etc.), Poppins typography, WCAG-compliant contrast tiers. |
-| **Hosting (static)** | Netlify | Auto-deploys from GitHub. Serves self-paced mode and all static pages. |
-| **Hosting (server)** | TBD — Railway or Render | WebSocket server needs a persistent host. Netlify can't do this. |
+| Component | Choice | Notes |
+|-----------|--------|-------|
+| **Frontend** | Vanilla HTML/CSS/JS | No build step. Static files served by Netlify. |
+| **Server** | Express + Socket.IO (Node.js) | Handles WebSocket sync, REST API, JSON file store. |
+| **Auth** | Supabase Auth | Email/password login. Role-based: admin, presenter, participant. |
+| **Database** | JSON file store (server-side) | `data/store.json` — sessions and responses. Simple, no external DB needed for session data. |
+| **Hosting (static)** | Netlify | Auto-deploys from GitHub. Serves all HTML/CSS/JS. |
+| **Hosting (server)** | Railway (TBD) | WebSocket server needs a Node.js host. See deployment section. |
+| **Real-time sync** | Socket.IO | Presenter drives slides. Participants follow in lockstep. |
+| **Slide format** | JSON objects in JS files | Each slide is a plain object with type, theme, content, interactivity config. |
+| **Brand system** | CSS custom properties | AIA palette (Gable Green, Turquoise, Dodger Blue), Poppins font, WCAG contrast tiers. |
 
-We explicitly chose NOT to use React, Lovable, or the existing spec in `00-AI-Primer-App-Specification.md` in favour of simplicity and iterability.
+---
 
 ## How It Works
 
-### Three Views
+### Four Views
 
-1. **Self-paced** (`index.html`) — Individual learner navigates freely. No server needed for this mode.
-2. **Presenter** (`presenter.html`) — Creates a session, gets a join code + QR. Shows current slide (high-res), speaker notes, next-slide preview, and live response stream. Controls navigation for all participants.
-3. **Participant** (`join.html`) — Enters session code + name. Mobile-first. Follows the presenter's position. Can interact with quizzes, polls, and text inputs.
+1. **Self-paced** (`app.html`) — Individual learner navigates freely through all slides. No server connection needed.
+2. **Presenter Dashboard** (`presenter.html`) — Lists all sessions. Create new sessions, resume paused ones, export ended ones. Gateway to the presentation view.
+3. **Presenter View** (launched from dashboard) — Shows slides full-screen with a "Pause & Exit" button. Controls navigation for all connected participants.
+4. **Participant** (`join.html`) — Enter session code + name. Mobile-first. Follows the presenter's slides. Can interact with quizzes, polls, and text inputs.
+
+### Session Lifecycle
+
+```
+active → started → paused → started → ended
+  │         │         │         │         │
+  │         │         │         │         └─ Session over. Export data.
+  │         │         │         └─ Presenter resumed from dashboard.
+  │         │         └─ Presenter clicked "Pause & Exit".
+  │         └─ Presenter clicked "Start Presentation".
+  └─ Session created, waiting for participants.
+```
 
 ### Flow
 
-1. Presenter opens `presenter.html` → server creates a session with a 5-character code
-2. Participants scan QR or go to `join.html?code=XXXXX`
-3. Presenter advances slides → WebSocket pushes state to all participants
-4. Interactive slides (quiz, poll, text input) collect responses → stored in `data/store.json` (local) or Supabase (production)
-5. Presenter sees responses streaming in real time
-6. After the session: `GET /api/sessions/{code}/export` returns all data grouped by slide
+1. Presenter opens `presenter.html` → sees the **Dashboard** listing all sessions
+2. Clicks **"+ New Session"** → server creates a session with a 5-character code
+3. **Setup screen** shows the code, QR, and live participant count
+4. Participants scan QR or go to `join.html?code=XXXXX` → enter name → see a **lobby screen** ("You're in! Waiting for presenter...")
+5. Presenter clicks **"Start Presentation"** → lobby clears, slides begin
+6. Presenter advances slides → WebSocket pushes state to all participants
+7. Interactive slides (quiz, poll, text input) collect responses in real time
+8. Presenter clicks **"⏸ Pause & Exit"** → participants see "Presenter has paused" overlay → presenter returns to dashboard
+9. Presenter clicks **"Resume"** on dashboard → drops back into slides at the same position, participants' overlay clears
+10. After the session: click **"Export"** on dashboard to download all response data as JSON
 
-### Authentication Modes
+### Authentication
 
-- **Local dev** (`CONFIG.LOCAL_DEV = true`): Auth bypassed entirely. A stub admin user is injected. All pages work without Supabase.
-- **Production** (`CONFIG.LOCAL_DEV = false`): Full Supabase auth. Users must sign in. Presenters need presenter/admin role. Participants can self-register.
+- **Presenters** must sign in with an admin or presenter role (Supabase Auth)
+- **Participants** do NOT need accounts — they just enter a name and session code
+- **Self-paced** (`app.html`) requires sign-in
+- **Login page** is `index.html` (the root)
 
-### Slide Definition Format
+### Participant Experience
 
-Each slide is a JS object:
+- Join page is mobile-first
+- Auth is optional — if logged in, name pre-fills from profile
+- Lobby screen with pulsing dot while waiting for presenter
+- Overlays for pause ("Sit tight"), resume (overlay clears), and end ("Thank you")
+- Cannot navigate slides independently — follows presenter
 
-```js
-{
-  type: 'content',           // cover | content | statement | split | quiz | poll | text-input | video | section
-  theme: 'dark',             // dark | light | gradient
-  sectionLabel: 'WHAT IS AI',
-  title: 'Slide title',
-  subtitle: 'Optional',
-  body: '<p>HTML content</p>',
-  notes: 'Speaker notes for presenter view',
-  badge: 'QUICK CHECK',      // turquoise pill badge
-  stats: [{ number: '+86%', label: 'Knowledge gain' }],
-  callout: { title: '...', body: '...' },
-  media: { type: 'image', src: 'assets/photo.jpg', alt: '...' },
-  quiz: { question: '...', options: ['A', 'B', 'C', 'D'], correct: 1 },
-  poll: { question: '...', options: ['Opt 1', 'Opt 2'] },
-  textInput: { prompt: '...', placeholder: '...' },
-}
-```
+---
 
-To add new slides, create or edit files in `public/slides/`. The demo deck is `ai-primer-demo.js`.
+## Slide Content
+
+All 7 sections of the AI Primer have been ported from Keynote to slide definitions:
+
+| File | Section | Slides |
+|------|---------|--------|
+| `section-1-foundation.js` | Foundation & Welcome | Cover, intro, ground rules, agenda |
+| `section-2-what-is-ai.js` | What Is AI? | AI definition, capabilities, fluency levels, industry adoption |
+| `section-3-ai-risks.js` | AI Risks & Guardrails | Hallucinations, bias, data privacy, deepfakes, risk radar |
+| `section-4-how-ai-works.js` | How AI Works | Neural networks, training, tokens, text completion, model types |
+| `section-5-prompting.js` | Prompting Foundations | Prompt anatomy, frameworks (4Ds, CO-STAR), tips, practice |
+| `section-6-applying-ai.js` | Applying AI at Work | Delegation mindset, use cases, 3 horizons, action planning |
+| `section-7-close.js` | Close | Summary, resources, Q&A |
+| `all-slides.js` | Combined | `AI_PRIMER_SLIDES` array — all sections concatenated |
+| `standard-slides.js` | Utilities | Reusable slides (break, Q&A, transition) |
+| `ai-primer-demo.js` | Demo | 6-slide demo deck for testing |
+
+### Interactive Components
+
+Each slide can include one interactive element:
+
+- **Quiz** — Multiple choice with correct answer reveal. Results aggregated across participants.
+- **Poll** — Multiple choice, no correct answer. Live bar chart updates.
+- **Text Input** — Open text responses. Word cloud generation + response wall.
+
+### Embedded Interactives
+
+Self-contained HTML files in `public/interactives/` for workshop activities:
+
+| File | Purpose |
+|------|---------|
+| `capabilities-explorer.html` | Explore AI capabilities by category |
+| `fluency-levels.html` | Self-assess AI fluency level |
+| `four-ds.html` | 4Ds prompting framework interactive |
+| `risk-radar.html` | AI risk assessment tool |
+| `text-completion.html` | Demonstrate how LLMs predict next tokens |
+
+---
 
 ## File Structure
 
 ```
-projects/ai-primer-live/
+AI-Primer-Live/
 ├── package.json              # Dependencies: express, socket.io, uuid
+├── package-lock.json
+├── Procfile                  # Railway: web: node server/index.js
+├── netlify.toml              # Netlify build config (publish: public)
 ├── .gitignore                # node_modules, data/, .DS_Store, *.log
 ├── PROJECT-CONTEXT.md        # This file
-├── SUPABASE-SETUP.md         # Step-by-step Supabase configuration guide
+├── SUPABASE-SETUP.md         # Supabase configuration guide
 ├── server/
-│   └── index.js              # Express + Socket.io + JSON store
+│   └── index.js              # Express + Socket.IO + JSON store + REST API
 ├── public/
-│   ├── index.html            # Self-paced entry point (requires auth in prod)
-│   ├── presenter.html        # Presenter view (requires presenter role in prod)
-│   ├── join.html             # Participant join screen (requires auth in prod)
-│   ├── login.html            # Sign in / create account page
+│   ├── index.html            # Login / sign-in page (root)
+│   ├── app.html              # Self-paced slide viewer (requires auth)
+│   ├── presenter.html        # Presenter dashboard + presentation view
+│   ├── join.html             # Participant join + lobby + session overlays
 │   ├── styles.css            # Full AIA brand CSS system
-│   ├── engine.js             # Slide engine (rendering, nav, interactivity, WebSocket)
-│   ├── config.js             # Supabase URL/key + LOCAL_DEV toggle
-│   ├── auth.js               # Auth module (wraps Supabase, stubs for local dev)
-│   ├── assets/               # Logos, images, videos (drop files here)
+│   ├── engine.js             # Slide engine (rendering, nav, WebSocket, interactivity)
+│   ├── config.js             # Supabase keys, SERVER_URL, LOCAL_DEV toggle
+│   ├── auth.js               # Auth module (wraps Supabase, role checks)
+│   ├── assets/
 │   │   ├── AIA_Logo_White.svg
 │   │   └── AIA_Logo_GableGreen.svg
-│   └── slides/
-│       └── ai-primer-demo.js # Demo slide deck (6 slides)
+│   ├── slides/
+│   │   ├── section-1-foundation.js
+│   │   ├── section-2-what-is-ai.js
+│   │   ├── section-3-ai-risks.js
+│   │   ├── section-4-how-ai-works.js
+│   │   ├── section-5-prompting.js
+│   │   ├── section-6-applying-ai.js
+│   │   ├── section-7-close.js
+│   │   ├── all-slides.js       # Combined slide array (AI_PRIMER_SLIDES)
+│   │   ├── standard-slides.js  # Reusable utility slides
+│   │   └── ai-primer-demo.js   # Demo deck (6 slides)
+│   └── interactives/
+│       ├── capabilities-explorer.html
+│       ├── fluency-levels.html
+│       ├── four-ds.html
+│       ├── risk-radar.html
+│       └── text-completion.html
 ├── supabase/
-│   └── schema.sql            # Full database schema (profiles, sessions, participants, responses, RLS)
+│   └── schema.sql              # Database tables, RLS policies
 └── data/
-    └── store.json            # Session + response data (local dev, auto-created)
+    └── store.json              # Session + response data (auto-created, not committed)
 ```
+
+---
+
+## Server API
+
+### REST Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/sessions` | List all sessions (optional `?status=` filter) |
+| `POST` | `/api/sessions` | Create a new session |
+| `GET` | `/api/sessions/:code` | Get session details + participants |
+| `GET` | `/api/sessions/:code/responses` | Get all responses for a session |
+| `GET` | `/api/sessions/:code/responses/:slideIndex` | Get responses for a specific slide |
+| `GET` | `/api/sessions/:code/export` | Export all session data (grouped by slide) |
+
+### WebSocket Events
+
+| Event | Direction | Purpose |
+|-------|-----------|---------|
+| `session-start` | Presenter → Server → All | Releases participant lobby |
+| `session-pause` | Presenter → Server → All | Pauses session, shows participant overlay |
+| `session-resume` | Presenter → Server → All | Resumes session, clears overlay |
+| `session-end` | Presenter → Server → All | Ends session permanently |
+| `session-state` | Server → Presenter | Reconnection state (currentSlide, status, participants) |
+| `slide-change` | Presenter → Server → Participants | Sync slide position |
+| `participant-joined` | Server → Presenter | New participant notification + count |
+| `participant-left` | Server → Presenter | Participant disconnected + count |
+| `response` | Participant → Server → Presenter | Quiz/poll/text response |
+| `poll-update` | Server → All | Aggregated poll results |
+| `quiz-update` | Server → All | Aggregated quiz results |
+| `text-update` | Server → All | Aggregated text responses + word cloud |
+
+---
+
+## Deployment
+
+### Netlify (Frontend — Working)
+
+- **URL:** `ai-primer-live.netlify.app`
+- Auto-deploys from `AI-Accelerator-Ltd/AI-Primer-Live` main branch
+- Serves everything in `public/`
+- No build step — static files only
+
+### Railway (WebSocket Server — Not Yet Working)
+
+The WebSocket server needs a Node.js host. Railway was chosen but we hit GitHub org permission issues. The server has been fully tested locally.
+
+**What needs to happen:**
+
+1. Create a new Railway service connected to a GitHub repo Railway can access
+2. Set environment variable: `ALLOWED_ORIGINS` = `https://ai-primer-live.netlify.app`
+3. Generate a public domain (`.up.railway.app`)
+4. Update `CONFIG.SERVER_URL` in `public/config.js` with the new Railway URL
+5. Push and verify `/api/health` returns `{"status":"ok",...}`
+6. Verify `/api/sessions` returns `[]`
+
+**Previous Railway URL** (now deleted): `ai-primer-live-production.up.railway.app`
+
+**Known issue:** Railway's GitHub app couldn't deploy from `AI-Accelerator-Ltd` org repo despite correct permissions. Options:
+- Deploy from `MrMnky/AI-Primer-Live` (personal mirror) instead
+- Try Render.com as an alternative
+- Use Railway CLI to deploy without GitHub integration
+
+**Server configuration:**
+- `Procfile`: `web: node server/index.js`
+- Node.js >=18
+- Port: reads from `PORT` env var (Railway sets this automatically)
+- CORS: reads from `ALLOWED_ORIGINS` env var (comma-separated)
+
+---
+
+## Credentials & Services
+
+| Service | Detail |
+|---------|--------|
+| **Supabase URL** | `https://vwrwdzdievlmftrfusna.supabase.co` |
+| **Supabase anon key** | In `public/config.js` |
+| **GitHub org repo** | `AI-Accelerator-Ltd/AI-Primer-Live` |
+| **GitHub personal repo** | `MrMnky/AI-Primer-Live` (mirror) |
+| **Netlify site** | `ai-primer-live.netlify.app` |
+| **Railway** | Needs fresh setup (see Deployment section) |
+
+---
 
 ## Running Locally
 
 ```bash
-cd projects/ai-primer-live
+cd AI-Primer-Live
 npm install
 npm start
 # → http://localhost:3000
 ```
 
-With `LOCAL_DEV: true` in `config.js` (the default), auth is bypassed and everything works immediately.
+Set `LOCAL_DEV: true` in `config.js` to bypass auth. Set `SERVER_URL: ''` (empty string) to use local server.
 
-## Environment Variables
+---
 
-| Variable | Where | Purpose |
-|----------|-------|---------|
-| `SUPABASE_URL` | `config.js` (frontend) + server env | Supabase project URL |
-| `SUPABASE_ANON_KEY` | `config.js` (frontend) | Public anon key (safe to expose) |
-| `SUPABASE_SERVICE_KEY` | Server env only | Service role key (secret — never commit) |
+## What's Built
 
-## What's Built (MVP)
-
-- Full CSS brand system (AIA palette, Poppins, all component styles)
-- Slide engine: renders slides from JSON, handles navigation (keyboard + touch), manages state
-- Three interactive component types: quiz (with correct/incorrect feedback), poll (with live bar charts), open text input
-- WebSocket-based presenter → participant sync (real-time slide control)
-- Presenter view: current slide, speaker notes, next-slide preview, live response stream, participant count
-- Participant view: mobile-first, follows presenter, join screen with code + name
-- JSON file store for sessions and responses (local dev)
-- Supabase auth system: email/password, magic links, role-based access (admin/presenter/participant)
-- Supabase database schema with RLS policies (profiles, sessions, session_participants, responses)
-- Login page with sign-in / create-account tabs
-- LOCAL_DEV mode for zero-config local development
-- REST API for session creation, response retrieval, and data export
-- 6 demo AI Primer slides covering: cover, statement, stats, quiz, poll, and text input
+- Full CSS brand system (AIA palette, Poppins, WCAG contrast tiers)
+- Slide engine: renders slides from JSON, keyboard + touch navigation, presenter/participant/self-paced modes
+- All 7 sections of AI Primer content ported to slide definitions
+- Three interactive types: quiz, poll, open text — all with live aggregation
+- WebSocket presenter → participant sync (real-time slide control)
+- Presenter dashboard: session listing, create/resume/pause/end/export
+- Participant lobby screen (waiting for presenter to start)
+- Participant session overlays (pause, resume, end states)
+- Presenter reconnection (resume mid-session from dashboard)
+- Supabase auth: email/password, role-based access (admin/presenter/participant)
+- Participants don't need accounts — just name + session code
+- Self-paced mode for individual learners
+- REST API for sessions, responses, and data export
+- JSON file store persistence
+- 5 embedded interactive HTML activities
+- QR code generation for session join links
 
 ## What's Next
 
-These are the natural next steps, in priority order:
+1. **Deploy the server** — Railway or alternative. This is the immediate blocker for live use.
+2. **Images and video** — Add media to slides. The engine supports `media: { type: 'image' | 'video', src: '...' }` but no assets have been added yet.
+3. **Progressive reveal (build steps)** — Step through content within a slide. Format supports `build` arrays but the engine doesn't process them yet.
+4. **Timer/countdown** — For timed activities.
+5. **Results display slide** — Show aggregated poll/quiz results as a dedicated slide type.
+6. **Server-side JWT verification** — Validate Supabase tokens on WebSocket connections before production use.
+7. **Admin panel** — Manage presenter accounts without editing Supabase directly.
 
-1. **Port the full AI Primer content** — Convert all 32+ modules from the Keynote into slide definitions. The content exists in `projects/ai-primer/` and `24-WORKSHOP-CONTENT-MODULES.md`.
-2. **Deploy server to Railway/Render** — Netlify serves static files but can't run the WebSocket server. Need a Node.js host for live sessions.
-3. **Server-side JWT verification** — The server doesn't yet validate Supabase JWT tokens on WebSocket connections. Needed before production use.
-4. **Images and video** — Drop media files into `public/assets/` and reference them in slide definitions. The engine already supports `media: { type: 'image' | 'video' | 'iframe', src: '...' }`.
-5. **Progressive reveal (build steps)** — The slide format includes a `build` array for stepping through content within a slide. Needs engine support.
-6. **Timer/countdown** — For timed activities (e.g. "you have 2 minutes to answer").
-7. **Results display slide** — A slide type that shows aggregated poll/quiz results from the session.
-8. **Word cloud** — Aggregate text responses into a live word cloud.
-9. **QR code generation** — Render the join QR directly (currently uses an external API).
+---
 
 ## Relationship to Existing AI Primer
 
-The existing AI Primer materials live in:
+The existing materials live in:
 - `projects/ai-primer/` — Keynote slides, prototypes, master course document
-- `projects/ai-primer/00-AI-Primer-App-Specification.md` — The original React/Supabase/Lovable spec (now superseded by this simpler approach)
-- `11-AI-PRIMER-APP.md` — Context file describing the app's purpose and methodology
-- `24-WORKSHOP-CONTENT-MODULES.md` — Full content modules, speaker notes, and run orders
+- `projects/ai-primer/00-AI-Primer-App-Specification.md` — Original React/Supabase/Lovable spec (superseded)
+- `11-AI-PRIMER-APP.md` — Context file describing the app's purpose
+- `24-WORKSHOP-CONTENT-MODULES.md` — Full content modules, speaker notes, run orders
 
-This project (`ai-primer-live`) is the replacement build. The content and pedagogy are the same; the delivery platform is new.
+This project (`AI-Primer-Live`) is the replacement build. Same content and pedagogy, new delivery platform.

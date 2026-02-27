@@ -139,7 +139,7 @@
   }
 
   // --- Auth Guard (redirect if not authenticated) ---
-  async function requireAuth(redirectTo = '/login.html') {
+  async function requireAuth(redirectTo = '/') {
     if (isLocalDev()) return LOCAL_SESSION;
     const session = await getSession();
     if (!session) {
@@ -150,7 +150,7 @@
   }
 
   // --- Presenter Guard (redirect if not a presenter) ---
-  async function requirePresenter(redirectTo = '/login.html') {
+  async function requirePresenter(redirectTo = '/') {
     if (isLocalDev()) return LOCAL_SESSION;
     const session = await requireAuth(redirectTo);
     if (!session) return null;

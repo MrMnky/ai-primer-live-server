@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Primer — AI Accelerator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="engine.js"></script>
+  <!-- AI Primer slide sections -->
+  <script src="slides/section-1-foundation.js"></script>
+  <script src="slides/section-2-what-is-ai.js"></script>
+  <script src="slides/section-3-ai-risks.js"></script>
+  <script src="slides/section-4-how-ai-works.js"></script>
+  <script src="slides/section-5-prompting.js"></script>
+  <script src="slides/section-6-applying-ai.js"></script>
+  <script src="slides/section-7-close.js"></script>
+  <script src="slides/all-slides.js"></script>
+  <script>
+    (async () => {
+      PrimerAuth.init();
+      const session = await PrimerAuth.requireAuth('/login.html');
+      if (!session) return;
+
+      AIPrimer.init({
+        slides: AI_PRIMER_SLIDES,
+        mode: 'self',
+        containerId: 'app',
+      });
+    })();
+  </script>
+</body>
+</html>

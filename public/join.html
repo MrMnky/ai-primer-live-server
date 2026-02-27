@@ -116,6 +116,7 @@
       const code = document.getElementById('code-input').value.trim().toUpperCase();
       const name = document.getElementById('name-input').value.trim() || currentUser?.full_name || 'Anonymous';
       const errorEl = document.getElementById('join-error');
+      const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
 
       if (!code || code.length < 4) {
         errorEl.textContent = 'Please enter a valid session code.';
@@ -124,22 +125,20 @@
       }
 
       // Validate session exists
+      let sessionData;
       try {
-        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
         const res = await fetch(`${serverUrl}/api/sessions/${code}`);
         if (!res.ok) {
           errorEl.textContent = 'Session not found. Check the code and try again.';
           errorEl.style.display = 'block';
           return;
         }
+        sessionData = await res.json();
       } catch (err) {
         errorEl.textContent = 'Cannot connect to server. Please try again.';
         errorEl.style.display = 'block';
         return;
       }
-
-      // Check if session has already started
-      const sessionData = await (await fetch(`${serverUrl}/api/sessions/${code}`)).json();
 
       // Show lobby screen
       document.getElementById('join-screen').remove();

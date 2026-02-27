@@ -13,7 +13,7 @@ const CONFIG = {
 
   // WebSocket server URL (Railway deployment)
   // Update this after deploying the server to Railway
-  SERVER_URL: '',
+  SERVER_URL: 'https://ai-primer-live-production.up.railway.app',
 
   // Local dev mode — set to true to skip auth entirely
   LOCAL_DEV: false,

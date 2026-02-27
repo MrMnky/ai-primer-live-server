@@ -179,6 +179,15 @@ io.on('connection', (socket) => {
     console.log(`"${participant.name}" joined ${sessionCode} (${liveParticipants[sessionCode].length} total)`);
   }
 
+  // Presenter starts session (releases lobby)
+  socket.on('session-start', () => {
+    if (mode !== 'presenter') return;
+    store.sessions[sessionCode].status = 'started';
+    saveStore(store);
+    io.to(sessionCode).emit('session-start');
+    console.log(`Session ${sessionCode} started by presenter`);
+  });
+
   // Presenter changes slide
   socket.on('slide-change', (data) => {
     if (mode !== 'presenter') return;

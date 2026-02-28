@@ -182,8 +182,23 @@
   <script>
     let currentUser = null;
     let activeSessionCode = null;
+    let activeSessionLanguage = 'en';
     let setupSocket = null;
     const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+
+    // Language display names
+    const LANGUAGE_NAMES = {
+      en: 'English',
+      fr: 'Français',
+      de: 'Deutsch',
+      es: 'Español',
+      it: 'Italiano',
+      pt: 'Português',
+      nl: 'Nederlands',
+      ja: '日本語',
+      zh: '中文',
+      ar: 'العربية',
+    };
 
     // --- Auth ---
     (async () => {
@@ -207,7 +222,7 @@
               <div class="dashboard__title">Presenter Dashboard</div>
               <div class="dashboard__subtitle">AI Primer Live</div>
             </div>
-            <button class="btn btn--primary" onclick="createNewSession()">+ New Session</button>
+            <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
           </div>
           <div id="session-list" class="session-list">
             <div class="empty-state">Loading sessions...</div>
@@ -270,22 +285,89 @@
       }
     }
 
-    // --- Create New Session ---
-    // Default course — use registry if available, fall back to legacy
+    // --- Create New Session (two-step: course picker → setup) ---
     const DEFAULT_COURSE_ID = 'ai-primer-full';
 
-    async function createNewSession() {
+    function showCoursePickerOrCreate() {
+      // If no registry or only one course, skip picker
+      if (typeof SlideRegistry === 'undefined') {
+        createNewSession(null, 'en');
+        return;
+      }
+
+      const courses = SlideRegistry.listCourses();
+      if (courses.length <= 1) {
+        createNewSession(courses[0]?.id || null, 'en');
+        return;
+      }
+
+      // Show course picker
+      const app = document.getElementById('app');
+      const courseOptions = courses.map(c =>
+        `<option value="${c.id}">${c.title} (${c.slideCount} slides)</option>`
+      ).join('');
+
+      app.innerHTML = `
+        <button class="setup-back" onclick="showDashboard()">← Dashboard</button>
+        <div class="setup-screen" id="course-picker">
+          <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:24px;">
+          <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Create New Session</h1>
+          <div style="margin:24px 0;width:100%;max-width:320px;">
+            <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Course</label>
+            <select id="course-select" onchange="updateLanguageOptions()" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-size:0.95rem;appearance:auto;">
+              ${courseOptions}
+            </select>
+          </div>
+          <div style="margin-bottom:32px;width:100%;max-width:320px;">
+            <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Language</label>
+            <select id="language-select" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-size:0.95rem;appearance:auto;">
+              <option value="en">English</option>
+            </select>
+          </div>
+          <button class="btn btn--primary" onclick="confirmCourseSelection()">Create Session</button>
+        </div>
+      `;
+
+      updateLanguageOptions();
+    }
+
+    function updateLanguageOptions() {
+      const courseId = document.getElementById('course-select')?.value;
+      const langSelect = document.getElementById('language-select');
+      if (!langSelect || !courseId) return;
+
+      const languages = (typeof SlideRegistry !== 'undefined' && SlideRegistry.getAvailableLanguages)
+        ? SlideRegistry.getAvailableLanguages(courseId)
+        : ['en'];
+
+      langSelect.innerHTML = languages.map(code =>
+        `<option value="${code}">${LANGUAGE_NAMES[code] || code}</option>`
+      ).join('');
+    }
+
+    function confirmCourseSelection() {
+      const courseId = document.getElementById('course-select')?.value || DEFAULT_COURSE_ID;
+      const language = document.getElementById('language-select')?.value || 'en';
+      createNewSession(courseId, language);
+    }
+
+    async function createNewSession(courseId, language) {
       try {
+        courseId = courseId || DEFAULT_COURSE_ID;
+        language = language || 'en';
+
         // Resolve slide count from registry or legacy
         let slideCount = AI_PRIMER_SLIDES.length;
-        let courseId = null;
 
         if (typeof SlideRegistry !== 'undefined') {
-          const course = SlideRegistry.getCourse(DEFAULT_COURSE_ID);
+          const course = SlideRegistry.getCourse(courseId);
           if (course) {
             slideCount = course.slides.length;
-            courseId = DEFAULT_COURSE_ID;
+          } else {
+            courseId = null; // fallback to legacy
           }
+        } else {
+          courseId = null;
         }
 
         const res = await fetch(serverUrl + '/api/sessions', {
@@ -296,6 +378,7 @@
             presenterName: currentUser?.full_name || 'Presenter',
             slideCount,
             courseId,
+            language,
           }),
         });
         const data = await res.json();
@@ -304,6 +387,7 @@
           alert('Could not create session. Server returned: ' + (data.error?.message || JSON.stringify(data.error) || 'unknown error'));
           return;
         }
+        activeSessionLanguage = language;
         openSetup(data.code);
       } catch (err) {
         console.error('Failed to create session:', err);
@@ -379,15 +463,25 @@
     }
 
     // --- Launch Presenter View ---
-    function launchPresenterView(code) {
+    async function launchPresenterView(code) {
       const app = document.getElementById('app');
       app.innerHTML = '';
+
+      // Fetch session data to get courseId and language
+      try {
+        const sessionRes = await fetch(`${serverUrl}/api/sessions/${code}`);
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          activeSessionLanguage = sessionData.language || 'en';
+        }
+      } catch (e) { /* use default */ }
 
       // Use registry course if available, fall back to legacy slides
       const initConfig = {
         mode: 'presenter',
         containerId: 'app',
         sessionCode: code,
+        language: activeSessionLanguage,
         onSocketReady: (socket) => {
           // Emit resume if we're rejoining a paused session
           socket.emit('session-resume');

@@ -79,8 +79,20 @@ const SlideRegistry = {
       title: COURSE_DEFINITIONS[id].title,
       description: COURSE_DEFINITIONS[id].description || '',
       slideCount: COURSE_DEFINITIONS[id].slides.length,
+      languages: COURSE_DEFINITIONS[id].languages || ['en'],
       metadata: COURSE_DEFINITIONS[id].metadata || {},
     }));
+  },
+
+  /**
+   * Get available languages for a course.
+   *
+   * @param {string} courseId
+   * @returns {string[]} Array of language codes (e.g. ['en', 'fr'])
+   */
+  getAvailableLanguages(courseId) {
+    const course = COURSE_DEFINITIONS[courseId];
+    return course?.languages || ['en'];
   },
 
   /**

@@ -15,6 +15,7 @@ const COURSE_DEFINITIONS = {
   'ai-primer-full': {
     title: 'AI Primer — Full Workshop',
     description: 'Foundation through close, all 7 sections, ~90 minutes of content',
+    languages: ['en', 'fr'],
     sections: [
       { label: 'Foundation', prefix: 's1' },
       { label: 'What is AI', prefix: 's2' },

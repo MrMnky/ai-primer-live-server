@@ -21,6 +21,9 @@
     responses: {},     // slideIndex -> { participantId -> response }
     courseId: null,     // registry course ID (if using registry)
     courseMeta: null,  // course metadata from registry
+    language: 'en',    // current language code
+    i18n: {},          // loaded translation data for current language
+    i18nFallback: {},  // English fallback (always loaded)
   };
 
   // --- Slide Definition Format ---
@@ -44,6 +47,108 @@
   //   results: { sourceSlideIndex: N, responseType: 'poll' | 'quiz' | 'text' },
   //   build: ['step1', 'step2']  // progressive reveal steps (future)
   // }
+
+  // --- i18n Runtime ---
+  async function loadI18n(language) {
+    // Always load English as fallback
+    try {
+      const enRes = await fetch('/i18n/en.json');
+      state.i18nFallback = enRes.ok ? await enRes.json() : {};
+    } catch (e) {
+      console.warn('[i18n] Could not load English fallback:', e);
+      state.i18nFallback = {};
+    }
+
+    if (!language || language === 'en') {
+      state.i18n = state.i18nFallback;
+    } else {
+      try {
+        const res = await fetch(`/i18n/${language}.json`);
+        state.i18n = res.ok ? await res.json() : state.i18nFallback;
+      } catch (e) {
+        console.warn(`[i18n] Could not load ${language}, falling back to English:`, e);
+        state.i18n = state.i18nFallback;
+      }
+    }
+    state.language = language || 'en';
+    console.log(`[i18n] Loaded language: ${state.language}`);
+  }
+
+  // Translate a UI string key with optional variable interpolation
+  function t(key, vars) {
+    let str = (state.i18n && state.i18n.ui && state.i18n.ui[key]) ||
+              (state.i18nFallback && state.i18nFallback.ui && state.i18nFallback.ui[key]) ||
+              key;
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        str = typeof str === 'string' ? str.split('{' + k + '}').join(vars[k]) : str;
+      });
+    }
+    return str;
+  }
+
+  // Enrich a slide object with translated content (fallback to inline strings)
+  function localiseSlide(slide) {
+    const contentKey = slide.contentKey || slide.id;
+    if (!contentKey) return slide;
+
+    const content = (state.i18n && state.i18n.slides && state.i18n.slides[contentKey]) ||
+                    (state.i18nFallback && state.i18nFallback.slides && state.i18nFallback.slides[contentKey]);
+    if (!content) return slide; // no translation entry — use inline strings
+
+    const loc = Object.assign({}, slide);
+    if (content.title) loc.title = content.title;
+    if (content.subtitle) loc.subtitle = content.subtitle;
+    if (content.body) loc.body = content.body;
+    if (content.sectionLabel) loc.sectionLabel = content.sectionLabel;
+    if (content.notes) loc.notes = content.notes;
+    if (content.badge) loc.badge = content.badge;
+
+    // Stats
+    if (content.stats && slide.stats) {
+      loc.stats = slide.stats.map(function (s, i) {
+        var ts = content.stats[i];
+        if (!ts) return s;
+        return { number: ts.number || s.number, label: ts.label || s.label };
+      });
+    }
+
+    // Callout
+    if (content['callout.title'] || content['callout.body']) {
+      loc.callout = Object.assign({}, slide.callout);
+      if (content['callout.title']) loc.callout.title = content['callout.title'];
+      if (content['callout.body']) loc.callout.body = content['callout.body'];
+    }
+
+    // Quiz
+    if (content['quiz.question'] || content['quiz.options']) {
+      loc.quiz = Object.assign({}, slide.quiz);
+      if (content['quiz.question']) loc.quiz.question = content['quiz.question'];
+      if (content['quiz.options']) loc.quiz.options = content['quiz.options'];
+    }
+
+    // Poll
+    if (content['poll.question'] || content['poll.options']) {
+      loc.poll = Object.assign({}, slide.poll);
+      if (content['poll.question']) loc.poll.question = content['poll.question'];
+      if (content['poll.options']) loc.poll.options = content['poll.options'];
+    }
+
+    // Text input
+    if (content['textInput.prompt'] || content['textInput.placeholder']) {
+      loc.textInput = Object.assign({}, slide.textInput);
+      if (content['textInput.prompt']) loc.textInput.prompt = content['textInput.prompt'];
+      if (content['textInput.placeholder']) loc.textInput.placeholder = content['textInput.placeholder'];
+    }
+
+    // Media alt text
+    if (content['media.alt'] && slide.media) {
+      loc.media = Object.assign({}, slide.media);
+      loc.media.alt = content['media.alt'];
+    }
+
+    return loc;
+  }
 
   // --- DOM Helpers ---
   function el(tag, className, innerHTML) {
@@ -257,7 +362,7 @@
       html += `<div class="poll__bar-fill" style="width: 0%"></div>`;
       html += `</div></div>`;
     });
-    html += `<div class="poll__total">0 responses</div>`;
+    html += `<div class="poll__total">0 ${t('engine.poll.responses')}</div>`;
     html += `</div>`;
     return html;
   }
@@ -265,8 +370,8 @@
   function renderTextInput(textInput, slideIndex) {
     let html = `<div class="text-input" data-slide="${slideIndex}">`;
     html += `<div class="text-input__prompt">${textInput.prompt}</div>`;
-    html += `<textarea class="text-input__field" placeholder="${textInput.placeholder || 'Type your response...'}" data-slide="${slideIndex}"></textarea>`;
-    html += `<button class="btn btn--primary text-input__submit" onclick="AIPrimer.submitTextInput(${slideIndex})">Submit</button>`;
+    html += `<textarea class="text-input__field" placeholder="${textInput.placeholder || t('engine.textInput.placeholder')}" data-slide="${slideIndex}"></textarea>`;
+    html += `<button class="btn btn--primary text-input__submit" onclick="AIPrimer.submitTextInput(${slideIndex})">${t('engine.textInput.submit')}</button>`;
     html += `</div>`;
     return html;
   }
@@ -645,7 +750,7 @@
   function updatePresenterNotes(index) {
     const notesEl = qs('.presenter-notes__content');
     if (!notesEl) return;
-    notesEl.innerHTML = state.slides[index].notes || '<em style="opacity:0.4">No notes for this slide.</em>';
+    notesEl.innerHTML = state.slides[index].notes || '<em style="opacity:0.4">' + t('engine.presenter.noNotes') + '</em>';
   }
 
   function updatePresenterNextPreview(index) {
@@ -658,7 +763,7 @@
       previewEl.innerHTML = '';
       previewEl.appendChild(mini);
     } else {
-      previewEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;opacity:0.3;font-size:0.8rem;">End of presentation</div>';
+      previewEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;opacity:0.3;font-size:0.8rem;">' + t('engine.presenter.endOfPresentation') + '</div>';
     }
   }
 
@@ -721,13 +826,13 @@
       state.socket.on('participant-joined', (data) => {
         state.participants = data.participants || [];
         updateParticipantCount();
-        addActivityItem('🟢', data.participantName || 'Someone', 'joined the session');
+        addActivityItem('🟢', data.participantName || t('engine.fallback.someone'), t('engine.activity.joined'));
       });
 
       state.socket.on('participant-left', (data) => {
         state.participants = data.participants || [];
         updateParticipantCount();
-        addActivityItem('🔴', data.participantName || 'Someone', 'left the session');
+        addActivityItem('🔴', data.participantName || t('engine.fallback.someone'), t('engine.activity.left'));
       });
     }
 
@@ -768,18 +873,22 @@
     if (stream) {
       const item = el('div', 'response-item');
       let text = '';
-      if (data.type === 'quiz') text = `selected option ${['A','B','C','D'][data.data.option]}`;
+      const optLabels = t('engine.quiz.optionLabels');
+      const optLetters = Array.isArray(optLabels) ? optLabels : ['A','B','C','D'];
+      if (data.type === 'quiz') text = `selected option ${optLetters[data.data.option]}`;
       else if (data.type === 'poll') text = `voted for option ${data.data.option + 1}`;
       else if (data.type === 'text') text = `"${data.data.text.substring(0, 80)}${data.data.text.length > 80 ? '...' : ''}"`;
-      item.innerHTML = `<span class="response-item__name">${data.participantName || 'Anonymous'}</span> ${text}`;
+      item.innerHTML = `<span class="response-item__name">${data.participantName || t('engine.fallback.anonymous')}</span> ${text}`;
       stream.appendChild(item);
       stream.scrollTop = stream.scrollHeight;
     }
 
     // Log to admin console activity feed
-    const name = data.participantName || 'Anonymous';
+    const name = data.participantName || t('engine.fallback.anonymous');
     if (data.type === 'quiz') {
-      addActivityItem('📝', name, `answered quiz (option ${['A','B','C','D'][data.data.option]})`);
+      const aLabels = t('engine.quiz.optionLabels');
+      const aLetters = Array.isArray(aLabels) ? aLabels : ['A','B','C','D'];
+      addActivityItem('📝', name, `${t('engine.activity.quizAnswer')} (option ${aLetters[data.data.option]})`);
     } else if (data.type === 'poll') {
       addActivityItem('📊', name, `voted in poll`);
     } else if (data.type === 'text') {
@@ -811,7 +920,7 @@
       <div class="ac-header">
         <div class="ac-header__title">
           <span class="ac-header__dot"></span>
-          <span>Live Console</span>
+          <span>${t('engine.adminConsole.title')}</span>
           <span class="ac-header__code">${state.sessionCode || ''}</span>
         </div>
         <button class="ac-header__close" onclick="AIPrimer.toggleAdminConsole()">&times;</button>
@@ -820,22 +929,22 @@
       <div class="ac-stats">
         <div class="ac-stat">
           <div class="ac-stat__number" id="ac-participant-count">${state.participants.length}</div>
-          <div class="ac-stat__label">Connected</div>
+          <div class="ac-stat__label">${t('engine.adminConsole.connected')}</div>
         </div>
         <div class="ac-stat">
           <div class="ac-stat__number" id="ac-slide-progress">${state.currentSlide + 1}/${state.slides.length}</div>
-          <div class="ac-stat__label">Slide</div>
+          <div class="ac-stat__label">${t('engine.adminConsole.slide')}</div>
         </div>
         <div class="ac-stat">
           <div class="ac-stat__number" id="ac-response-count">${Object.keys(state.responses).reduce((sum, k) => sum + Object.keys(state.responses[k]).length, 0)}</div>
-          <div class="ac-stat__label">Responses</div>
+          <div class="ac-stat__label">${t('engine.adminConsole.responses')}</div>
         </div>
       </div>
 
       <div class="ac-tabs">
-        <button class="ac-tab ac-tab--active" data-tab="participants" onclick="AIPrimer.switchAdminTab('participants')">Participants</button>
-        <button class="ac-tab" data-tab="activity" onclick="AIPrimer.switchAdminTab('activity')">Activity</button>
-        <button class="ac-tab" data-tab="session" onclick="AIPrimer.switchAdminTab('session')">Session</button>
+        <button class="ac-tab ac-tab--active" data-tab="participants" onclick="AIPrimer.switchAdminTab('participants')">${t('engine.adminConsole.participants')}</button>
+        <button class="ac-tab" data-tab="activity" onclick="AIPrimer.switchAdminTab('activity')">${t('engine.adminConsole.activity')}</button>
+        <button class="ac-tab" data-tab="session" onclick="AIPrimer.switchAdminTab('session')">${t('engine.adminConsole.session')}</button>
       </div>
 
       <div class="ac-panel" id="ac-panel-participants">
@@ -846,24 +955,24 @@
 
       <div class="ac-panel ac-panel--hidden" id="ac-panel-activity">
         <div id="ac-activity-log" class="ac-activity-log">
-          ${activityLog.length === 0 ? '<div class="ac-empty">No activity yet</div>' : activityLog.map(renderActivityItem).join('')}
+          ${activityLog.length === 0 ? '<div class="ac-empty">' + t('engine.adminConsole.noActivity') + '</div>' : activityLog.map(renderActivityItem).join('')}
         </div>
       </div>
 
       <div class="ac-panel ac-panel--hidden" id="ac-panel-session">
         <div class="ac-session-info">
           <div class="ac-session-row">
-            <span class="ac-session-label">Join Link</span>
+            <span class="ac-session-label">${t('engine.adminConsole.joinLink')}</span>
             <a href="${joinUrl}" target="_blank" class="ac-session-link">${joinUrl}</a>
           </div>
           <div class="ac-session-row">
-            <span class="ac-session-label">Status</span>
-            <span class="ac-session-value" id="ac-connection-status">${state.connected ? 'Connected' : 'Connecting...'}</span>
+            <span class="ac-session-label">${t('engine.adminConsole.status')}</span>
+            <span class="ac-session-value" id="ac-connection-status">${state.connected ? t('engine.status.connected') : t('engine.status.connecting')}</span>
           </div>
         </div>
         <div class="ac-controls">
-          <button class="ac-control-btn ac-control-btn--pause" onclick="AIPrimer.adminPause()">⏸ Pause Session</button>
-          <button class="ac-control-btn ac-control-btn--end" onclick="AIPrimer.adminEnd()">⏹ End Session</button>
+          <button class="ac-control-btn ac-control-btn--pause" onclick="AIPrimer.adminPause()">⏸ ${t('engine.adminConsole.pauseSession')}</button>
+          <button class="ac-control-btn ac-control-btn--end" onclick="AIPrimer.adminEnd()">⏹ ${t('engine.adminConsole.endSession')}</button>
         </div>
       </div>
     `;
@@ -873,12 +982,12 @@
 
   function renderParticipantList() {
     if (state.participants.length === 0) {
-      return '<div class="ac-empty">No participants yet</div>';
+      return '<div class="ac-empty">' + t('engine.adminConsole.noParticipants') + '</div>';
     }
 
     return state.participants.map(p => {
       const initial = (p.name || 'A').charAt(0).toUpperCase();
-      const slideLabel = (p.currentSlide !== undefined) ? `Slide ${p.currentSlide + 1}` : '';
+      const slideLabel = (p.currentSlide !== undefined) ? `${t('engine.adminConsole.slide')} ${p.currentSlide + 1}` : '';
       const activityIcon = p.lastActivityType === 'quiz' ? '📝' :
                            p.lastActivityType === 'poll' ? '📊' :
                            p.lastActivityType === 'text' ? '💬' :
@@ -888,7 +997,7 @@
       return `<div class="ac-participant">
         <div class="ac-participant__avatar">${initial}</div>
         <div class="ac-participant__info">
-          <div class="ac-participant__name">${p.name || 'Anonymous'}</div>
+          <div class="ac-participant__name">${p.name || t('engine.fallback.anonymous')}</div>
           <div class="ac-participant__meta">${slideLabel}${timeSince ? ' · ' + timeSince : ''}</div>
         </div>
         <div class="ac-participant__activity">${activityIcon}</div>
@@ -963,7 +1072,7 @@
     if (respEl) respEl.textContent = responseCount;
 
     const statusEl = document.getElementById('ac-connection-status');
-    if (statusEl) statusEl.textContent = state.connected ? 'Connected' : 'Disconnected';
+    if (statusEl) statusEl.textContent = state.connected ? t('engine.status.connected') : t('engine.status.disconnected');
 
     const listEl = document.getElementById('ac-participant-list');
     if (listEl) {
@@ -1039,8 +1148,8 @@
       <div class="section-nav-overlay" onclick="AIPrimer.toggleSectionNav()">
         <div class="section-nav" onclick="event.stopPropagation()">
           <div class="section-nav__header">
-            <div class="section-nav__title">Sections</div>
-            <div class="section-nav__hint">Click to jump · Press S or Esc to close</div>
+            <div class="section-nav__title">${t('engine.sectionNav.title')}</div>
+            <div class="section-nav__hint">${t('engine.sectionNav.hint')}</div>
             <button class="section-nav__close" onclick="AIPrimer.toggleSectionNav()">&times;</button>
           </div>
           <div class="section-nav__grid">
@@ -1059,9 +1168,9 @@
           </div>
           <div class="section-nav__info">
             <div class="section-nav__label">${sec.label}</div>
-            <div class="section-nav__meta">${sec.slideCount} slides · ${slideNum}–${endNum}</div>
+            <div class="section-nav__meta">${sec.slideCount} ${t('engine.sectionNav.slides')} · ${slideNum}–${endNum}</div>
           </div>
-          ${isCurrent ? '<div class="section-nav__badge">Current</div>' : ''}
+          ${isCurrent ? '<div class="section-nav__badge">' + t('engine.sectionNav.current') + '</div>' : ''}
         </div>
       `;
     });
@@ -1268,14 +1377,19 @@
   }
 
   // --- Initialisation ---
-  function init(config) {
-    // config = { slides: [...], courseId: '...', mode: 'presenter'|'participant'|'self', containerId: '...' }
+  async function init(config) {
+    // config = { slides: [...], courseId: '...', mode: 'presenter'|'participant'|'self',
+    //            containerId: '...', language: 'en' }
     //
     // Slide resolution priority:
     //   1. config.courseId → resolve via SlideRegistry.getCourse()
     //   2. config.slides → use directly (legacy path)
     //   3. window.AI_PRIMER_SLIDES → final fallback
     //
+
+    // Load i18n before rendering anything
+    await loadI18n(config.language || 'en');
+
     if (config.courseId && typeof SlideRegistry !== 'undefined') {
       const course = SlideRegistry.getCourse(config.courseId);
       if (course) {
@@ -1298,6 +1412,9 @@
     } else {
       state.slides = window.AI_PRIMER_SLIDES || [];
     }
+
+    // Localise all slides using i18n data
+    state.slides = state.slides.map(localiseSlide);
 
     state.mode = config.mode || 'self';
     state.sessionCode = config.sessionCode || null;
@@ -1361,40 +1478,40 @@
         </div>
         <div class="presenter-sidebar">
           <div class="presenter-next">
-            <div class="presenter-next__label">Next Slide</div>
+            <div class="presenter-next__label">${t('engine.presenter.nextSlide')}</div>
             <div class="presenter-next__preview"></div>
           </div>
           <div class="presenter-notes">
-            <div class="presenter-notes__label">Speaker Notes</div>
+            <div class="presenter-notes__label">${t('engine.presenter.speakerNotes')}</div>
             <div class="presenter-notes__content"></div>
           </div>
           <div class="response-stream">
-            <div class="response-stream__label">Live Responses</div>
+            <div class="response-stream__label">${t('engine.presenter.liveResponses')}</div>
           </div>
         </div>
         <div class="section-progress" id="section-progress"></div>
         <div class="presenter-controls">
           <div class="presenter-controls__nav">
-            <button class="presenter-controls__btn" onclick="AIPrimer.prev()">&#9664; Prev</button>
+            <button class="presenter-controls__btn" onclick="AIPrimer.prev()">&#9664; ${t('engine.presenter.prev')}</button>
             <span class="presenter-controls__slide-info">1 / ${state.slides.length}</span>
-            <button class="presenter-controls__btn" onclick="AIPrimer.next()">Next &#9654;</button>
+            <button class="presenter-controls__btn" onclick="AIPrimer.next()">${t('engine.presenter.next')} &#9654;</button>
           </div>
           <div class="presenter-controls__stats">
             <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleSectionNav()" title="Section navigator (S)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
-              Sections
+              ${t('engine.presenter.sections')}
             </button>
-            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleAdminConsole()" title="Open admin console">
+            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleAdminConsole()" title="${t('engine.presenter.openConsole')}">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
               </svg>
-              Console
+              ${t('engine.presenter.console')}
             </button>
             <div class="presenter-controls__stat">
               <span class="presenter-controls__stat-dot"></span>
-              <span><span class="presenter-controls__participant-count">0</span> participants</span>
+              <span><span class="presenter-controls__participant-count">0</span> ${t('engine.presenter.participants')}</span>
             </div>
             <div class="presenter-controls__stat presenter-controls__session-code">
               ${state.sessionCode || ''}
@@ -1426,6 +1543,8 @@
   AIPrimer.getState = () => ({ ...state });
   AIPrimer.getCourseId = () => state.courseId;
   AIPrimer.getCourseMeta = () => state.courseMeta;
+  AIPrimer.t = t;
+  AIPrimer.getLanguage = () => state.language;
   AIPrimer.toggleSessionPanel = toggleSessionPanel;
   AIPrimer.toggleAdminConsole = toggleAdminConsole;
   AIPrimer.switchAdminTab = switchAdminTab;
@@ -1435,7 +1554,7 @@
     if (typeof pauseAndExit === 'function') pauseAndExit(state.sessionCode);
   };
   AIPrimer.adminEnd = function () {
-    if (confirm('End this session? Participants will be disconnected.')) {
+    if (confirm(t('engine.confirm.endSession'))) {
       if (state.socket) {
         state.socket.emit('session-end');
         state.socket.disconnect();

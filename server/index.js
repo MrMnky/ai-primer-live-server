@@ -101,6 +101,8 @@ async function loadActiveSessions() {
         slideCount: s.slide_count,
         currentSlide: s.current_slide,
         status: s.status,
+        courseId: s.course_id || null,
+        language: s.language || 'en',
         createdAt: s.created_at,
         startedAt: s.started_at,
         endedAt: s.ended_at,
@@ -200,6 +202,8 @@ app.get('/api/sessions', async (req, res) => {
       slideCount: s.slide_count,
       currentSlide: s.current_slide,
       status: s.status,
+      courseId: s.course_id || null,
+      language: s.language || 'en',
       createdAt: s.created_at,
       startedAt: s.started_at,
       endedAt: s.ended_at,
@@ -216,7 +220,7 @@ app.get('/api/sessions', async (req, res) => {
 
 // Create session
 app.post('/api/sessions', async (req, res) => {
-  const { title, presenterName, slideCount, courseId } = req.body;
+  const { title, presenterName, slideCount, courseId, language } = req.body;
   let code = generateCode();
   while (sessionCache[code]) code = generateCode();
 
@@ -229,15 +233,16 @@ app.post('/api/sessions', async (req, res) => {
     current_slide: 0,
     status: 'active',
     course_id: courseId || null,
+    language: language || 'en',
   };
 
   if (SUPABASE_KEY) {
     let { error } = await db.insert('sessions', session);
-    // If insert fails (e.g. course_id column missing), retry without it
+    // If insert fails (e.g. course_id/language column missing), retry without new columns
     if (error) {
-      console.warn('[Sessions] Insert failed, retrying without course_id:', error.message || error);
-      const { course_id, ...sessionWithoutCourse } = session;
-      const retry = await db.insert('sessions', sessionWithoutCourse);
+      console.warn('[Sessions] Insert failed, retrying without new columns:', error.message || error);
+      const { course_id, language: _lang, ...sessionWithoutNew } = session;
+      const retry = await db.insert('sessions', sessionWithoutNew);
       if (retry.error) {
         console.error('[Sessions] Insert retry also failed:', retry.error);
         return res.status(500).json({ error: retry.error });
@@ -252,6 +257,7 @@ app.post('/api/sessions', async (req, res) => {
     presenterName: session.presenter_name,
     slideCount: session.slide_count,
     courseId: session.course_id,
+    language: session.language || 'en',
     currentSlide: 0,
     status: 'active',
     createdAt: new Date().toISOString(),

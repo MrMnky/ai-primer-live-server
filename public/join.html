@@ -116,7 +116,59 @@
   <script src="registry/registry-api.js"></script>
   <script src="components/graphic-container.js"></script>
   <script>
+    // --- i18n bootstrap for join page ---
+    let _i18n = {};
+    let _i18nFallback = {};
+
+    async function loadJoinI18n(lang) {
+      try {
+        const enRes = await fetch('/i18n/en.json');
+        _i18nFallback = enRes.ok ? await enRes.json() : {};
+      } catch (e) { _i18nFallback = {}; }
+
+      if (!lang || lang === 'en') {
+        _i18n = _i18nFallback;
+      } else {
+        try {
+          const res = await fetch('/i18n/' + lang + '.json');
+          _i18n = res.ok ? await res.json() : _i18nFallback;
+        } catch (e) { _i18n = _i18nFallback; }
+      }
+    }
+
+    function t(key, vars) {
+      // Use AIPrimer.t if available (after engine init), else local lookup
+      if (typeof AIPrimer !== 'undefined' && AIPrimer.t) return AIPrimer.t(key, vars);
+      let str = (_i18n && _i18n.ui && _i18n.ui[key]) ||
+                (_i18nFallback && _i18nFallback.ui && _i18nFallback.ui[key]) ||
+                key;
+      if (vars) {
+        Object.keys(vars).forEach(function (k) {
+          str = typeof str === 'string' ? str.split('{' + k + '}').join(vars[k]) : str;
+        });
+      }
+      return str;
+    }
+
+    function applyJoinI18n() {
+      var el;
+      el = document.querySelector('.join-screen__title');
+      if (el) el.textContent = t('join.title');
+      el = document.querySelector('.join-screen__subtitle');
+      if (el) el.textContent = t('join.subtitle');
+      el = document.getElementById('code-input');
+      if (el) el.placeholder = t('join.codePlaceholder');
+      el = document.getElementById('name-input');
+      if (el) el.placeholder = t('join.namePlaceholder');
+      el = document.getElementById('join-btn');
+      if (el) el.textContent = t('join.btn');
+    }
+
+    // Load English i18n immediately so the join form is translatable
+    loadJoinI18n('en').then(applyJoinI18n);
+
     let currentUser = null;
+    let sessionLanguage = 'en';
 
     // Optional auth — pre-fill name if logged in, but don't require it
     (async () => {
@@ -142,12 +194,12 @@
 
     async function joinSession() {
       const code = document.getElementById('code-input').value.trim().toUpperCase();
-      const name = document.getElementById('name-input').value.trim() || currentUser?.full_name || 'Anonymous';
+      const name = document.getElementById('name-input').value.trim() || currentUser?.full_name || t('join.anonymous');
       const errorEl = document.getElementById('join-error');
       const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
 
       if (!code || code.length < 4) {
-        errorEl.textContent = 'Please enter a valid session code.';
+        errorEl.textContent = t('join.error.invalidCode');
         errorEl.style.display = 'block';
         return;
       }
@@ -157,15 +209,21 @@
       try {
         const res = await fetch(`${serverUrl}/api/sessions/${code}`);
         if (!res.ok) {
-          errorEl.textContent = 'Session not found. Check the code and try again.';
+          errorEl.textContent = t('join.error.notFound');
           errorEl.style.display = 'block';
           return;
         }
         sessionData = await res.json();
       } catch (err) {
-        errorEl.textContent = 'Cannot connect to server. Please try again.';
+        errorEl.textContent = t('join.error.serverError');
         errorEl.style.display = 'block';
         return;
+      }
+
+      // Capture language from session data (server will provide this in Phase 3)
+      sessionLanguage = sessionData.language || 'en';
+      if (sessionLanguage !== 'en') {
+        await loadJoinI18n(sessionLanguage);
       }
 
       // Show lobby screen
@@ -175,10 +233,10 @@
       lobby.id = 'lobby-screen';
       lobby.innerHTML = `
         <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:16px;">
-        <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">You're in!</h1>
+        <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">${t('join.lobby.title')}</h1>
         <div class="lobby-screen__name">${name}</div>
         <div class="lobby-pulse"></div>
-        <div class="lobby-screen__status">Waiting for the presenter to start...</div>
+        <div class="lobby-screen__status">${t('join.lobby.waiting')}</div>
       `;
       document.getElementById('app').appendChild(lobby);
 
@@ -190,7 +248,7 @@
 
       // Reject ended sessions
       if (sessionData.status === 'ended') {
-        errorEl.textContent = 'This session has ended.';
+        errorEl.textContent = t('join.session.ended');
         errorEl.style.display = 'block';
         document.getElementById('app').appendChild(document.getElementById('join-screen') || (() => { location.reload(); return document.body; })());
         return;
@@ -216,8 +274,8 @@
         if (lobby) {
           lobby.innerHTML = `
             <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:16px;">
-            <h2 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Session Ended</h2>
-            <p style="opacity:0.5;">Thank you for joining!</p>
+            <h2 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">${t('join.session.ended')}</h2>
+            <p style="opacity:0.5;">${t('join.session.thanks')}</p>
           `;
         }
       });
@@ -247,15 +305,16 @@
         containerId: 'app',
         sessionCode: code,
         participantName: name,
+        language: sessionLanguage,
         onSocketReady: (socket) => {
           socket.on('session-pause', () => {
-            showOverlay('Presenter has paused', 'Sit tight — the session will resume shortly...');
+            showOverlay(t('join.session.paused'), t('join.session.pausedSubtitle'));
           });
           socket.on('session-resume', () => {
             removeOverlay();
           });
           socket.on('session-end', () => {
-            showOverlay('Session Ended', 'Thank you for joining!');
+            showOverlay(t('join.session.ended'), t('join.session.thanks'));
           });
         },
       };

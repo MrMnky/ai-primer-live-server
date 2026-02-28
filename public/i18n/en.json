@@ -1,0 +1,768 @@
+{
+  "ui": {
+    "engine.textInput.placeholder": "Type your response...",
+    "engine.quiz.optionLabels": ["A", "B", "C", "D"],
+    "engine.quiz.submitted": "Submitted",
+    "engine.activity.joined": "joined the session",
+    "engine.activity.left": "left the session",
+    "engine.activity.graphicInteraction": "interacted with graphic",
+    "engine.activity.quizAnswer": "answered quiz",
+    "engine.status.connected": "Connected",
+    "engine.status.connecting": "Connecting...",
+    "engine.status.disconnected": "Disconnected",
+    "engine.fallback.anonymous": "Anonymous",
+    "engine.fallback.someone": "Someone",
+    "engine.confirm.endSession": "End this session? Participants will be disconnected.",
+    "engine.adminConsole.title": "Live Console",
+    "engine.adminConsole.connection": "Connection",
+    "engine.adminConsole.participants": "Participants",
+    "engine.adminConsole.activity": "Activity",
+    "engine.adminConsole.session": "Session",
+    "engine.adminConsole.responses": "Responses",
+    "engine.adminConsole.connected": "Connected",
+    "engine.adminConsole.disconnected": "Disconnected",
+    "engine.adminConsole.slide": "Slide",
+    "engine.adminConsole.noActivity": "No activity yet",
+    "engine.adminConsole.noParticipants": "No participants yet",
+    "engine.adminConsole.joinLink": "Join Link",
+    "engine.adminConsole.status": "Status",
+    "engine.adminConsole.pauseSession": "Pause Session",
+    "engine.adminConsole.endSession": "End Session",
+    "engine.textInput.submit": "Submit",
+    "engine.poll.responses": "responses",
+    "engine.presenter.noNotes": "No notes for this slide.",
+    "engine.presenter.endOfPresentation": "End of presentation",
+    "engine.presenter.nextSlide": "Next Slide",
+    "engine.presenter.speakerNotes": "Speaker Notes",
+    "engine.presenter.liveResponses": "Live Responses",
+    "engine.presenter.prev": "Prev",
+    "engine.presenter.next": "Next",
+    "engine.presenter.sections": "Sections",
+    "engine.presenter.console": "Console",
+    "engine.presenter.openConsole": "Open admin console",
+    "engine.presenter.participants": "participants",
+    "engine.sectionNav.title": "Sections",
+    "engine.sectionNav.hint": "Click to jump · Press S or Esc to close",
+    "engine.sectionNav.slides": "slides",
+    "engine.sectionNav.current": "Current",
+    "presenter.dashboard.title": "Presenter Dashboard",
+    "presenter.dashboard.subtitle": "AI Primer Live",
+    "presenter.dashboard.newSession": "+ New Session",
+    "presenter.dashboard.loading": "Loading sessions...",
+    "presenter.dashboard.empty": "No sessions yet. Create one to get started.",
+    "presenter.dashboard.serverError": "Cannot connect to server.",
+    "presenter.status.active": "Waiting",
+    "presenter.session.participant": "participant",
+    "presenter.session.participants": "participants",
+    "presenter.session.slide": "Slide",
+    "presenter.btn.open": "Open",
+    "presenter.btn.resume": "Resume",
+    "presenter.btn.export": "Export",
+    "presenter.setup.title": "Session Ready",
+    "presenter.setup.subtitle": "Share the link, code, or QR with participants",
+    "presenter.setup.back": "← Dashboard",
+    "presenter.setup.copyLink": "Copy Link",
+    "presenter.setup.copied": "Copied!",
+    "presenter.setup.waiting": "Waiting for participants...",
+    "presenter.setup.oneParticipant": "1 participant connected",
+    "presenter.setup.nParticipants": "{count} participants connected",
+    "presenter.setup.start": "Start Presentation",
+    "presenter.session.defaultTitle": "AI Primer",
+    "presenter.fallback.presenter": "Presenter",
+    "presenter.error.createSession": "Could not create session. Check server connection.",
+    "presenter.error.createSessionServer": "Could not create session. Server returned: {error}",
+    "presenter.error.exportFailed": "Could not export session data.",
+    "join.title": "AI Primer",
+    "join.subtitle": "Enter the session code to join",
+    "join.codePlaceholder": "CODE",
+    "join.namePlaceholder": "Your name",
+    "join.btn": "Join Session",
+    "join.error.invalidCode": "Please enter a valid session code.",
+    "join.error.notFound": "Session not found. Check the code and try again.",
+    "join.error.serverError": "Cannot connect to server. Please try again.",
+    "join.lobby.title": "You're in!",
+    "join.lobby.waiting": "Waiting for the presenter to start...",
+    "join.session.ended": "Session Ended",
+    "join.session.thanks": "Thank you for joining!",
+    "join.session.paused": "Presenter has paused",
+    "join.session.pausedSubtitle": "Sit tight — the session will resume shortly...",
+    "join.anonymous": "Anonymous"
+  },
+  "slides": {
+    "s1-opener": {
+      "sectionLabel": "SECTION 1",
+      "title": "Foundation",
+      "subtitle": "Establishing a Foundation for AI Literacy"
+    },
+    "s1-find-us": {
+      "sectionLabel": "FOUNDATION",
+      "title": "Find us",
+      "body": "<p><strong>AI Accelerator</strong><br>2 Appleby Yard, Soames Walk<br>Design District, London SE10 0BJ</p><p>We're in the Design District at Greenwich Peninsula — look for the colourful buildings near the O2. Enter via Soames Walk from North Greenwich station.</p>",
+      "media.alt": "Design District campus map showing building locations"
+    },
+    "s1-cover-welcome": {
+      "title": "AI Primer",
+      "subtitle": "Get your team aligned and AI-ready. Built for any tool. Designed to last."
+    },
+    "s1-not-an-engineer": {
+      "sectionLabel": "FOUNDATION",
+      "title": "This isn't about turning you into an AI engineer.",
+      "body": "<p>It's about building a solid mental model — a framework you can use to understand how generative AI works, make sensible decisions, spot genuine opportunity, and know when someone's talking nonsense.</p>",
+      "callout.title": "The real test",
+      "callout.body": "If you can explain AI to someone else — actually explain it, not just repeat the buzzwords — then you've understood it."
+    },
+    "s1-objectives": {
+      "sectionLabel": "FOUNDATION",
+      "title": "What you'll walk away with",
+      "body": "<p>By the end of this course, you'll have four things:</p>\n<p><strong>1. A clear mental model</strong> of how generative AI actually works — not watered down, not oversimplified.</p>\n<p><strong>2. Understanding of large language models</strong> — how they're trained, how they think, why they sometimes work brilliantly and sometimes completely miss the mark.</p>\n<p><strong>3. Practical exercises completed</strong> — not watching someone else do them. You'll have done them.</p>\n<p><strong>4. A framework for concepts, techniques, and skills</strong> that make AI genuinely useful in practice.</p>"
+    },
+    "s1-how-we-get-there": {
+      "sectionLabel": "FOUNDATION",
+      "title": "How we'll get there",
+      "body": "<p>We're organised into five sections, each building on the last:</p>\n<p><strong>Foundation</strong> — Building the mental model before we do anything else.</p>\n<p><strong>Capabilities</strong> — What AI can actually do. Not the marketing version.</p>\n<p><strong>Limitations &amp; Risks</strong> — Understanding what AI can't do is just as important.</p>\n<p><strong>Techniques</strong> — The practical methods that make the difference between using AI well and using it poorly.</p>\n<p><strong>Implementation</strong> — How to integrate this into your work and your organisation.</p>",
+      "callout.title": "What success looks like",
+      "callout.body": "You can explain to a colleague how a language model works. You can spot when AI is the right tool and when it isn't. You can use it effectively. And you can help others do the same."
+    },
+    "s1-adoption-curve": {
+      "sectionLabel": "FOUNDATION",
+      "title": "The AI Adoption Curve",
+      "body": "<p>There are four stages of AI adoption in an organisation:</p><p><strong>Understanding → Relevance → Framework → Implementation</strong></p><p>Most organisations spend about a week on Understanding, half-do Relevance, struggle with Framework, and then jump straight to Implementation.</p>",
+      "stats": [
+        {"number": "1 week", "label": "Average time on Understanding"},
+        {"number": "Skipped", "label": "Relevance stage"},
+        {"number": "80%", "label": "Jump straight to tools"}
+      ]
+    },
+    "s1-left-side-of-curve": {
+      "sectionLabel": "FOUNDATION",
+      "title": "The real value is on the left side of the curve.",
+      "body": "<p>Understanding and Relevance — that's where you avoid costly mistakes. That's where people develop genuine confidence instead of anxiety. Skip it, and implementation becomes expensive trial-and-error.</p>",
+      "callout.title": "Think of it like building a house",
+      "callout.body": "If you don't get the foundation and the structure right, you can paint the walls and fit the furniture, but the house isn't sound. It's not going to last."
+    },
+    "s1-what-adoption-looks-like": {
+      "sectionLabel": "FOUNDATION",
+      "title": "What adoption actually looks like",
+      "body": "<p>Imagine three people on your team:</p>\n<p><strong>Person A</strong> uses AI every day. They prompt engineer. They experiment. They've built processes around it.</p>\n<p><strong>Person B</strong> dabbles. They've tried it a few times. But it's not embedded in how they work.</p>\n<p><strong>Person C</strong> hasn't really started. Maybe sceptical. Maybe just hasn't had a reason to try.</p>\n<p>All three are in the same organisation, doing the same job function. That's your adoption curve right there.</p>"
+    },
+    "s1-knowledge-vs-confidence": {
+      "sectionLabel": "FOUNDATION",
+      "title": "Knowledge ≠ Confidence",
+      "body": "<p>These two metrics are different, and they matter in different ways:</p><p><strong>High knowledge, low confidence:</strong> understands AI but nervous about using it. Worried about making mistakes.</p><p><strong>High confidence, low knowledge:</strong> dives in, tries everything, might get lucky — but isn't sure what they don't know.</p><p>The sweet spot is both together. That's what this course builds.</p>",
+      "stats": [
+        {"number": "3", "label": "Metrics that matter"},
+        {"number": "Frequency", "label": "How often they use it"},
+        {"number": "K + C", "label": "Knowledge × Confidence"}
+      ]
+    },
+    "s1-invisible-ai-use": {
+      "sectionLabel": "FOUNDATION",
+      "title": "Most AI use today is invisible.",
+      "body": "<p>Someone's using ChatGPT to draft an email. Someone else is brainstorming with it. Someone's summarising documents. It's happening everywhere — but you can't see it. So you can't manage it, measure it, or build capability around it.</p>"
+    },
+    "s1-fomo-strategy": {
+      "sectionLabel": "FOUNDATION",
+      "badge": "KEY INSIGHT",
+      "title": "FOMO is a terrible strategy",
+      "body": "<p>What fills the gap when you can't see what's happening and don't have a clear strategy? Fear of missing out.</p>\n<p>FOMO leads to solutions in search of problems. Tools that don't get used. Pilots that don't scale. Initiatives that start with momentum and then stall because the foundation wasn't there.</p>",
+      "callout.title": "The better question",
+      "callout.body": "Not \"Should we use AI?\" — that ship has sailed. The question is: \"How is AI already being used in our organisation, and what do we do with that?\""
+    },
+    "s1-pulse-check-poll": {
+      "sectionLabel": "FOUNDATION",
+      "title": "Where is your team right now?",
+      "poll.question": "How would you describe your organisation's current relationship with AI?",
+      "poll.options": [
+        "Curious but cautious — we haven't really started",
+        "Experimenting — some people are using it individually",
+        "Adopting — we have some structured initiatives",
+        "Scaling — AI is part of how we work"
+      ]
+    },
+    "s2-opener": {
+      "sectionLabel": "SECTION 2",
+      "title": "What is AI",
+      "subtitle": "From pattern recognition to platform shift"
+    },
+    "s2-ai-definition": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "AI is any situation where a machine carries out a task that usually requires human intelligence.",
+      "body": "<p>Not mysterious. Not magic. Just a tool doing something we'd normally have to think through ourselves. Think of it as outsourced cognitive effort.</p>"
+    },
+    "s2-deterministic-vs-probabilistic": {
+      "sectionLabel": "WHAT IS AI",
+      "badge": "KEY CONCEPT",
+      "title": "Deterministic vs Probabilistic",
+      "body": "<p><strong>Traditional software is deterministic.</strong> Same input, same output, every time. You press save, the file saves. Predictable. Reliable.</p>\n<p><strong>AI is probabilistic.</strong> It doesn't calculate the correct answer — it predicts the most likely response. When you use ChatGPT or Claude, it's saying: \"Given everything I've learned, what would a human most likely write here?\"</p>\n<p>This is the single most important distinction in the entire course.</p>"
+    },
+    "s2-plausible-not-correct": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "AI generates plausible responses. Not correct ones.",
+      "body": "<p>Plausible does not mean correct. This is not a limitation we'll fix with better engineering. This is how the system fundamentally works.</p>",
+      "callout.title": "The intern analogy",
+      "callout.body": "Imagine a very fast intern who has read everything on the internet but understood none of it. They produce fluent first drafts — but you can't trust them without checking. That's AI."
+    },
+    "s2-training-vs-inference": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Training vs Inference",
+      "body": "<p>Two completely different phases:</p>\n<p><strong>Training</strong> — slow, expensive, happens once. The model is shown vast amounts of data and adjusts itself based on patterns. Like learning to bake over months or years.</p>\n<p><strong>Inference</strong> — fast, cheap, happens billions of times a day. You type a question, you get a response. Like baking a cake using what you already know.</p>\n<p>During inference, the model is not learning anything new. It's applying what it already knows.</p>"
+    },
+    "s2-chatgpt-doesnt-learn": {
+      "sectionLabel": "WHAT IS AI",
+      "badge": "MISCONCEPTION",
+      "title": "ChatGPT does not learn from your conversations.",
+      "body": "<p>People often think that chatting with an AI makes it smarter. That your input gets absorbed into the model. <strong>This is not true</strong> — not on paid plans.</p>\n<p>The model is a snapshot, frozen at a specific moment in time. Your conversations don't change it. Your input doesn't get absorbed.</p>",
+      "callout.title": "The encyclopaedia analogy",
+      "callout.body": "Imagine an encyclopaedia from 2023. You can read it, ask it questions, have a conversation with it. But it doesn't change because you're using it. In a year, it's still the 2023 version.",
+      "stats": [
+        {"number": "Frozen", "label": "Model is a snapshot"},
+        {"number": "Private", "label": "Data not absorbed"},
+        {"number": "Dated", "label": "Knowledge has a cut-off"}
+      ]
+    },
+    "s2-what-is-ai-recap": {
+      "sectionLabel": "WHAT IS AI",
+      "badge": "RECAP",
+      "title": "What we've established so far",
+      "body": "<p><strong>AI is a program</strong> that handles tasks usually requiring human thinking — by spotting patterns and replicating them.</p>\n<p><strong>The model is trained once, then frozen.</strong> It doesn't learn from you. You're using a snapshot.</p>\n<p><strong>AI generates plausible responses</strong> based on probability — not correct ones. That distinction changes how you use it.</p>\n<p><strong>Data is compressed into patterns</strong>, not stored as facts. The training data is gone. What remains are statistical relationships.</p>"
+    },
+    "s2-llms-changed-everything": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Large Language Models changed everything.",
+      "body": "<p>Before LLMs, most AI was purpose-built. One system for image recognition, another for chess, another for recommendations. LLMs are different — they're general-purpose. You can throw almost anything at them and they'll have a go.</p>"
+    },
+    "s2-why-large": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Why \"Large\"?",
+      "body": "<p>Three things make these models \"large\":</p>",
+      "stats": [
+        {"number": "Petabytes", "label": "of training data"},
+        {"number": "Billions", "label": "of parameters (weights)"},
+        {"number": "Months", "label": "of compute time"}
+      ],
+      "callout.title": "The mixing desk",
+      "callout.body": "Parameters are like knobs on a studio mixing desk. Billions of them, each tuned during training to capture patterns in the data. That's what \"large\" means — a huge number of tunable components."
+    },
+    "s2-patterns-not-facts": {
+      "sectionLabel": "WHAT IS AI",
+      "badge": "KEY CONCEPT",
+      "title": "Patterns, not facts",
+      "body": "<p>Once training finishes, the data is gone. All those petabytes of text are deleted. What remains are <strong>parameters</strong> — statistical patterns.</p>\n<p>The model doesn't have a file that says \"Paris is the capital of France.\" Instead, it learned that \"Paris\" clusters near \"capital\", which clusters near \"France\". It generates the answer from statistical relationships.</p>\n<p>That's why it can sound absolutely confident about something completely wrong. It's not evaluating truth. It's predicting what's likely to come next.</p>"
+    },
+    "s2-many-interfaces-few-models": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Many interfaces, few models",
+      "body": "<p>There are hundreds of AI tools out there — ChatGPT, Claude, Gemini, Copilot, Perplexity, Cursor. They all feel different.</p>\n<p>But most run on a small number of underlying models. Like how hundreds of apps exist on iOS, but they all run on the same operating system underneath.</p>\n<p>Switching tools often means switching the UI, not the intelligence.</p>"
+    },
+    "s2-emergence": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Models are developing abilities nobody trained them to have.",
+      "body": "<p>This is called emergence — capabilities that appear without being explicitly programmed. The model develops abilities it was never trained to have. And we don't fully understand why.</p>"
+    },
+    "s2-emergence-examples": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Real examples of emergence",
+      "body": "<p><strong>Befriending a crow</strong> — a model understood social dynamics well enough to generate advice that actually worked. Not trained in ornithology.</p>\n<p><strong>Converting obsolete video codecs</strong> — a model understood patterns in binary data well enough to reason about format conversion. Not trained for that.</p>\n<p><strong>Analysing rail signalling diagrams</strong> — a model caught design errors in a system diagram created by a domain expert. Not trained in rail engineering.</p>\n<p>This isn't isolated. Researchers regularly find new things models can do that weren't explicitly taught.</p>",
+      "callout.title": "Why it happens",
+      "callout.body": "At large scale, patterns learned for one domain transfer to others. Understanding language deeply enough seems to mean understanding a lot of other things too."
+    },
+    "s2-emergence-why-it-matters": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Why emergence matters",
+      "body": "<p>We're in a <strong>discovery phase</strong>. Someone, somewhere, might find an ability in today's models that no one else has discovered yet. A better way to diagnose disease. A clever engineering solution. Something we haven't thought of.</p>\n<p>But unpredictability cuts both ways. If models develop abilities we don't expect, that's exciting — and it's also a reminder that we're less in control of what they can do.</p>",
+      "stats": [
+        {"number": "Discovery", "label": "phase we're in"},
+        {"number": "Exciting", "label": "new capabilities emerging"},
+        {"number": "Concerning", "label": "less predictable systems"}
+      ]
+    },
+    "s2-capabilities-explorer-interactive": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Explore: AI Capabilities",
+      "subtitle": "What are LLMs good at — and where should you be cautious?"
+    },
+    "s2-llm-progress-trajectory": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "The trajectory of LLM capabilities",
+      "body": "<p>The progression isn't linear — it's compounding:</p>\n<p><strong>Word Predictors</strong> → <strong>Chat Assistants</strong> → <strong>Tool Users</strong> → <strong>Multimodal</strong> → <strong>Agents</strong> → <strong>Reasoning</strong></p>\n<p>Each capability builds on the ones before. And when you combine certain capabilities, you get something qualitatively different — not just incremental improvement.</p>",
+      "callout.title": "The combination effect",
+      "callout.body": "Reasoning + tool access is different. A model that can break down a complex problem, plan an approach, use tools to gather information, and adjust based on what it finds. That's not a smarter chatbot. That's a different category."
+    },
+    "s2-platform-shift": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "This is a platform shift. Not a tool upgrade.",
+      "body": "<p>Think about smartphones. At first, just phones. Then email. Then apps. Then sensors. Then APIs connecting to your life. At each step, someone could have said \"It's just a phone with more features.\" That would have missed the point entirely.</p>\n<p>LLM progress isn't a feature roadmap. It's platforms changing. It's how work gets done changing.</p>"
+    },
+    "s2-media-bg-demo": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "We're building on a foundation that didn't exist five years ago.",
+      "body": "<p>The infrastructure, the models, the interfaces — all new. And all accelerating.</p>",
+      "media.alt": "AI neural network visualisation"
+    },
+    "s2-media-split-demo": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "AI milestones: faster than you think",
+      "body": "<p>From academic curiosity to global platform in under a decade.</p>\n<p>The timeline isn't just accelerating — the gaps between breakthroughs are shrinking. Each one builds on the last.</p>",
+      "media.alt": "Timeline of key AI milestones from 1956 to 2022"
+    },
+    "s2-media-inline-demo": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "See it in action",
+      "body": "<p>A quick look at how these models actually work in practice — from prompt to response.</p>"
+    },
+    "s2-foundation-model-landscape": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "The foundation model landscape",
+      "body": "<p>Training an LLM costs billions. Only a handful of organisations can do it:</p>\n<p><strong>OpenAI</strong> — GPT models<br><strong>Anthropic</strong> — Claude<br><strong>Google</strong> — Gemini<br><strong>Meta</strong> — LLaMA<br><strong>Microsoft</strong> — partnerships with OpenAI</p>\n<p>That's the foundation layer. Everything else is wrapping and interface.</p>"
+    },
+    "s2-strategic-implications": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "Strategic implications",
+      "body": "<p>When you choose an AI tool, you're also choosing:</p>\n<p><strong>Cost</strong> — different models, different pricing at scale.<br><strong>Risk</strong> — dependent on one organisation's uptime and roadmap.<br><strong>Data governance</strong> — where does your data go? Different providers, different policies.<br><strong>Capabilities</strong> — locked into that model's strengths and weaknesses.<br><strong>Vendor dependency</strong> — switching means more than changing the UI.</p>"
+    },
+    "s2-llms-recap": {
+      "sectionLabel": "WHAT IS AI",
+      "badge": "RECAP",
+      "title": "What we know about LLMs",
+      "body": "<p><strong>General-purpose systems</strong> trained on vast data, billions of parameters.</p>\n<p><strong>We're still discovering</strong> what they can do — emergent abilities appear regularly.</p>\n<p><strong>Most tools sit on a few big models</strong> — the landscape is concentrated.</p>\n<p><strong>Progress is compounding</strong>, not linear — each capability becomes a building block.</p>"
+    },
+    "s2-will-this-get-better": {
+      "sectionLabel": "WHAT IS AI",
+      "title": "The question isn't \"Will this get better?\" — of course it will.",
+      "body": "<p>The real question: <strong>Are we ready for what comes next?</strong></p>\n<p>That's what we need to focus on. Not whether the technology will improve. It will. The question is whether we understand where it fails, and how to use it effectively.</p>"
+    },
+    "s2-break": {
+      "sectionLabel": "BREAK",
+      "title": "Quick break",
+      "subtitle": "We've covered what AI is and how it works. After the break: what can go wrong, and how do we actually use it."
+    },
+    "s3-opener": {
+      "sectionLabel": "SECTION 3",
+      "title": "AI Risks",
+      "subtitle": "Understanding what can go wrong — and what to do about it"
+    },
+    "s3-risk-not-avoiding": {
+      "sectionLabel": "AI RISKS",
+      "title": "Risk isn't about avoiding AI. It's about using it well.",
+      "body": "<p>Understanding what can go wrong is how you use these tools effectively. Healthy scepticism isn't paranoia — it's competence.</p>"
+    },
+    "s3-hallucinations": {
+      "sectionLabel": "AI RISKS",
+      "badge": "CORE RISK",
+      "title": "Hallucinations",
+      "body": "<p>The fundamental risk. Everything else builds on this.</p>\n<p>LLMs don't consult a database. They predict the next word based on statistical likelihood, not truth. So an AI can <strong>confidently tell you something completely false</strong> — and sound absolutely convincing doing it.</p>\n<p>Even a 95% accurate model produces confident falsehoods 5% of the time. And you won't always know which is which.</p>",
+      "callout.title": "The mental model",
+      "callout.body": "Treat every output as a hallucination. Some happen to be correct. Some aren't. Cross-check critical facts. Treat citations as hints, not proof."
+    },
+    "s3-training-data-risks": {
+      "sectionLabel": "AI RISKS",
+      "title": "Training data risks",
+      "body": "<p><strong>Currency</strong> — your model only knows what was in its training data. Trained through April 2024? Doesn't know what happened in May. Interest rates, product pricing, regulatory changes — all gone dark.</p>\n<p><strong>Intellectual property</strong> — early models were trained on vast datasets without explicit permission. Once information is in the weights, you can't remove it. It's baked in.</p>\n<p><strong>Bias</strong> — training data reflects the world as it was, including all the biases and stereotypes. Users introduce further bias through how they frame questions. And AI exhibits sycophancy — it tends to agree with you.</p>"
+    },
+    "s3-security-privacy-fraud": {
+      "sectionLabel": "AI RISKS",
+      "title": "Security, privacy, and fraud",
+      "body": "<p><strong>Deepfakes</strong> — it used to take serious effort to impersonate someone. Now it takes a still image and three seconds of audio. The UK government identifies citizen fraud as a major concern.</p>\n<p><strong>Privacy</strong> — free tools may train on your data. Paid tools generally don't, but read the terms.</p>\n<p><strong>Legislation</strong> — the UK isn't writing entirely new AI laws. It's applying existing legislation: GDPR, Data Protection Act, consumer protection.</p>",
+      "callout.title": "The unencrypted email test",
+      "callout.body": "If you wouldn't send it over unencrypted email, don't paste it into an AI tool. That's your north star for privacy decisions."
+    },
+    "s3-automation-over-trust": {
+      "sectionLabel": "AI RISKS",
+      "badge": "EMERGING",
+      "title": "Automation and over-trust",
+      "body": "<p>An estate agent deployed AI to handle email enquiries. The AI auto-replied to an email from a property inspector, <strong>confidently confirming something completely wrong</strong> — without a human checking.</p>\n<p>If you automate a decision, you must have a human review it before it goes out. Not as a bottleneck to avoid. As a safety mechanism you can't live without.</p>",
+      "callout.title": "The principle",
+      "callout.body": "Human-in-the-loop isn't a weakness. It's the control system."
+    },
+    "s3-knowledge-exposure-injection": {
+      "sectionLabel": "AI RISKS",
+      "title": "Knowledge exposure and prompt injection",
+      "body": "<p><strong>Knowledge exposure</strong> — AI doesn't respect your organisation's permission structure. If information exists somewhere the AI has access to, semantic search will find it. An engineer might accidentally surface confidential strategy docs.</p>\n<p><strong>Prompt injection</strong> — someone embeds hidden instructions in text, and the AI follows those instructions instead of yours. Hidden text in documents, metadata, or images. You don't always see what the AI sees.</p>"
+    },
+    "s3-ai-slop-deepfakes": {
+      "sectionLabel": "AI RISKS",
+      "title": "AI slop and deepfakes",
+      "body": "<p><strong>AI slop</strong> — low-value AI-generated content. Generating is faster than reviewing, so quality drops. Audiences are getting better at recognising it — unnatural excitement, em dashes everywhere, phrases like \"delve\" and \"transformative\". There's a reputational cost to obviously AI-generated output.</p>\n<p><strong>Deepfakes in real time</strong> — someone deepfakes your CEO on a Zoom call. Asks you to process a payment. Three seconds of audio and a still image is all it takes.</p>",
+      "callout.title": "Verification",
+      "callout.body": "For real-time deepfakes: ask a personal question. Something the real person would know but isn't findable online. \"What's your dog's name?\" A deepfake won't have that knowledge."
+    },
+    "s3-environmental-impact": {
+      "sectionLabel": "AI RISKS",
+      "title": "Environmental impact",
+      "body": "<p>Training gets the headlines, but inference — every query you run — is 90% of the lifecycle energy. At billions of queries daily, that adds up.</p>",
+      "stats": [
+        {"number": "11,390t", "label": "CO₂ from training Llama 3.1"},
+        {"number": "90%", "label": "Lifecycle energy is inference"},
+        {"number": "500ml", "label": "Water per 20–50 queries"}
+      ],
+      "callout.title": "Treat prompts like meetings",
+      "callout.body": "Purpose matters. You wouldn't book a meeting just to see who shows up. Same discipline applies to AI queries. Have a reason. Have a plan for the output."
+    },
+    "s3-ethics-responsible-ai": {
+      "sectionLabel": "AI RISKS",
+      "title": "Ethics and responsible AI",
+      "body": "<p>Not abstract philosophy. This is how your organisation avoids harm and maintains trust.</p>\n<p><strong>Accountability</strong> — someone owns every AI-influenced decision. A person, not a process.</p>\n<p><strong>Fairness</strong> — test for bias before you deploy. If the decision affects people, run scenarios.</p>\n<p><strong>Transparency</strong> — if AI influenced a decision affecting someone, they should know.</p>\n<p>Some decisions should never be fully automated. Hiring benefits from AI screening, but a human makes the final call. Redundancy decisions should never be algorithmic.</p>"
+    },
+    "s3-safety-checklist": {
+      "sectionLabel": "AI RISKS",
+      "badge": "SAFETY CHECKLIST",
+      "title": "Your AI safety checklist",
+      "body": "<p><strong>1.</strong> Don't blindly trust outputs — verify critical facts.<br><strong>2.</strong> Remember models are frozen — they don't know what happened yesterday.<br><strong>3.</strong> Don't paste proprietary data into free tools.<br><strong>4.</strong> Watch for bias — in training data, in your framing, in the AI's sycophancy.<br><strong>5.</strong> Don't share sensitive data — apply the unencrypted email test.<br><strong>6.</strong> Track legal changes — regulation is evolving.<br><strong>7.</strong> Keep human in the loop — for any decision that matters.</p>"
+    },
+    "s3-risk-radar-interactive": {
+      "sectionLabel": "AI RISKS",
+      "title": "Explore: Risk Radar",
+      "subtitle": "Tap each risk to see what it means and how to mitigate it."
+    },
+    "s3-human-in-the-loop": {
+      "sectionLabel": "AI RISKS",
+      "title": "Human-in-the-loop isn't a weakness. It's the control system.",
+      "body": "<p>Sceptical but productive. Thoughtful but not paralysed. That's how you use AI well.</p>\n<p>Now we understand the risks. Let's understand how these systems actually work — that knowledge is power.</p>"
+    },
+    "s3-eu-ai-act": {
+      "sectionLabel": "AI RISKS",
+      "badge": "REGULATION",
+      "title": "The EU AI Act",
+      "body": "<p><strong>Brussels effect:</strong> if you develop, deploy, or import AI for EU customers, you're covered — even from the UK.</p>\n<p>Key deadlines:</p>\n<p><strong>Feb 2025</strong> — prohibited practices (social credit, emotion recognition in law enforcement)<br><strong>Aug 2025</strong> — GPAI rules (ChatGPT-class models)<br><strong>Aug 2026</strong> — high-risk AI (hiring, credit, medical, policing)<br><strong>Aug 2027</strong> — full regime for regulated products</p>",
+      "stats": [
+        {"number": "€35m", "label": "Maximum penalty"},
+        {"number": "7%", "label": "Of global turnover"}
+      ]
+    },
+    "s3-eu-ai-act-changes": {
+      "sectionLabel": "AI RISKS",
+      "title": "EU AI Act: what changes for you",
+      "body": "<p><strong>Audit</strong> — know what AI systems you're using and where.</p>\n<p><strong>Categorise</strong> — put each system into prohibited, GPAI, high-risk, or regulated buckets.</p>\n<p><strong>Represent</strong> — appoint an EU representative. Train staff. Document processes.</p>\n<p><strong>Maintain</strong> — ongoing compliance, documentation, audit trails.</p>",
+      "callout.title": "The mindset shift",
+      "callout.body": "This isn't burden imposed from Brussels. It's regulation codifying good practice. Human-in-the-loop. Documented decisions. Awareness of risk. The Act just makes it a legal requirement."
+    },
+    "s3-risk-quiz": {
+      "sectionLabel": "AI RISKS",
+      "badge": "QUICK CHECK",
+      "title": "Test your risk awareness",
+      "quiz.question": "Your colleague pastes a confidential client contract into the free version of ChatGPT to summarise it. What's the main risk?",
+      "quiz.options": [
+        "The summary might contain hallucinations",
+        "The contract data could be used to train OpenAI's models",
+        "ChatGPT might send the summary to the wrong person",
+        "The contract will be stored permanently on OpenAI's servers"
+      ]
+    },
+    "s4-opener": {
+      "sectionLabel": "SECTION 4",
+      "title": "How AI Works",
+      "subtitle": "The mechanics behind the magic"
+    },
+    "s4-text-completion": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "An LLM does exactly one thing. It completes text.",
+      "body": "<p>You give it some words, and it predicts what comes next. Token by token. Each prediction based on one question: given everything so far, what's the most probable next thing?</p>"
+    },
+    "s4-simplicity-scales": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "How simplicity scales into brilliance",
+      "body": "<p>This dumb, simple mechanism — picking the most likely next word over and over — scales into full sentences, paragraphs, entire narratives. It produces tone. Structure. Persuasion. Insight.</p>\n<p>Why? Because the patterns it learned from training data included brilliant writing, good explanations, persuasive arguments. So when it's predicting the next word, it's statistically likely to pick words that flow together the way those well-written sources did.</p>",
+      "callout.title": "A line worth remembering",
+      "callout.body": "AI doesn't understand meaning. It understands momentum. It's completing a pattern, not reporting a truth."
+    },
+    "s4-text-completion-interactive": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "Try it: Text Completion",
+      "subtitle": "See how an LLM predicts the next word — one token at a time."
+    },
+    "s4-tokens": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "Tokens: the currency of AI",
+      "body": "<p>AI doesn't see words the way you do. It sees <strong>tokens</strong> — roughly chunks of language. Sometimes a full word, sometimes part of a word, sometimes just punctuation.</p>\n<p>\"unhappy\" → <strong>un</strong> + <strong>happy</strong> (2 tokens)<br>\"it's\" → <strong>it</strong> + <strong>'</strong> + <strong>s</strong> (3 tokens)</p>\n<p>Everything is measured in tokens: input limits, conversation memory, processing cost, your bill. Tokens are the unit for every constraint you run into.</p>"
+    },
+    "s4-what-happens-when-you-send": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "What happens when you hit send",
+      "body": "<p>Four things happen in sequence:</p>\n<p><strong>1. System prompt</strong> — invisible instructions shaping the AI's behaviour.<br><strong>2. Conversation window</strong> — every message you've sent and received, bundled together.<br><strong>3. Safety system</strong> — filters checking if the response is harmful or unsafe.<br><strong>4. Model response</strong> — text completion, token by token.</p>"
+    },
+    "s4-model-rereads": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "The model doesn't remember your conversation. It re-reads it.",
+      "body": "<p>Every time you hit send, the entire conversation history gets re-sent to the model. Every message. Every response. All of it. The model re-reads everything from scratch.</p>"
+    },
+    "s4-why-this-matters": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "Why this matters",
+      "body": "<p><strong>Earlier messages matter</strong> — they're literally part of the context every time, shaping what comes next.</p>\n<p><strong>Tone persists</strong> — set a frustrated tone early? It's in the window for every response that follows.</p>\n<p><strong>Bad assumptions compound</strong> — a misunderstanding in message 2 gets amplified through messages 3, 4, 5. You're both locked into the wrong path.</p>\n<p><strong>Fresh chat fixes things</strong> — clear the window, lose the bad context, start clean.</p>",
+      "callout.title": "The fundamental reframe",
+      "callout.body": "You are not having a conversation with a mind. You are co-authoring a document. And the AI is completing it."
+    },
+    "s4-context-window": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "The context window",
+      "body": "<p>The model's <strong>working memory</strong> — the maximum amount of text it can see at once. Everything goes in: system prompt, full conversation history, uploaded documents, your current question.</p>\n<p>Different models have different sizes (4k to 100k+ tokens). But there's always a limit. And performance follows a curve.</p>"
+    },
+    "s4-quality-curve": {
+      "sectionLabel": "HOW AI WORKS",
+      "badge": "KEY CONCEPT",
+      "title": "The quality curve",
+      "body": "<p><strong>Too little context</strong> → poor, confused, generic responses. The model has to guess.</p>\n<p><strong>Sweet spot</strong> → enough context to understand your situation. Not so much that it gets lost. This is where you want to be.</p>\n<p><strong>Too much context</strong> → quality drops. The model gets confused, loses focus. Like being handed every email your company has ever sent and asked to summarise the current project.</p>",
+      "callout.title": "The goal",
+      "callout.body": "Don't think \"how much context can I give the model.\" Think \"what's the minimum useful context this task needs.\" Give it that. Operate there."
+    },
+    "s4-context-window-full-signals": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "Signals your context window is full",
+      "body": "<p><strong>Forgetting agreements</strong> — you said \"use formal tone\" and it switches to casual halfway through.</p>\n<p><strong>Answering the wrong question</strong> — your question is specific but the response is generic or off-topic.</p>\n<p><strong>Going vague</strong> — responses get evasive and non-committal. Too much noise, not enough signal.</p>\n<p><strong>What to do:</strong> start a fresh chat, curate the context (trim irrelevant messages), or work in shorter sprints with summaries between them.</p>"
+    },
+    "s4-system1-vs-system2": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "System 1 vs System 2",
+      "body": "<p><strong>System 1</strong> — fast, automatic, intuitive. You see 2 + 2, you say \"4\" without thinking. AI defaults to this mode: pattern-based, confident, quick.</p>\n<p><strong>System 2</strong> — slow, deliberate, careful. You work through a tricky problem step by step. Full attention. No autopilot.</p>\n<p>By default, AI operates in System 1. That's how it makes confident mistakes.</p>"
+    },
+    "s4-why-system1-fails": {
+      "sectionLabel": "HOW AI WORKS",
+      "badge": "EXAMPLE",
+      "title": "Why System 1 fails",
+      "body": "<p>\"What is 250 × 23?\"</p>\n<p><strong>System 1:</strong> fast, automatic → answers 5,650 (wrong).</p>\n<p><strong>System 2:</strong> \"Break this into steps\" → 250 × 20 = 5,000. 250 × 3 = 750. Total = 5,750 (correct).</p>\n<p>The model's not pattern-completing anymore. It's breaking the problem down and showing work. Same applies to legal analysis, strategic thinking, debugging, persuasive writing.</p>"
+    },
+    "s4-prompt-for-system2": {
+      "sectionLabel": "HOW AI WORKS",
+      "title": "How to prompt for System 2",
+      "body": "<p>The language matters. Don't just say \"analyse this.\" Use these instead:</p>\n<p>\"Let's think about this step by step.\"<br>\"Break this into stages and explain each one.\"<br>\"What assumptions are you making?\"<br>\"How would you justify that?\"<br>\"Is there anything that could contradict this conclusion?\"</p>\n<p>These shift the model into deliberate, careful processing — and produce dramatically better results on complex tasks.</p>",
+      "callout.title": "The caveat",
+      "callout.body": "Better reasoning doesn't mean the model suddenly knows what's true. It can reason beautifully through a false premise. System 2 makes AI more useful — it doesn't make it reliable. You still have to check the work."
+    },
+    "s4-how-ai-works-quiz": {
+      "sectionLabel": "HOW AI WORKS",
+      "badge": "QUICK CHECK",
+      "title": "Test that understanding",
+      "quiz.question": "Your AI conversation has been going for 30 messages and the model starts forgetting things you agreed on earlier. What's most likely happening?",
+      "quiz.options": [
+        "The model is experiencing a technical glitch",
+        "The context window is filling up and older messages are being deprioritised",
+        "The model has learned your preferences wrong",
+        "You need to upgrade to a more powerful model"
+      ]
+    },
+    "s5-opener": {
+      "sectionLabel": "SECTION 5",
+      "title": "Prompting & Context Engineering",
+      "subtitle": "Structured thinking, not clever wording"
+    },
+    "s5-steering-probability": {
+      "sectionLabel": "PROMPTING",
+      "title": "Prompting is steering probability, not issuing commands.",
+      "body": "<p>You give the model clear instruction and enough context for useful output. That's it. No secret syntax. No magic words. Just structured thinking.</p>"
+    },
+    "s5-what-prompting-achieves": {
+      "sectionLabel": "PROMPTING",
+      "title": "What prompting actually achieves",
+      "body": "<p><strong>Narrows the solution space</strong> — you're steering the model toward what you need, not hoping it guesses right.</p>\n<p><strong>Reduces hallucinations</strong> — when the model's confused about what you want, it makes things up. Clarity stops that.</p>\n<p><strong>Controls the shape</strong> — list, table, step-by-step plan. Form is part of the instruction, not decoration.</p>",
+      "callout.title": "The reframe",
+      "callout.body": "You're not having a conversation with a mind. You're designing an interaction that makes it easy for the model to understand what useful looks like."
+    },
+    "s5-techniques-1-to-5": {
+      "sectionLabel": "PROMPTING",
+      "badge": "TECHNIQUES 1–5",
+      "title": "Ten techniques — the first five",
+      "body": "<p><strong>1. Instructions</strong> — just tell the AI what you want. Directly. Most underrated technique.</p>\n<p><strong>2. Summarisation</strong> — highest-value, lowest-risk. Compressing what exists, not inventing. Also optimises your context window.</p>\n<p><strong>3. Few-Shot</strong> — show examples of what good looks like. The model learns from pattern, not explanation.</p>\n<p><strong>4. Priming</strong> — load context first: \"Read the following and say only OK.\" Forces absorption before action.</p>\n<p><strong>5. Meta Prompting</strong> — tell the AI how to behave. \"Always ask a clarifying question.\" \"If you're not sure, say so.\"</p>"
+    },
+    "s5-techniques-6-to-10": {
+      "sectionLabel": "PROMPTING",
+      "badge": "TECHNIQUES 6–10",
+      "title": "Ten techniques — the next five",
+      "body": "<p><strong>6. Output Form</strong> — specify the shape: bullets, table, checklist, narrative. Form changes how the model structures its thinking.</p>\n<p><strong>7. Roles</strong> — \"Think like a product manager.\" Narrows probability space. But caution: roles increase confidence, not correctness.</p>\n<p><strong>8. Chain of Thought</strong> — \"Walk me through this step by step.\" Activates System 2 thinking. Slower but more accurate.</p>\n<p><strong>9. Tree of Thought</strong> — \"Generate three options with trade-offs.\" Prevents tunnel vision.</p>\n<p><strong>10. Generate Knowledge</strong> — \"What do we know about X? Now how should we approach Y?\" Think out loud before committing.</p>",
+      "callout.title": "The principle",
+      "callout.body": "These techniques stack. A strong prompt might combine instructions, meta prompting, and chain of thought together. You layer them — you don't use them in isolation."
+    },
+    "s5-three-principles": {
+      "sectionLabel": "PROMPTING",
+      "title": "Three principles to remember",
+      "stats": [
+        {"number": "1", "label": "Context is king"},
+        {"number": "2", "label": "Design interactions, not questions"},
+        {"number": "3", "label": "Structured thinking, not clever wording"}
+      ],
+      "body": "<p>Everything flows from context. Better prompts don't come from trickier syntax — they come from richer, more relevant context. You're not wordsmithing. You're designing how the conversation goes.</p>"
+    },
+    "s5-four-levels-maturity": {
+      "sectionLabel": "PROMPTING",
+      "badge": "KEY CONCEPT",
+      "title": "Four levels of prompting maturity",
+      "body": "<p><strong>Level 1: Steering Output</strong> — control what the model produces. Instructions, summarisation, output form, constraints.</p>\n<p><strong>Level 2: Context & Teaching</strong> — shape how the model understands the task. Priming, roles, few-shot, context blocks.</p>\n<p><strong>Level 3: Designing Thinking</strong> — for hard, ambiguous, high-stakes tasks. Decomposition, tree of thought, chain of thought, self-check loops.</p>\n<p><strong>Level 4: Building Systems</strong> — prompting becomes infrastructure. Prompt chaining, structured outputs, meta-prompting at scale.</p>",
+      "callout.title": "The critical insight",
+      "callout.body": "You don't graduate from Level 1. You layer. All levels remain useful — they address different problems. Most people stay at Level 1. Nothing wrong with that. But knowing Level 2 and 3 exist changes how you see problems."
+    },
+    "s5-fluency-levels-interactive": {
+      "sectionLabel": "PROMPTING",
+      "title": "Explore: Prompting Maturity Levels",
+      "subtitle": "Click through each level to see what it looks like in practice."
+    },
+    "s5-intent-context-constraints": {
+      "sectionLabel": "PROMPTING",
+      "title": "Intent, Context, Constraints",
+      "body": "<p>Every good prompt balances three things:</p>\n<p><strong>Intent</strong> — what are you actually trying to achieve? Not the surface question — the goal underneath.</p>\n<p><strong>Context</strong> — what information does the model need? Background, examples, standards, data.</p>\n<p><strong>Constraints</strong> — what boundaries matter? Length, format, tone, audience.</p>"
+    },
+    "s5-practical-dos-donts": {
+      "sectionLabel": "PROMPTING",
+      "title": "Practical dos and don'ts",
+      "body": "<p><strong>Don't add context without purpose</strong> — noise hurts signal. If it doesn't change the answer, leave it out.</p>\n<p><strong>State positives, not negatives</strong> — \"Use a professional tone\" beats \"Don't be too informal.\" The model moves toward things better than away from them.</p>\n<p><strong>Control output shape</strong> — form is part of the instruction, not an afterthought.</p>\n<p><strong>State what the answer is for</strong> — \"Summarise this for a board presentation\" changes what matters.</p>\n<p><strong>Iterate</strong> — iteration isn't failure, it's refinement. Your first prompt won't be perfect. Nobody's is.</p>"
+    },
+    "s5-before-and-after": {
+      "sectionLabel": "PROMPTING",
+      "badge": "EXAMPLE",
+      "title": "Before and after",
+      "body": "<p><strong>Before:</strong> \"Write a marketing email.\"</p>\n<p>Vague. The model guesses. Output is generic.</p>\n<p><strong>After:</strong> \"Write a marketing email for small business owners considering switching accounting software. Emphasise time savings, not features. Keep it to 150 words. Purpose: open rate, not immediate conversion.\"</p>\n<p>Now the model has intent, context, and constraints. It knows the audience, the angle, the goal. Output is tighter, more useful.</p>",
+      "callout.title": "The difference",
+      "callout.body": "Clarity. That's it."
+    },
+    "s5-context-engineering": {
+      "sectionLabel": "PROMPTING",
+      "title": "Better answers don't come from smarter AI. They come from better context.",
+      "body": "<p>Individual prompting doesn't scale. Context engineering does. It's the shift from one person asking one question to an organisation sharing a baseline.</p>"
+    },
+    "s5-context-blocks": {
+      "sectionLabel": "PROMPTING",
+      "title": "Context blocks",
+      "body": "<p>Reusable, structured chunks of context — defined once, refined over time, reused everywhere:</p>\n<p><strong>Organisational context</strong> — your values, how decisions get made, what success looks like.</p>\n<p><strong>Product context</strong> — what you build, who uses it, what problems it solves.</p>\n<p><strong>Process context</strong> — how work happens. Agile sprints, decision frameworks, standards.</p>\n<p><strong>Customer personas</strong> — real examples, not made-up profiles.</p>\n<p><strong>Templates and examples</strong> — what good looks like in your world.</p>",
+      "callout.title": "The effect",
+      "callout.body": "Shared context creates shared outcomes. When everyone loads the same product context before responding to customer feedback, you get consistency. Not enforced consistency. Natural consistency."
+    },
+    "s5-context-blocks-caution": {
+      "sectionLabel": "PROMPTING",
+      "title": "The caution with context blocks",
+      "body": "<p>Context blocks can lie. Especially if AI generated them.</p>\n<p>\"Our customers love feature X\" is a context claim. Maybe it's wrong. Maybe the AI invented it. Maybe the data's incomplete.</p>\n<p>Context blocks must be <strong>reviewed and owned by humans</strong>. You're the source of truth, not the model. Treat them like documentation — they need accuracy, ownership, and review before they go live.</p>",
+      "callout.title": "The alignment insight",
+      "callout.body": "AI isn't aligned by policy documents. It's aligned by context. You can write a policy saying \"be customer-focused\" — but if you load context that shows you prioritise revenue over satisfaction, the model aligns with the context, not the policy."
+    },
+    "s5-most-powerful-prompt": {
+      "sectionLabel": "PROMPTING",
+      "title": "\"Read the following and say only OK.\"",
+      "body": "<p>The most useful prompt you'll ever use. It looks silly. But it works. You paste in context. You add that instruction. The model reads it and responds with one word. Then you ask your questions — and output quality jumps.</p>"
+    },
+    "s5-load-first-act-second": {
+      "sectionLabel": "PROMPTING",
+      "title": "Load first, act second",
+      "body": "<p>AI is eager. The moment you give it information, it wants to respond, solve, suggest. This simple instruction interrupts that instinct.</p>\n<p><strong>Practical example:</strong> You've got a company strategy document. Don't say \"here's our strategy, summarise it.\" Instead: load the document with \"read and say OK\" → get confirmation → then ask \"Now answer these questions about our product roadmap based only on our strategy.\"</p>\n<p>The model's now operating from your frame, not its default assumptions.</p>",
+      "callout.title": "The deeper point",
+      "callout.body": "The best prompts aren't the most elaborate. They're the most deliberate."
+    },
+    "s5-prompting-summary": {
+      "sectionLabel": "PROMPTING",
+      "title": "Prompting is structured thinking. Context is king. Design interactions, not just questions.",
+      "body": "<p>Ten techniques. Four levels. Context blocks that scale. The simplest techniques often work best. Now you're ready to apply it — because knowing how to prompt is one thing. Using prompts to actually build and decide is another.</p>"
+    },
+    "s5-prompting-quiz": {
+      "sectionLabel": "PROMPTING",
+      "badge": "QUICK CHECK",
+      "title": "Test that understanding",
+      "quiz.question": "You're writing a prompt and the AI keeps giving you vague, generic answers. What's the most likely fix?",
+      "quiz.options": [
+        "Use a more powerful AI model",
+        "Add more specific context about your situation and what the output is for",
+        "Rephrase your question using more complex language",
+        "Tell the AI to \"try harder\" and \"be more specific\""
+      ]
+    },
+    "s6-opener": {
+      "sectionLabel": "SECTION 6",
+      "title": "Applying AI",
+      "subtitle": "From understanding to action"
+    },
+    "s6-better-thinking-question": {
+      "sectionLabel": "APPLYING AI",
+      "title": "Don't ask \"where can we use AI?\" Ask \"where does better thinking actually matter?\"",
+      "body": "<p>Most organisations get stuck because they ask the wrong question. Reframing from technology to impact changes everything.</p>"
+    },
+    "s6-three-approaches": {
+      "sectionLabel": "APPLYING AI",
+      "badge": "KEY CONCEPT",
+      "title": "Three approaches to AI value",
+      "body": "<p><strong>1. Automation</strong> — doing existing work faster or cheaper. Where most teams start. Delivers early wins, but it's the easiest to copy. Not sustainable advantage.</p>\n<p><strong>2. Augmentation</strong> — AI makes people better at thinking, not just faster at doing. A good analyst becomes exceptional. A good writer becomes more prolific. You're multiplying capability.</p>\n<p><strong>3. Agentic systems</strong> — AI doesn't just respond. It notices, suggests, and acts. Powerful for some problems. Also dangerous — which is exactly why governance matters.</p>",
+      "callout.title": "The key line",
+      "callout.body": "Automation saves time. Augmentation compounds capability. Agents change how work is organised. Time savings disappear. Capability compounds."
+    },
+    "s6-picking-pilots": {
+      "sectionLabel": "APPLYING AI",
+      "title": "Picking your pilots",
+      "body": "<p>AI is improving so quickly that if you build something too close to what consumer tools already do, it will either become a generic feature or be overtaken before you finish.</p><p>The smart move is to focus on use cases where <strong>your data, workflows, and expertise</strong> create real, defensible value.</p>",
+      "media.alt": "AI Development timeline showing commodity risk and overtake risk when picking pilot projects"
+    },
+    "s6-four-ds-interactive": {
+      "sectionLabel": "APPLYING AI",
+      "title": "Explore: The 4 Ds of AI Fluency",
+      "subtitle": "A framework for approaching any AI opportunity."
+    },
+    "s6-tools-come-and-go": {
+      "sectionLabel": "APPLYING AI",
+      "title": "Tools will come and go. Techniques stick.",
+      "body": "<p>You might be using Claude today, something else in two years. But if you know how to think about the work, the technique travels with you. That's how you future-proof your capability.</p>"
+    },
+    "s6-transcription": {
+      "sectionLabel": "APPLYING AI",
+      "badge": "TECHNIQUE 1",
+      "title": "Transcription",
+      "body": "<p>One of the highest-ROI techniques. Most of your knowledge vanishes into thin air — meetings, site walks, informal thinking. Transcription turns that into an asset.</p>\n<p><strong>Site walk</strong> — clip-on microphone, think out loud, transcribe, then ask \"what patterns do you see?\"</p>\n<p><strong>Self-interview</strong> — generate ten questions about your business. Record yourself answering. AI converts to structured notes that sound like you.</p>\n<p><strong>Voice to writing</strong> — talk out the email naturally. Ask AI to polish it professionally. Writing stops feeling like a chore.</p>"
+    },
+    "s6-deep-research": {
+      "sectionLabel": "APPLYING AI",
+      "badge": "TECHNIQUE 2",
+      "title": "Deep research",
+      "body": "<p>Think of AI as a junior researcher who works for free. You ask a question. It goes to hundreds of websites. Spends about thirty minutes. Returns a structured summary with numbered citations.</p>\n<p>This is <strong>synthesis, not search</strong>. AI connects dots you don't have time to connect.</p>\n<p><strong>The guardrail:</strong> AI can hallucinate. Reduce hallucinations, not eliminate. Always spot-check your sources. Always.</p>"
+    },
+    "s6-comparison-reasoning-simulation": {
+      "sectionLabel": "APPLYING AI",
+      "badge": "TECHNIQUES 3–5",
+      "title": "Comparison, reasoning, simulation",
+      "body": "<p><strong>3. Comparison</strong> — systematic evaluation of options side by side. Vendors, tools, strategies. Give AI the criteria, get structured analysis instead of scattered thinking.</p>\n<p><strong>4. Reasoning</strong> — systematic problem-solving for multi-step problems. Budget planning, product roadmaps, strategy choices. Ask AI to walk through the logic, show its work, catch its own errors.</p>\n<p><strong>5. Simulation</strong> — the most underused technique. AI as a thinking partner. Simulate customers, stakeholders, difficult conversations, entire scenarios.</p>",
+      "callout.title": "Synthetic audiences",
+      "callout.body": "Do deep research on a customer segment. AI builds a persona from real data. Then ask it: \"Go to my website and tell me what you think.\" Feedback from a synthetic customer, not your own assumptions. Important: simulation is insight, not truth."
+    },
+    "s6-applying-ai-summary": {
+      "sectionLabel": "APPLYING AI",
+      "title": "Automation. Augmentation. Agents. Transcription. Research. Comparison. Reasoning. Simulation.",
+      "body": "<p>Three approaches that stack. Five techniques that travel. Tools change. Techniques stick. That's applying AI in practice.</p>"
+    },
+    "s6-applying-ai-quiz": {
+      "sectionLabel": "APPLYING AI",
+      "badge": "QUICK CHECK",
+      "title": "Test that understanding",
+      "quiz.question": "Your team wants to use AI for competitive advantage. Which approach is most likely to deliver sustainable value?",
+      "quiz.options": [
+        "Automating repetitive tasks to save time and reduce costs",
+        "Using AI to augment your team's thinking and decision-making capability",
+        "Deploying agentic AI systems that act autonomously",
+        "Using the most advanced AI model available"
+      ]
+    },
+    "s7-opener": {
+      "sectionLabel": "SECTION 7",
+      "title": "Course Close",
+      "subtitle": "From understanding to action"
+    },
+    "s7-where-weve-been": {
+      "sectionLabel": "CLOSE",
+      "title": "Where we've been",
+      "body": "<p>We started with what AI is. How it actually works. What it's good at. What it's not.</p>\n<p>We talked about where it creates value — and equally important, where it creates risk.</p>\n<p>We looked at what it means for your strategy, your team, the work you do every day.</p>\n<p>And we've walked through how to actually apply it. Not with buzzwords. With techniques that work.</p>"
+    },
+    "s7-real-work-starts": {
+      "sectionLabel": "CLOSE",
+      "title": "The real work starts after today.",
+      "body": "<p>Everything we've talked about only matters if you do something different with it next week. Next month. Something concrete. Something you'll actually do.</p>"
+    },
+    "s7-your-commitment": {
+      "sectionLabel": "CLOSE",
+      "title": "Your commitment",
+      "textInput.prompt": "After everything we've discussed today, what's one thing you'll do differently next week?",
+      "textInput.placeholder": "e.g. Record myself thinking through a problem and transcribe it..."
+    },
+    "s7-three-months": {
+      "sectionLabel": "CLOSE",
+      "title": "Three months from now",
+      "body": "<p>If you do one small thing differently next week, and build on it, three months from now you'll be using AI in ways you can't quite imagine yet.</p>\n<p><strong>Habits compound.</strong> Small experiments become capabilities. Capabilities compound into advantage.</p>",
+      "callout.title": "AI advantage",
+      "callout.body": "AI advantage won't come from knowing more than others. It will come from better judgement, better habits, and better timing."
+    },
+    "s7-final-statement": {
+      "sectionLabel": "CLOSE",
+      "title": "That judgement is the asset. Not the technology. Not the tool. The thinking.",
+      "body": "<p>You're capable of far more with AI than you probably think right now. And you're more thoughtful about the risks than most people are. That's a good place to be.</p><p>Go build something.</p>"
+    }
+  }
+}

@@ -1,0 +1,318 @@
+{
+  "ui": {
+    "engine.textInput.placeholder": "Saisissez votre réponse...",
+    "engine.quiz.optionLabels": ["A", "B", "C", "D"],
+    "engine.quiz.submitted": "Soumis",
+    "engine.activity.joined": "a rejoint la session",
+    "engine.activity.left": "a quitté la session",
+    "engine.activity.graphicInteraction": "a interagi avec le graphique",
+    "engine.activity.quizAnswer": "a répondu au quiz",
+    "engine.status.connected": "Connecté",
+    "engine.status.connecting": "Connexion...",
+    "engine.status.disconnected": "Déconnecté",
+    "engine.fallback.anonymous": "Anonyme",
+    "engine.fallback.someone": "Quelqu'un",
+    "engine.confirm.endSession": "Mettre fin à cette session ? Les participants seront déconnectés.",
+    "engine.adminConsole.title": "Console en direct",
+    "engine.adminConsole.connection": "Connexion",
+    "engine.adminConsole.participants": "Participants",
+    "engine.adminConsole.activity": "Activité",
+    "engine.adminConsole.session": "Session",
+    "engine.adminConsole.responses": "Réponses",
+    "engine.adminConsole.connected": "Connecté",
+    "engine.adminConsole.disconnected": "Déconnecté",
+    "engine.adminConsole.slide": "Diapo",
+    "engine.adminConsole.noActivity": "Aucune activité pour le moment",
+    "engine.adminConsole.noParticipants": "Aucun participant pour le moment",
+    "engine.adminConsole.joinLink": "Lien de connexion",
+    "engine.adminConsole.status": "Statut",
+    "engine.adminConsole.pauseSession": "Mettre en pause",
+    "engine.adminConsole.endSession": "Terminer la session",
+    "engine.textInput.submit": "Envoyer",
+    "engine.poll.responses": "réponses",
+    "engine.presenter.noNotes": "Pas de notes pour cette diapositive.",
+    "engine.presenter.endOfPresentation": "Fin de la présentation",
+    "engine.presenter.nextSlide": "Diapositive suivante",
+    "engine.presenter.speakerNotes": "Notes du présentateur",
+    "engine.presenter.liveResponses": "Réponses en direct",
+    "engine.presenter.prev": "Préc",
+    "engine.presenter.next": "Suiv",
+    "engine.presenter.sections": "Sections",
+    "engine.presenter.console": "Console",
+    "engine.presenter.openConsole": "Ouvrir la console",
+    "engine.presenter.participants": "participants",
+    "engine.sectionNav.title": "Sections",
+    "engine.sectionNav.hint": "Cliquez pour naviguer · Appuyez sur S ou Échap pour fermer",
+    "engine.sectionNav.slides": "diapositives",
+    "engine.sectionNav.current": "En cours",
+    "presenter.dashboard.title": "Tableau de bord",
+    "presenter.dashboard.subtitle": "AI Primer Live",
+    "presenter.dashboard.newSession": "+ Nouvelle session",
+    "presenter.dashboard.loading": "Chargement des sessions...",
+    "presenter.dashboard.empty": "Aucune session. Créez-en une pour commencer.",
+    "presenter.dashboard.serverError": "Impossible de se connecter au serveur.",
+    "presenter.status.active": "En attente",
+    "presenter.session.participant": "participant",
+    "presenter.session.participants": "participants",
+    "presenter.session.slide": "Diapo",
+    "presenter.btn.open": "Ouvrir",
+    "presenter.btn.resume": "Reprendre",
+    "presenter.btn.export": "Exporter",
+    "presenter.setup.title": "Session prête",
+    "presenter.setup.subtitle": "Partagez le lien, le code ou le QR avec les participants",
+    "presenter.setup.back": "← Tableau de bord",
+    "presenter.setup.copyLink": "Copier le lien",
+    "presenter.setup.copied": "Copié !",
+    "presenter.setup.waiting": "En attente de participants...",
+    "presenter.setup.oneParticipant": "1 participant connecté",
+    "presenter.setup.nParticipants": "{count} participants connectés",
+    "presenter.setup.start": "Lancer la présentation",
+    "presenter.session.defaultTitle": "AI Primer",
+    "presenter.fallback.presenter": "Présentateur",
+    "presenter.error.createSession": "Impossible de créer la session. Vérifiez la connexion au serveur.",
+    "presenter.error.createSessionServer": "Impossible de créer la session. Le serveur a renvoyé : {error}",
+    "presenter.error.exportFailed": "Impossible d'exporter les données de la session.",
+    "join.title": "AI Primer",
+    "join.subtitle": "Entrez le code de session pour rejoindre",
+    "join.codePlaceholder": "CODE",
+    "join.namePlaceholder": "Votre nom",
+    "join.btn": "Rejoindre la session",
+    "join.error.invalidCode": "Veuillez entrer un code de session valide.",
+    "join.error.notFound": "Session introuvable. Vérifiez le code et réessayez.",
+    "join.error.serverError": "Impossible de se connecter au serveur. Veuillez réessayer.",
+    "join.lobby.title": "Vous êtes connecté !",
+    "join.lobby.waiting": "En attente du démarrage par le présentateur...",
+    "join.session.ended": "Session terminée",
+    "join.session.thanks": "Merci d'avoir participé !",
+    "join.session.paused": "Le présentateur a mis en pause",
+    "join.session.pausedSubtitle": "Patience — la session reprendra bientôt...",
+    "join.anonymous": "Anonyme"
+  },
+  "slides": {
+    "s1-opener": {
+      "sectionLabel": "SECTION 1",
+      "title": "Les fondamentaux",
+      "subtitle": "Poser les bases de la culture IA"
+    },
+    "s1-find-us": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "Nous trouver",
+      "body": "<p><strong>AI Accelerator</strong><br>2 Appleby Yard, Soames Walk<br>Design District, London SE10 0BJ</p><p>Nous sommes dans le Design District à Greenwich Peninsula — cherchez les bâtiments colorés près de l'O2. Entrez par Soames Walk depuis la station North Greenwich.</p>",
+      "media.alt": "Plan du campus du Design District montrant l'emplacement des bâtiments"
+    },
+    "s1-cover-welcome": {
+      "title": "AI Primer",
+      "subtitle": "Alignez votre équipe et préparez-la à l'IA. Conçu pour tout outil. Pensé pour durer."
+    },
+    "s1-not-an-engineer": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "L'objectif n'est pas de faire de vous un ingénieur IA.",
+      "body": "<p>Il s'agit de construire un modèle mental solide — un cadre que vous pouvez utiliser pour comprendre comment l'IA générative fonctionne, prendre des décisions sensées, repérer les vraies opportunités, et savoir quand quelqu'un raconte n'importe quoi.</p>",
+      "callout.title": "Le vrai test",
+      "callout.body": "Si vous pouvez expliquer l'IA à quelqu'un d'autre — vraiment l'expliquer, pas simplement répéter les mots à la mode — alors vous l'avez comprise."
+    },
+    "s1-objectives": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "Ce que vous en retirerez",
+      "body": "<p>À la fin de cette formation, vous aurez quatre choses :</p><p><strong>1. Un modèle mental clair</strong> du fonctionnement réel de l'IA générative — ni édulcoré, ni trop simplifié.</p><p><strong>2. La compréhension des grands modèles de langage</strong> — comment ils sont entraînés, comment ils « pensent », pourquoi ils fonctionnent parfois brillamment et parfois complètement à côté.</p><p><strong>3. Des exercices pratiques réalisés</strong> — pas en regardant quelqu'un d'autre les faire. Vous les aurez faits vous-même.</p><p><strong>4. Un cadre de concepts, techniques et compétences</strong> qui rendent l'IA vraiment utile en pratique.</p>"
+    },
+    "s1-how-we-get-there": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "Comment nous allons y arriver",
+      "body": "<p>Nous sommes organisés en cinq sections, chacune s'appuyant sur la précédente :</p><p><strong>Fondamentaux</strong> — Construire le modèle mental avant toute autre chose.</p><p><strong>Capacités</strong> — Ce que l'IA peut vraiment faire. Pas la version marketing.</p><p><strong>Limites et risques</strong> — Comprendre ce que l'IA ne peut pas faire est tout aussi important.</p><p><strong>Techniques</strong> — Les méthodes pratiques qui font la différence entre bien utiliser l'IA et mal l'utiliser.</p><p><strong>Mise en œuvre</strong> — Comment intégrer tout cela dans votre travail et votre organisation.</p>",
+      "callout.title": "À quoi ressemble le succès",
+      "callout.body": "Vous pouvez expliquer à un collègue comment fonctionne un modèle de langage. Vous savez repérer quand l'IA est le bon outil et quand elle ne l'est pas. Vous pouvez l'utiliser efficacement. Et vous pouvez aider les autres à faire de même."
+    },
+    "s1-adoption-curve": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "La courbe d'adoption de l'IA",
+      "body": "<p>Il y a quatre étapes dans l'adoption de l'IA en entreprise :</p><p><strong>Compréhension → Pertinence → Cadre → Mise en œuvre</strong></p><p>La plupart des organisations passent environ une semaine sur la Compréhension, font à moitié la Pertinence, galèrent avec le Cadre, puis passent directement à la Mise en œuvre.</p>",
+      "stats": [
+        {
+          "number": "1 semaine",
+          "label": "Temps moyen sur la Compréhension"
+        },
+        {
+          "number": "Ignorée",
+          "label": "Étape de Pertinence"
+        },
+        {
+          "number": "80 %",
+          "label": "Passent directement aux outils"
+        }
+      ]
+    },
+    "s1-left-side-of-curve": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "La vraie valeur est à gauche de la courbe.",
+      "body": "<p>Compréhension et Pertinence — c'est là que vous évitez les erreurs coûteuses. C'est là que les gens développent une confiance réelle plutôt que de l'anxiété. Sautez cette étape, et la mise en œuvre devient un coûteux tâtonnement.</p>",
+      "callout.title": "Pensez-y comme la construction d'une maison",
+      "callout.body": "Si vous ne posez pas correctement les fondations et la structure, vous pouvez peindre les murs et installer les meubles, mais la maison n'est pas solide. Elle ne tiendra pas."
+    },
+    "s1-what-adoption-looks-like": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "À quoi ressemble vraiment l'adoption",
+      "body": "<p>Imaginez trois personnes dans votre équipe :</p><p><strong>Personne A</strong> utilise l'IA tous les jours. Elle fait du prompt engineering. Elle expérimente. Elle a construit des processus autour.</p><p><strong>Personne B</strong> touche un peu. Elle a essayé quelques fois. Mais ce n'est pas ancré dans sa façon de travailler.</p><p><strong>Personne C</strong> n'a pas vraiment commencé. Peut-être sceptique. Peut-être qu'elle n'a juste pas eu de raison d'essayer.</p><p>Les trois sont dans la même organisation, au même poste. Voilà votre courbe d'adoption.</p>"
+    },
+    "s1-knowledge-vs-confidence": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "Connaissance ≠ Confiance",
+      "body": "<p>Ces deux métriques sont différentes, et elles comptent de manière différente :</p><p><strong>Haute connaissance, faible confiance :</strong> comprend l'IA mais est nerveux à l'idée de l'utiliser. A peur de faire des erreurs.</p><p><strong>Haute confiance, faible connaissance :</strong> se lance, essaie tout, peut avoir de la chance — mais ne sait pas ce qu'il ne sait pas.</p><p>Le point idéal, c'est les deux ensemble. C'est ce que cette formation construit.</p>",
+      "stats": [
+        {
+          "number": "3",
+          "label": "Métriques qui comptent"
+        },
+        {
+          "number": "Fréquence",
+          "label": "À quelle fréquence ils l'utilisent"
+        },
+        {
+          "number": "C + C",
+          "label": "Connaissance × Confiance"
+        }
+      ]
+    },
+    "s1-invisible-ai-use": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "La plupart des usages de l'IA aujourd'hui sont invisibles.",
+      "body": "<p>Quelqu'un utilise ChatGPT pour rédiger un e-mail. Quelqu'un d'autre brainstorme avec. Un autre résume des documents. Ça se passe partout — mais vous ne le voyez pas. Vous ne pouvez donc ni le gérer, ni le mesurer, ni développer de compétences autour.</p>"
+    },
+    "s1-fomo-strategy": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "badge": "POINT CLÉ",
+      "title": "Le FOMO est une terrible stratégie",
+      "body": "<p>Qu'est-ce qui comble le vide quand vous ne voyez pas ce qui se passe et n'avez pas de stratégie claire ? La peur de rater quelque chose.</p><p>Le FOMO mène à des solutions en quête de problèmes. Des outils qui ne sont pas utilisés. Des pilotes qui ne passent pas à l'échelle. Des initiatives qui démarrent avec élan puis s'arrêtent parce que les fondations n'étaient pas là.</p>",
+      "callout.title": "La meilleure question",
+      "callout.body": "Pas « Devrions-nous utiliser l'IA ? » — ce débat est derrière nous. La question est : « Comment l'IA est-elle déjà utilisée dans notre organisation, et que faisons-nous avec cela ? »"
+    },
+    "s1-pulse-check-poll": {
+      "sectionLabel": "LES FONDAMENTAUX",
+      "title": "Où en est votre équipe ?",
+      "poll.question": "Comment décririez-vous la relation actuelle de votre organisation avec l'IA ?",
+      "poll.options": ["Curieux mais prudents — nous n'avons pas vraiment commencé", "Expérimentation — certaines personnes l'utilisent individuellement", "Adoption — nous avons des initiatives structurées", "Passage à l'échelle — l'IA fait partie de notre façon de travailler"]
+    },
+    "s3-opener": {
+      "sectionLabel": "SECTION 3",
+      "title": "Risques de l'IA",
+      "subtitle": "Comprendre ce qui peut mal tourner — et quoi faire"
+    },
+    "s3-risk-not-avoiding": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Le risque, ce n'est pas d'éviter l'IA. C'est de bien l'utiliser.",
+      "body": "<p>Comprendre ce qui peut mal tourner, c'est comme ça qu'on utilise ces outils efficacement. Le scepticisme sain n'est pas de la paranoïa — c'est de la compétence.</p>"
+    },
+    "s3-hallucinations": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "badge": "RISQUE FONDAMENTAL",
+      "title": "Hallucinations",
+      "body": "<p>Le risque fondamental. Tout le reste en découle.</p><p>Les LLM ne consultent pas une base de données. Ils prédisent le mot suivant en fonction de la probabilité statistique, pas de la vérité. Un modèle d'IA peut donc <strong>vous affirmer avec assurance quelque chose de complètement faux</strong> — et sonner absolument convaincant en le faisant.</p><p>Même un modèle précis à 95 % produit des faussetés convaincantes 5 % du temps. Et vous ne saurez pas toujours lesquelles.</p>",
+      "callout.title": "Le modèle mental",
+      "callout.body": "Traitez chaque résultat comme une hallucination. Certains se trouvent être corrects. D'autres non. Vérifiez les faits critiques. Considérez les citations comme des pistes, pas des preuves."
+    },
+    "s3-training-data-risks": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Risques liés aux données d'entraînement",
+      "body": "<p><strong>Actualité</strong> — votre modèle ne connaît que ce qui était dans ses données d'entraînement. Entraîné jusqu'en avril 2024 ? Il ne sait pas ce qui s'est passé en mai. Taux d'intérêt, prix des produits, changements réglementaires — tout ça dans le noir.</p><p><strong>Propriété intellectuelle</strong> — les premiers modèles ont été entraînés sur d'immenses jeux de données sans permission explicite. Une fois l'information dans les poids, on ne peut pas la retirer. C'est intégré.</p><p><strong>Biais</strong> — les données d'entraînement reflètent le monde tel qu'il était, y compris tous les biais et stéréotypes. Les utilisateurs introduisent d'autres biais par la façon dont ils formulent leurs questions. Et l'IA fait preuve de complaisance — elle a tendance à vous donner raison.</p>"
+    },
+    "s3-security-privacy-fraud": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Sécurité, vie privée et fraude",
+      "body": "<p><strong>Deepfakes</strong> — il fallait autrefois un effort considérable pour usurper l'identité de quelqu'un. Maintenant, il suffit d'une photo et de trois secondes d'audio. Le gouvernement britannique identifie la fraude citoyenne comme une préoccupation majeure.</p><p><strong>Vie privée</strong> — les outils gratuits peuvent s'entraîner sur vos données. Les outils payants ne le font généralement pas, mais lisez les conditions.</p><p><strong>Législation</strong> — le Royaume-Uni n'écrit pas de nouvelles lois IA. Il applique la législation existante : RGPD, Data Protection Act, protection des consommateurs.</p>",
+      "callout.title": "Le test de l'e-mail non chiffré",
+      "callout.body": "Si vous ne l'enverriez pas par e-mail non chiffré, ne le collez pas dans un outil d'IA. C'est votre boussole pour les décisions de confidentialité."
+    },
+    "s3-automation-over-trust": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "badge": "ÉMERGENT",
+      "title": "Automatisation et excès de confiance",
+      "body": "<p>Un agent immobilier a déployé l'IA pour gérer les demandes par e-mail. L'IA a répondu automatiquement à un e-mail d'un inspecteur immobilier, <strong>confirmant avec assurance quelque chose de complètement faux</strong> — sans qu'un humain ne vérifie.</p><p>Si vous automatisez une décision, vous devez avoir un humain qui la vérifie avant qu'elle ne parte. Pas comme un goulot d'étranglement à éviter. Comme un mécanisme de sécurité dont vous ne pouvez pas vous passer.</p>",
+      "callout.title": "Le principe",
+      "callout.body": "L'humain dans la boucle n'est pas une faiblesse. C'est le système de contrôle."
+    },
+    "s3-knowledge-exposure-injection": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Exposition des connaissances et injection de prompts",
+      "body": "<p><strong>Exposition des connaissances</strong> — l'IA ne respecte pas la structure de permissions de votre organisation. Si l'information existe quelque part où l'IA a accès, la recherche sémantique la trouvera. Un ingénieur pourrait accidentellement faire remonter des documents stratégiques confidentiels.</p><p><strong>Injection de prompts</strong> — quelqu'un intègre des instructions cachées dans du texte, et l'IA suit ces instructions au lieu des vôtres. Du texte caché dans des documents, des métadonnées ou des images. Vous ne voyez pas toujours ce que l'IA voit.</p>"
+    },
+    "s3-ai-slop-deepfakes": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Contenu IA de mauvaise qualité et deepfakes",
+      "body": "<p><strong>Contenu IA de mauvaise qualité</strong> — du contenu généré par IA de faible valeur. Générer est plus rapide que vérifier, donc la qualité baisse. Les audiences deviennent meilleures pour le reconnaître — enthousiasme artificiel, tirets cadratins partout, expressions comme « approfondir » et « transformateur ». Il y a un coût réputationnel au contenu manifestement généré par IA.</p><p><strong>Deepfakes en temps réel</strong> — quelqu'un imite votre PDG en deepfake lors d'un appel Zoom. Vous demande de traiter un paiement. Trois secondes d'audio et une photo suffisent.</p>",
+      "callout.title": "Vérification",
+      "callout.body": "Pour les deepfakes en temps réel : posez une question personnelle. Quelque chose que la vraie personne saurait mais qui n'est pas trouvable en ligne. « Comment s'appelle votre chien ? » Un deepfake n'aura pas cette connaissance."
+    },
+    "s3-environmental-impact": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Impact environnemental",
+      "stats": [
+        {
+          "number": "11 390 t",
+          "label": "CO₂ de l'entraînement de Llama 3.1"
+        },
+        {
+          "number": "90 %",
+          "label": "L'énergie du cycle de vie est l'inférence"
+        },
+        {
+          "number": "500 ml",
+          "label": "D'eau pour 20-50 requêtes"
+        }
+      ],
+      "body": "<p>L'entraînement fait les gros titres, mais l'inférence — chaque requête que vous lancez — représente 90 % de l'énergie du cycle de vie. À des milliards de requêtes par jour, ça s'accumule.</p>",
+      "callout.title": "Traitez les prompts comme des réunions",
+      "callout.body": "L'objectif compte. Vous n'organiseriez pas une réunion juste pour voir qui se présente. La même discipline s'applique aux requêtes IA. Ayez une raison. Ayez un plan pour le résultat."
+    },
+    "s3-ethics-responsible-ai": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Éthique et IA responsable",
+      "body": "<p>Pas de la philosophie abstraite. C'est comme ça que votre organisation évite les préjudices et maintient la confiance.</p><p><strong>Responsabilité</strong> — quelqu'un est responsable de chaque décision influencée par l'IA. Une personne, pas un processus.</p><p><strong>Équité</strong> — testez les biais avant de déployer. Si la décision affecte des personnes, faites des simulations.</p><p><strong>Transparence</strong> — si l'IA a influencé une décision affectant quelqu'un, cette personne devrait le savoir.</p><p>Certaines décisions ne devraient jamais être entièrement automatisées. Le recrutement bénéficie du tri par IA, mais un humain prend la décision finale. Les décisions de licenciement ne devraient jamais être algorithmiques.</p>"
+    },
+    "s3-safety-checklist": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "badge": "LISTE DE CONTRÔLE",
+      "title": "Votre liste de contrôle sécurité IA",
+      "body": "<p><strong>1.</strong> Ne faites pas aveuglément confiance aux résultats — vérifiez les faits critiques.<br><strong>2.</strong> Rappelez-vous que les modèles sont figés — ils ne savent pas ce qui s'est passé hier.<br><strong>3.</strong> Ne collez pas de données propriétaires dans les outils gratuits.<br><strong>4.</strong> Surveillez les biais — dans les données d'entraînement, dans votre formulation, dans la complaisance de l'IA.<br><strong>5.</strong> Ne partagez pas de données sensibles — appliquez le test de l'e-mail non chiffré.<br><strong>6.</strong> Suivez les évolutions légales — la réglementation évolue.<br><strong>7.</strong> Gardez l'humain dans la boucle — pour toute décision qui compte.</p>"
+    },
+    "s3-risk-radar-interactive": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Explorer : Radar des risques",
+      "subtitle": "Touchez chaque risque pour voir ce qu'il signifie et comment l'atténuer."
+    },
+    "s3-human-in-the-loop": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "L'humain dans la boucle n'est pas une faiblesse. C'est le système de contrôle.",
+      "body": "<p>Sceptique mais productif. Réfléchi mais pas paralysé. C'est comme ça qu'on utilise bien l'IA.</p><p>Maintenant que nous comprenons les risques. Comprenons comment ces systèmes fonctionnent réellement — cette connaissance est un pouvoir.</p>"
+    },
+    "s3-eu-ai-act": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "badge": "RÉGLEMENTATION",
+      "title": "Le règlement européen sur l'IA",
+      "body": "<p><strong>L'effet Bruxelles :</strong> si vous développez, déployez ou importez de l'IA pour des clients européens, vous êtes concerné — même depuis le Royaume-Uni.</p><p>Dates clés :</p><p><strong>Fév 2025</strong> — pratiques interdites (crédit social, reconnaissance des émotions par les forces de l'ordre)<br><strong>Août 2025</strong> — règles GPAI (modèles de classe ChatGPT)<br><strong>Août 2026</strong> — IA à haut risque (recrutement, crédit, médical, police)<br><strong>Août 2027</strong> — régime complet pour les produits réglementés</p>",
+      "stats": [
+        {
+          "number": "35 M€",
+          "label": "Pénalité maximale"
+        },
+        {
+          "number": "7 %",
+          "label": "Du chiffre d'affaires mondial"
+        }
+      ]
+    },
+    "s3-eu-ai-act-changes": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "title": "Règlement européen sur l'IA : ce qui change pour vous",
+      "body": "<p><strong>Audit</strong> — sachez quels systèmes d'IA vous utilisez et où.</p><p><strong>Catégoriser</strong> — classez chaque système dans les catégories interdit, GPAI, haut risque ou réglementé.</p><p><strong>Représenter</strong> — nommez un représentant dans l'UE. Formez le personnel. Documentez les processus.</p><p><strong>Maintenir</strong> — conformité continue, documentation, pistes d'audit.</p>",
+      "callout.title": "Le changement de mentalité",
+      "callout.body": "Ce n'est pas un fardeau imposé par Bruxelles. C'est une réglementation qui codifie les bonnes pratiques. L'humain dans la boucle. Des décisions documentées. La conscience du risque. La loi en fait simplement une obligation légale."
+    },
+    "s3-risk-quiz": {
+      "sectionLabel": "RISQUES DE L'IA",
+      "badge": "VÉRIFICATION RAPIDE",
+      "title": "Testez votre conscience des risques",
+      "quiz.question": "Votre collègue colle un contrat client confidentiel dans la version gratuite de ChatGPT pour le résumer. Quel est le principal risque ?",
+      "quiz.options": ["Le résumé pourrait contenir des hallucinations", "Les données du contrat pourraient être utilisées pour entraîner les modèles d'OpenAI", "ChatGPT pourrait envoyer le résumé à la mauvaise personne", "Le contrat sera stocké de façon permanente sur les serveurs d'OpenAI"]
+    }
+  }
+}

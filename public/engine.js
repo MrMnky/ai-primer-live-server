@@ -1635,6 +1635,12 @@
             <div class="presenter-controls__stat presenter-controls__session-code">
               ${state.sessionCode || ''}
             </div>
+            <button class="presenter-controls__session-btn presenter-controls__end-btn" onclick="AIPrimer.endSession()" title="${t('engine.endSession.button')}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              ${t('engine.endSession.button')}
+            </button>
           </div>
         </div>
       </div>
@@ -1673,13 +1679,251 @@
     if (typeof pauseAndExit === 'function') pauseAndExit(state.sessionCode);
   };
   AIPrimer.adminEnd = function () {
-    if (confirm(t('engine.confirm.endSession'))) {
-      if (state.socket) {
-        state.socket.emit('session-end');
-        state.socket.disconnect();
-      }
-      if (typeof showDashboard === 'function') showDashboard();
+    AIPrimer.endSession();
+  };
+
+  // --- End Session with Post-Session Summary ---
+  AIPrimer.endSession = function () {
+    if (!confirm(t('engine.confirm.endSession'))) return;
+    if (state.socket) {
+      state.socket.emit('session-end');
+      state.socket.disconnect();
     }
+    // Fetch and show post-session summary
+    showPostSessionSummary(state.sessionCode);
+  };
+
+  // --- Post-Session Summary Overlay ---
+  function showPostSessionSummary(sessionCode) {
+    const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+
+    fetch(`${serverUrl}/api/sessions/${sessionCode}/export`)
+      .then(res => res.json())
+      .then(data => {
+        // Remove any existing overlay
+        const existing = document.getElementById('post-session-summary');
+        if (existing) existing.remove();
+
+        // Create overlay container
+        const overlay = document.createElement('div');
+        overlay.id = 'post-session-summary';
+        overlay.className = 'post-session-summary';
+
+        // Calculate session duration
+        const createdAt = new Date(data.session.created_at);
+        const endedAt = new Date(data.session.ended_at);
+        const durationMs = endedAt - createdAt;
+        const durationMins = Math.floor(durationMs / 60000);
+        const durationHours = Math.floor(durationMins / 60);
+        const durationMinsRem = durationMins % 60;
+        const durationStr = durationHours > 0
+          ? `${durationHours}h ${durationMinsRem}m`
+          : `${durationMins}m`;
+
+        // Build HTML
+        let html = `
+          <div class="post-session-summary__container">
+            <div class="post-session-summary__header">
+              <svg class="post-session-summary__logo" viewBox="0 0 32 32" width="48" height="48">
+                <circle cx="16" cy="16" r="15" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M 13 20 L 15 22 L 21 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <h1 class="post-session-summary__title">${t('engine.session.complete')}</h1>
+            </div>
+
+            <div class="post-session-summary__info">
+              <div class="post-session-summary__info-row">
+                <span class="post-session-summary__label">Code:</span>
+                <span class="post-session-summary__value">${data.session.code}</span>
+              </div>
+              <div class="post-session-summary__info-row">
+                <span class="post-session-summary__label">${t('engine.session.duration')}:</span>
+                <span class="post-session-summary__value">${durationStr}</span>
+              </div>
+              <div class="post-session-summary__info-row">
+                <span class="post-session-summary__label">${t('engine.session.totalParticipants')}:</span>
+                <span class="post-session-summary__value">${data.session.total_participants || 0}</span>
+              </div>
+            </div>
+
+            <div class="post-session-summary__stats">
+              <div class="post-session-summary__stat-card">
+                <div class="post-session-summary__stat-number">${data.totalInteractions || 0}</div>
+                <div class="post-session-summary__stat-label">${t('engine.session.totalInteractions')}</div>
+              </div>
+              <div class="post-session-summary__stat-card">
+                <div class="post-session-summary__stat-number">${data.totalResponses || 0}</div>
+                <div class="post-session-summary__stat-label">${t('engine.session.totalResponses')}</div>
+              </div>
+            </div>
+        `;
+
+        // Poll & Quiz Results Section
+        if (data.responsesBySlide) {
+          const pollQuizSlides = [];
+          Object.entries(data.responsesBySlide).forEach(([slideIdx, responses]) => {
+            const slide = state.slides[parseInt(slideIdx)];
+            if (!slide) return;
+            if (slide.poll || slide.quiz) {
+              pollQuizSlides.push({ slideIdx: parseInt(slideIdx), slide, responses });
+            }
+          });
+
+          if (pollQuizSlides.length > 0) {
+            html += `<div class="post-session-summary__section">
+              <h2 class="post-session-summary__section-title">${t('engine.session.pollResults')}</h2>
+              <div class="post-session-summary__results-list">`;
+
+            pollQuizSlides.forEach(({ slideIdx, slide, responses }) => {
+              const isPoll = !!slide.poll;
+              const question = isPoll ? slide.poll.question : slide.quiz.question;
+              const options = isPoll ? slide.poll.options : slide.quiz.options;
+
+              // Count responses per option
+              const counts = {};
+              options.forEach((_, i) => { counts[i] = 0; });
+              responses.forEach(r => {
+                if (typeof r === 'number' && r in counts) counts[r]++;
+                else if (typeof r === 'string') {
+                  const idx = options.indexOf(r);
+                  if (idx >= 0) counts[idx]++;
+                }
+              });
+
+              const total = Object.values(counts).reduce((a, b) => a + b, 0);
+              const maxCount = Math.max(...Object.values(counts), 1);
+
+              html += `<div class="post-session-summary__result-item">
+                <div class="post-session-summary__result-question">${question}</div>
+                <div class="post-session-summary__bars">`;
+
+              options.forEach((opt, i) => {
+                const count = counts[i];
+                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                const barWidth = total > 0 ? Math.round((count / maxCount) * 100) : 0;
+                html += `<div class="post-session-summary__bar-row">
+                  <div class="post-session-summary__bar-label">${opt}</div>
+                  <div class="post-session-summary__bar-container">
+                    <div class="post-session-summary__bar-fill" style="width:${barWidth}%"></div>
+                  </div>
+                  <div class="post-session-summary__bar-stats">${count} (${pct}%)</div>
+                </div>`;
+              });
+
+              html += `</div>
+              </div>`;
+            });
+
+            html += `</div>
+            </div>`;
+          }
+        }
+
+        // Text Responses (Word Clouds)
+        if (data.responsesBySlide) {
+          const textSlides = [];
+          Object.entries(data.responsesBySlide).forEach(([slideIdx, responses]) => {
+            const slide = state.slides[parseInt(slideIdx)];
+            if (!slide) return;
+            if (slide.textInput && responses && responses.length > 0) {
+              textSlides.push({ slideIdx: parseInt(slideIdx), slide, responses });
+            }
+          });
+
+          if (textSlides.length > 0) {
+            html += `<div class="post-session-summary__section">
+              <h2 class="post-session-summary__section-title">${t('engine.session.textResponses')}</h2>
+              <div class="post-session-summary__text-responses">`;
+
+            textSlides.forEach(({ slideIdx, slide }) => {
+              html += `<div class="post-session-summary__text-response-item">
+                <div class="post-session-summary__text-prompt">${slide.textInput.prompt || 'Text Response'}</div>
+                <div id="wordcloud-${slideIdx}" class="post-session-summary__wordcloud"></div>
+              </div>`;
+            });
+
+            html += `</div>
+            </div>`;
+          }
+        }
+
+        // Action buttons
+        html += `
+          <div class="post-session-summary__actions">
+            <button class="post-session-summary__btn post-session-summary__btn--download" onclick="AIPrimer.downloadSessionReport('${sessionCode}')">
+              ${t('engine.session.downloadReport')}
+            </button>
+            <button class="post-session-summary__btn post-session-summary__btn--primary" onclick="AIPrimer.returnToDashboard()">
+              ${t('engine.session.backToDashboard')}
+            </button>
+          </div>
+          </div>
+        `;
+
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+
+        // Render word clouds for text responses
+        if (data.responsesBySlide) {
+          Object.entries(data.responsesBySlide).forEach(([slideIdx, responses]) => {
+            const slide = state.slides[parseInt(slideIdx)];
+            if (!slide || !slide.textInput) return;
+
+            // Build word cloud from responses (if they're words)
+            if (responses && responses.length > 0) {
+              const words = {};
+              responses.forEach(r => {
+                if (typeof r === 'string') {
+                  const trimmed = r.trim();
+                  if (trimmed) {
+                    words[trimmed] = (words[trimmed] || 0) + 1;
+                  }
+                }
+              });
+
+              const wordArray = Object.entries(words)
+                .map(([word, count]) => ({ word, count }))
+                .sort((a, b) => b.count - a.count);
+
+              const cloudEl = document.getElementById(`wordcloud-${slideIdx}`);
+              if (cloudEl) {
+                renderWordCloudInto(cloudEl, wordArray);
+              }
+            }
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load post-session summary:', err);
+        alert('Could not load session summary.');
+        if (typeof showDashboard === 'function') showDashboard();
+      });
+  }
+
+  // --- Download Session Report ---
+  AIPrimer.downloadSessionReport = function (sessionCode) {
+    const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+
+    fetch(`${serverUrl}/api/sessions/${sessionCode}/export`)
+      .then(res => res.json())
+      .then(data => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `session-${sessionCode}-export.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        console.error('Download failed:', err);
+        alert(t('presenter.error.exportFailed'));
+      });
+  };
+
+  // --- Return to Dashboard ---
+  AIPrimer.returnToDashboard = function () {
+    if (typeof showDashboard === 'function') showDashboard();
   };
 
 })();

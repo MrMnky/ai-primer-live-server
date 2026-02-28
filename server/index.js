@@ -232,8 +232,17 @@ app.post('/api/sessions', async (req, res) => {
   };
 
   if (SUPABASE_KEY) {
-    const { error } = await db.insert('sessions', session);
-    if (error) return res.status(500).json({ error });
+    let { error } = await db.insert('sessions', session);
+    // If insert fails (e.g. course_id column missing), retry without it
+    if (error) {
+      console.warn('[Sessions] Insert failed, retrying without course_id:', error.message || error);
+      const { course_id, ...sessionWithoutCourse } = session;
+      const retry = await db.insert('sessions', sessionWithoutCourse);
+      if (retry.error) {
+        console.error('[Sessions] Insert retry also failed:', retry.error);
+        return res.status(500).json({ error: retry.error });
+      }
+    }
   }
 
   sessionCache[code] = {

@@ -299,6 +299,11 @@
           }),
         });
         const data = await res.json();
+        if (!res.ok || !data.code) {
+          console.error('Session creation error:', data);
+          alert('Could not create session. Server returned: ' + (data.error?.message || JSON.stringify(data.error) || 'unknown error'));
+          return;
+        }
         openSetup(data.code);
       } catch (err) {
         console.error('Failed to create session:', err);

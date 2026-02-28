@@ -1,7 +1,12 @@
 {
   "ui": {
     "engine.textInput.placeholder": "Saisissez votre réponse...",
-    "engine.quiz.optionLabels": ["A", "B", "C", "D"],
+    "engine.quiz.optionLabels": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
     "engine.quiz.submitted": "Soumis",
     "engine.activity.joined": "a rejoint la session",
     "engine.activity.left": "a quitté la session",
@@ -30,6 +35,8 @@
     "engine.adminConsole.endSession": "Terminer la session",
     "engine.textInput.submit": "Envoyer",
     "engine.poll.responses": "réponses",
+    "engine.reveal.button": "Révéler les résultats",
+    "engine.reveal.revealed": "Résultats révélés",
     "engine.presenter.noNotes": "Pas de notes pour cette diapositive.",
     "engine.presenter.endOfPresentation": "Fin de la présentation",
     "engine.presenter.nextSlide": "Diapositive suivante",
@@ -190,7 +197,12 @@
       "sectionLabel": "LES FONDAMENTAUX",
       "title": "Où en est votre équipe ?",
       "poll.question": "Comment décririez-vous la relation actuelle de votre organisation avec l'IA ?",
-      "poll.options": ["Curieux mais prudents — nous n'avons pas vraiment commencé", "Expérimentation — certaines personnes l'utilisent individuellement", "Adoption — nous avons des initiatives structurées", "Passage à l'échelle — l'IA fait partie de notre façon de travailler"]
+      "poll.options": [
+        "Curieux mais prudents — nous n'avons pas vraiment commencé",
+        "Expérimentation — certaines personnes l'utilisent individuellement",
+        "Adoption — nous avons des initiatives structurées",
+        "Passage à l'échelle — l'IA fait partie de notre façon de travailler"
+      ]
     },
     "s3-opener": {
       "sectionLabel": "SECTION 3",
@@ -312,7 +324,12 @@
       "badge": "VÉRIFICATION RAPIDE",
       "title": "Testez votre conscience des risques",
       "quiz.question": "Votre collègue colle un contrat client confidentiel dans la version gratuite de ChatGPT pour le résumer. Quel est le principal risque ?",
-      "quiz.options": ["Le résumé pourrait contenir des hallucinations", "Les données du contrat pourraient être utilisées pour entraîner les modèles d'OpenAI", "ChatGPT pourrait envoyer le résumé à la mauvaise personne", "Le contrat sera stocké de façon permanente sur les serveurs d'OpenAI"]
+      "quiz.options": [
+        "Le résumé pourrait contenir des hallucinations",
+        "Les données du contrat pourraient être utilisées pour entraîner les modèles d'OpenAI",
+        "ChatGPT pourrait envoyer le résumé à la mauvaise personne",
+        "Le contrat sera stocké de façon permanente sur les serveurs d'OpenAI"
+      ]
     }
   }
 }

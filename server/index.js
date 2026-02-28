@@ -103,6 +103,7 @@ async function loadActiveSessions() {
         status: s.status,
         courseId: s.course_id || null,
         language: s.language || 'en',
+        revealedSlides: {},
         createdAt: s.created_at,
         startedAt: s.started_at,
         endedAt: s.ended_at,
@@ -258,6 +259,7 @@ app.post('/api/sessions', async (req, res) => {
     slideCount: session.slide_count,
     courseId: session.course_id,
     language: session.language || 'en',
+    revealedSlides: {},
     currentSlide: 0,
     status: 'active',
     createdAt: new Date().toISOString(),
@@ -414,6 +416,7 @@ io.on('connection', (socket) => {
     socket.emit('session-state', {
       currentSlide: sessionCache[sessionCode].currentSlide,
       status: sessionCache[sessionCode].status,
+      revealedSlides: sessionCache[sessionCode].revealedSlides || {},
       participants: (liveParticipants[sessionCode] || []).map(p => ({
         id: p.id, name: p.name, currentSlide: p.currentSlide,
         joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
@@ -437,6 +440,10 @@ io.on('connection', (socket) => {
     liveParticipants[sessionCode].push(participant);
 
     socket.emit('slide-change', { slideIndex: sessionCache[sessionCode].currentSlide });
+    // Send revealed slides state for late joiners
+    if (sessionCache[sessionCode].revealedSlides && Object.keys(sessionCache[sessionCode].revealedSlides).length) {
+      socket.emit('session-state', { revealedSlides: sessionCache[sessionCode].revealedSlides });
+    }
 
     const participantList = liveParticipants[sessionCode].map(p => ({
       id: p.id, name: p.name, currentSlide: p.currentSlide,
@@ -510,6 +517,39 @@ io.on('connection', (socket) => {
       liveParticipants[sessionCode].forEach(p => { p.currentSlide = data.slideIndex; });
     }
     socket.to(sessionCode).emit('slide-change', data);
+  });
+
+  // Results reveal (presenter-only)
+  socket.on('results-reveal', (data) => {
+    if (mode !== 'presenter') return;
+    const slideIndex = data.slideIndex;
+
+    // Track revealed state
+    if (!sessionCache[sessionCode].revealedSlides) sessionCache[sessionCode].revealedSlides = {};
+    sessionCache[sessionCode].revealedSlides[slideIndex] = true;
+
+    // Aggregate current results for this slide
+    const responses = (responseCache[sessionCode] || []).filter(r => r.slideIndex === slideIndex);
+    const type = data.type || (responses[0] ? responses[0].type : 'poll');
+    const counts = {};
+    responses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
+    const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
+    const options = [];
+    for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
+
+    // Broadcast to all clients in session
+    io.to(sessionCode).emit('results-revealed', {
+      slideIndex,
+      type,
+      results: { options, total: responses.length },
+    });
+
+    logInteraction(sessionCode, 'results_revealed', {
+      slideIndex,
+      eventData: { type, total: responses.length },
+    });
+
+    console.log(`Results revealed for slide ${slideIndex} in ${sessionCode} (${responses.length} responses)`);
   });
 
   // Participant responses

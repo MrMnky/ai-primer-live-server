@@ -23,7 +23,8 @@
     courseMeta: null,  // course metadata from registry
     language: 'en',    // current language code
     i18n: {},          // loaded translation data for current language
-    i18nFallback: {},  // English fallback (always loaded)
+    i18nFallback: {},  // English fallback
+    revealedSlides: {},   // slideIndex -> true (results have been revealed) (always loaded)
   };
 
   // --- Slide Definition Format ---
@@ -338,31 +339,43 @@
   }
 
   function renderQuiz(quiz, slideIndex) {
+    const isRevealed = state.revealedSlides[slideIndex];
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-    let html = `<div class="quiz" data-slide="${slideIndex}">`;
+    let html = `<div class="quiz${isRevealed ? ' revealed' : ''}" data-slide="${slideIndex}">`;
     html += `<div class="quiz__question">${quiz.question}</div>`;
     html += `<div class="quiz__options">`;
     quiz.options.forEach((opt, i) => {
-      html += `<div class="quiz__option" data-option="${i}" onclick="AIPrimer.selectQuizOption(${slideIndex}, ${i})">`;
+      const correctClass = isRevealed && i === quiz.correct ? ' correct' : '';
+      const incorrectClass = isRevealed && i !== quiz.correct ? ' incorrect' : '';
+      html += `<div class="quiz__option${correctClass}${incorrectClass}" data-option="${i}" onclick="AIPrimer.selectQuizOption(${slideIndex}, ${i})">`;
       html += `<span class="quiz__option-marker">${letters[i]}</span>`;
       html += `<span>${opt}</span>`;
       html += `</div>`;
     });
-    html += `</div></div>`;
+    html += `</div>`;
+    if (state.mode === 'presenter') {
+      html += `<button class="btn btn--reveal${isRevealed ? ' revealed' : ''}" onclick="AIPrimer.revealResults(${slideIndex})"${isRevealed ? ' disabled' : ''}>${isRevealed ? t('engine.reveal.revealed') + ' ✓' : t('engine.reveal.button')}</button>`;
+    }
+    html += `</div>`;
     return html;
   }
 
   function renderPoll(poll, slideIndex) {
-    let html = `<div class="poll" data-slide="${slideIndex}">`;
+    const isRevealed = state.revealedSlides[slideIndex];
+    const hideResults = state.mode === 'participant' && !isRevealed;
+    let html = `<div class="poll${isRevealed ? ' revealed' : ''}" data-slide="${slideIndex}">`;
     html += `<div class="quiz__question">${poll.question}</div>`;
     poll.options.forEach((opt, i) => {
       html += `<div class="poll__bar-container">`;
-      html += `<div class="poll__bar-label"><span>${opt}</span><span class="poll__bar-pct" data-option="${i}">0%</span></div>`;
+      html += `<div class="poll__bar-label"><span>${opt}</span><span class="poll__bar-pct${hideResults ? ' hidden' : ''}" data-option="${i}">0%</span></div>`;
       html += `<div class="poll__bar-track" data-option="${i}" onclick="AIPrimer.selectPollOption(${slideIndex}, ${i})">`;
       html += `<div class="poll__bar-fill" style="width: 0%"></div>`;
       html += `</div></div>`;
     });
-    html += `<div class="poll__total">0 ${t('engine.poll.responses')}</div>`;
+    html += `<div class="poll__total${hideResults ? ' hidden' : ''}">0 ${t('engine.poll.responses')}</div>`;
+    if (state.mode === 'presenter') {
+      html += `<button class="btn btn--reveal${isRevealed ? ' revealed' : ''}" onclick="AIPrimer.revealResults(${slideIndex})"${isRevealed ? ' disabled' : ''}>${isRevealed ? t('engine.reveal.revealed') + ' ✓' : t('engine.reveal.button')}</button>`;
+    }
     html += `</div>`;
     return html;
   }
@@ -589,7 +602,7 @@
     options[optionIndex].classList.add('selected');
 
     // If in self-paced or we want to show correct immediately
-    if (state.mode === 'self' || state.mode === 'presenter') {
+    if (state.mode === 'self') {
       setTimeout(() => {
         options.forEach((o, i) => {
           if (i === quiz.correct) o.classList.add('correct');
@@ -624,6 +637,20 @@
       btn.disabled = true;
     }
   };
+  AIPrimer.revealResults = function (slideIndex) {
+    if (!state.socket || !state.connected) return;
+    const slide = state.slides[slideIndex];
+    const type = slide.poll ? 'poll' : 'quiz';
+    state.socket.emit('results-reveal', { slideIndex, type });
+
+    // Optimistic UI — disable button immediately
+    const btn = document.querySelector(`.poll[data-slide="${slideIndex}"] .btn--reveal, .quiz[data-slide="${slideIndex}"] .btn--reveal`);
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('revealed');
+      btn.textContent = t('engine.reveal.revealed') + ' ✓';
+    }
+  };
 
   function sendResponse(slideIndex, type, data) {
     const payload = {
@@ -646,6 +673,8 @@
 
   // --- Poll Results Update ---
   function updatePollResults(slideIndex, results) {
+    // In participant mode, don't update bars until results are revealed
+    if (state.mode === 'participant' && !state.revealedSlides[slideIndex]) return;
     // results = { options: [count, count, ...], total: N }
     const container = document.querySelector(`.poll[data-slide="${slideIndex}"]`);
     if (!container) return;
@@ -799,6 +828,12 @@
       state.socket.on('slide-change', (data) => {
         goToSlide(data.slideIndex);
       });
+
+      state.socket.on('session-state', (data) => {
+        if (data.revealedSlides) {
+          state.revealedSlides = data.revealedSlides;
+        }
+      });
     }
 
     // Presenter: receive responses and session state for reconnection
@@ -811,6 +846,9 @@
         if (data.participants) {
           state.participants = data.participants;
           updateParticipantCount();
+        }
+        if (data.revealedSlides) {
+          state.revealedSlides = data.revealedSlides;
         }
       });
 
@@ -843,6 +881,45 @@
 
     state.socket.on('quiz-update', (data) => {
       updateQuizResults(data.slideIndex, data.results);
+    });
+
+    state.socket.on('results-revealed', (data) => {
+      state.revealedSlides[data.slideIndex] = true;
+
+      if (data.type === 'poll') {
+        const container = document.querySelector(`.poll[data-slide="${data.slideIndex}"]`);
+        if (container) {
+          container.classList.add('revealed');
+          // Show hidden elements
+          container.querySelectorAll('.poll__bar-pct.hidden').forEach(el => el.classList.remove('hidden'));
+          const totalEl = container.querySelector('.poll__total.hidden');
+          if (totalEl) totalEl.classList.remove('hidden');
+        }
+        updatePollResults(data.slideIndex, data.results);
+      }
+
+      if (data.type === 'quiz') {
+        const container = document.querySelector(`.quiz[data-slide="${data.slideIndex}"]`);
+        if (container) {
+          container.classList.add('revealed');
+          // Mark correct/incorrect
+          const slide = state.slides[data.slideIndex];
+          if (slide && slide.quiz) {
+            container.querySelectorAll('.quiz__option').forEach((opt, i) => {
+              if (i === slide.quiz.correct) opt.classList.add('correct');
+              else opt.classList.add('incorrect');
+            });
+          }
+        }
+      }
+
+      // Update reveal button if present (presenter view)
+      const btn = document.querySelector(`.poll[data-slide="${data.slideIndex}"] .btn--reveal, .quiz[data-slide="${data.slideIndex}"] .btn--reveal`);
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('revealed');
+        btn.textContent = t('engine.reveal.revealed') + ' ✓';
+      }
     });
 
     state.socket.on('text-update', (data) => {

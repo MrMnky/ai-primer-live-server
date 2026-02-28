@@ -1,7 +1,12 @@
 {
   "ui": {
     "engine.textInput.placeholder": "Type your response...",
-    "engine.quiz.optionLabels": ["A", "B", "C", "D"],
+    "engine.quiz.optionLabels": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
     "engine.quiz.submitted": "Submitted",
     "engine.activity.joined": "joined the session",
     "engine.activity.left": "left the session",
@@ -30,6 +35,8 @@
     "engine.adminConsole.endSession": "End Session",
     "engine.textInput.submit": "Submit",
     "engine.poll.responses": "responses",
+    "engine.reveal.button": "Reveal Results",
+    "engine.reveal.revealed": "Results Revealed",
     "engine.presenter.noNotes": "No notes for this slide.",
     "engine.presenter.endOfPresentation": "End of presentation",
     "engine.presenter.nextSlide": "Next Slide",
@@ -128,9 +135,18 @@
       "title": "The AI Adoption Curve",
       "body": "<p>There are four stages of AI adoption in an organisation:</p><p><strong>Understanding → Relevance → Framework → Implementation</strong></p><p>Most organisations spend about a week on Understanding, half-do Relevance, struggle with Framework, and then jump straight to Implementation.</p>",
       "stats": [
-        {"number": "1 week", "label": "Average time on Understanding"},
-        {"number": "Skipped", "label": "Relevance stage"},
-        {"number": "80%", "label": "Jump straight to tools"}
+        {
+          "number": "1 week",
+          "label": "Average time on Understanding"
+        },
+        {
+          "number": "Skipped",
+          "label": "Relevance stage"
+        },
+        {
+          "number": "80%",
+          "label": "Jump straight to tools"
+        }
       ]
     },
     "s1-left-side-of-curve": {
@@ -150,9 +166,18 @@
       "title": "Knowledge ≠ Confidence",
       "body": "<p>These two metrics are different, and they matter in different ways:</p><p><strong>High knowledge, low confidence:</strong> understands AI but nervous about using it. Worried about making mistakes.</p><p><strong>High confidence, low knowledge:</strong> dives in, tries everything, might get lucky — but isn't sure what they don't know.</p><p>The sweet spot is both together. That's what this course builds.</p>",
       "stats": [
-        {"number": "3", "label": "Metrics that matter"},
-        {"number": "Frequency", "label": "How often they use it"},
-        {"number": "K + C", "label": "Knowledge × Confidence"}
+        {
+          "number": "3",
+          "label": "Metrics that matter"
+        },
+        {
+          "number": "Frequency",
+          "label": "How often they use it"
+        },
+        {
+          "number": "K + C",
+          "label": "Knowledge × Confidence"
+        }
       ]
     },
     "s1-invisible-ai-use": {
@@ -215,9 +240,18 @@
       "callout.title": "The encyclopaedia analogy",
       "callout.body": "Imagine an encyclopaedia from 2023. You can read it, ask it questions, have a conversation with it. But it doesn't change because you're using it. In a year, it's still the 2023 version.",
       "stats": [
-        {"number": "Frozen", "label": "Model is a snapshot"},
-        {"number": "Private", "label": "Data not absorbed"},
-        {"number": "Dated", "label": "Knowledge has a cut-off"}
+        {
+          "number": "Frozen",
+          "label": "Model is a snapshot"
+        },
+        {
+          "number": "Private",
+          "label": "Data not absorbed"
+        },
+        {
+          "number": "Dated",
+          "label": "Knowledge has a cut-off"
+        }
       ]
     },
     "s2-what-is-ai-recap": {
@@ -236,9 +270,18 @@
       "title": "Why \"Large\"?",
       "body": "<p>Three things make these models \"large\":</p>",
       "stats": [
-        {"number": "Petabytes", "label": "of training data"},
-        {"number": "Billions", "label": "of parameters (weights)"},
-        {"number": "Months", "label": "of compute time"}
+        {
+          "number": "Petabytes",
+          "label": "of training data"
+        },
+        {
+          "number": "Billions",
+          "label": "of parameters (weights)"
+        },
+        {
+          "number": "Months",
+          "label": "of compute time"
+        }
       ],
       "callout.title": "The mixing desk",
       "callout.body": "Parameters are like knobs on a studio mixing desk. Billions of them, each tuned during training to capture patterns in the data. That's what \"large\" means — a huge number of tunable components."
@@ -271,9 +314,18 @@
       "title": "Why emergence matters",
       "body": "<p>We're in a <strong>discovery phase</strong>. Someone, somewhere, might find an ability in today's models that no one else has discovered yet. A better way to diagnose disease. A clever engineering solution. Something we haven't thought of.</p>\n<p>But unpredictability cuts both ways. If models develop abilities we don't expect, that's exciting — and it's also a reminder that we're less in control of what they can do.</p>",
       "stats": [
-        {"number": "Discovery", "label": "phase we're in"},
-        {"number": "Exciting", "label": "new capabilities emerging"},
-        {"number": "Concerning", "label": "less predictable systems"}
+        {
+          "number": "Discovery",
+          "label": "phase we're in"
+        },
+        {
+          "number": "Exciting",
+          "label": "new capabilities emerging"
+        },
+        {
+          "number": "Concerning",
+          "label": "less predictable systems"
+        }
       ]
     },
     "s2-capabilities-explorer-interactive": {
@@ -391,9 +443,18 @@
       "title": "Environmental impact",
       "body": "<p>Training gets the headlines, but inference — every query you run — is 90% of the lifecycle energy. At billions of queries daily, that adds up.</p>",
       "stats": [
-        {"number": "11,390t", "label": "CO₂ from training Llama 3.1"},
-        {"number": "90%", "label": "Lifecycle energy is inference"},
-        {"number": "500ml", "label": "Water per 20–50 queries"}
+        {
+          "number": "11,390t",
+          "label": "CO₂ from training Llama 3.1"
+        },
+        {
+          "number": "90%",
+          "label": "Lifecycle energy is inference"
+        },
+        {
+          "number": "500ml",
+          "label": "Water per 20–50 queries"
+        }
       ],
       "callout.title": "Treat prompts like meetings",
       "callout.body": "Purpose matters. You wouldn't book a meeting just to see who shows up. Same discipline applies to AI queries. Have a reason. Have a plan for the output."
@@ -425,8 +486,14 @@
       "title": "The EU AI Act",
       "body": "<p><strong>Brussels effect:</strong> if you develop, deploy, or import AI for EU customers, you're covered — even from the UK.</p>\n<p>Key deadlines:</p>\n<p><strong>Feb 2025</strong> — prohibited practices (social credit, emotion recognition in law enforcement)<br><strong>Aug 2025</strong> — GPAI rules (ChatGPT-class models)<br><strong>Aug 2026</strong> — high-risk AI (hiring, credit, medical, policing)<br><strong>Aug 2027</strong> — full regime for regulated products</p>",
       "stats": [
-        {"number": "€35m", "label": "Maximum penalty"},
-        {"number": "7%", "label": "Of global turnover"}
+        {
+          "number": "€35m",
+          "label": "Maximum penalty"
+        },
+        {
+          "number": "7%",
+          "label": "Of global turnover"
+        }
       ]
     },
     "s3-eu-ai-act-changes": {
@@ -575,9 +642,18 @@
       "sectionLabel": "PROMPTING",
       "title": "Three principles to remember",
       "stats": [
-        {"number": "1", "label": "Context is king"},
-        {"number": "2", "label": "Design interactions, not questions"},
-        {"number": "3", "label": "Structured thinking, not clever wording"}
+        {
+          "number": "1",
+          "label": "Context is king"
+        },
+        {
+          "number": "2",
+          "label": "Design interactions, not questions"
+        },
+        {
+          "number": "3",
+          "label": "Structured thinking, not clever wording"
+        }
       ],
       "body": "<p>Everything flows from context. Better prompts don't come from trickier syntax — they come from richer, more relevant context. You're not wordsmithing. You're designing how the conversation goes.</p>"
     },

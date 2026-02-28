@@ -150,6 +150,59 @@ function select(i) {
 }
 
 render();
+
+// --- GraphicContainer postMessage Protocol ---
+(function() {
+  let _graphicState = {};
+  
+  // Listen for messages from parent (slide engine)
+  window.addEventListener('message', function(event) {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+    
+    switch (msg.type) {
+      case 'INIT':
+        // Received init data from parent (device type, slide index, etc.)
+        _graphicState = msg.data || {};
+        if (typeof onGraphicInit === 'function') onGraphicInit(_graphicState);
+        break;
+      case 'SESSION_DATA':
+        if (typeof onSessionData === 'function') onSessionData(msg.data);
+        break;
+      case 'RESET':
+        _graphicState = {};
+        if (typeof onGraphicReset === 'function') onGraphicReset();
+        break;
+    }
+  });
+  
+  // Notify parent that graphic is loaded and ready
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+  }
+  
+  // Helper: call from graphic to signal completion
+  window.graphicComplete = function(data) {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'GRAPHIC_COMPLETE', data: data || {} }, '*');
+    }
+  };
+  
+  // Helper: request session data from parent
+  window.requestSessionData = function(key) {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'REQUEST_SESSION_DATA', key: key }, '*');
+    }
+  };
+  
+  // Helper: log an interaction event
+  window.logInteraction = function(action, data) {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'LOG_INTERACTION', action: action, data: data || {} }, '*');
+    }
+  };
+})();
+
 </script>
 </body>
 </html>

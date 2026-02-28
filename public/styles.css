@@ -1671,3 +1671,59 @@ html, body {
     right: 12px;
   }
 }
+
+/* --- Graphic Slides (interactive iframe containers) --- */
+.slide--graphic {
+  padding: 0;
+}
+
+.slide--graphic .slide__title {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  z-index: 2;
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+
+.slide--graphic .slide__section-label {
+  position: absolute;
+  top: 8px;
+  left: 32px;
+  z-index: 2;
+}
+
+.slide__graphic-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.slide__graphic-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+/* When graphic has a title, push iframe down */
+.slide--graphic .slide__title ~ .slide__graphic-container,
+.slide--graphic .slide__section-label ~ .slide__graphic-container {
+  top: 72px;
+}
+
+@media (max-width: 768px) {
+  .slide--graphic .slide__title {
+    font-size: 1rem;
+    top: 16px;
+    left: 20px;
+  }
+  .slide--graphic .slide__section-label {
+    top: 4px;
+    left: 20px;
+  }
+  .slide--graphic .slide__title ~ .slide__graphic-container,
+  .slide--graphic .slide__section-label ~ .slide__graphic-container {
+    top: 56px;
+  }
+}

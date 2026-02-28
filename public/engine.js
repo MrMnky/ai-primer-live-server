@@ -19,6 +19,8 @@
     connected: false,
     participants: [],
     responses: {},     // slideIndex -> { participantId -> response }
+    courseId: null,     // registry course ID (if using registry)
+    courseMeta: null,  // course metadata from registry
   };
 
   // --- Slide Definition Format ---
@@ -60,6 +62,7 @@
                       slide.type === 'split' ? 'slide--split' :
                       slide.type === 'section' ? 'slide--cover' :
                       slide.type === 'full-media' ? 'slide--full-media' :
+                      slide.type === 'graphic' ? 'slide--graphic' :
                       slide.type === 'results' ? '' : '';
 
     const div = el('div', `slide ${themeClass} ${typeClass}`.trim());
@@ -173,6 +176,11 @@
       html += '</div>';
     }
 
+    // Graphic (interactive iframe via GraphicContainer)
+    if (slide.type === 'graphic' && slide.graphic) {
+      html += `<div class="slide__graphic-container" data-slide="${index}" data-graphic-id="${slide.graphic.id}"></div>`;
+    }
+
     // Results (aggregated responses display)
     if (slide.results) {
       html += renderResults(slide.results, index);
@@ -225,14 +233,38 @@
   function goToSlide(index) {
     if (index < 0 || index >= state.slides.length) return;
 
-    const prev = state.currentSlide;
+    const prevIndex = state.currentSlide;
     state.currentSlide = index;
+
+    // Unmount graphic from previous slide if it had one
+    if (typeof GraphicContainer !== 'undefined' && state.slides[prevIndex]?.type === 'graphic') {
+      GraphicContainer.unmount(prevIndex);
+    }
 
     // Update active slide
     const slideEls = document.querySelectorAll('.slide-viewport .slide');
     slideEls.forEach((el, i) => {
       el.classList.toggle('active', i === index);
     });
+
+    // Mount graphic if current slide is a graphic type
+    if (typeof GraphicContainer !== 'undefined' && state.slides[index]?.type === 'graphic' && state.slides[index].graphic) {
+      const containerEl = document.querySelector(`.slide__graphic-container[data-slide="${index}"]`);
+      if (containerEl && !containerEl.querySelector('iframe')) {
+        GraphicContainer.mount(
+          containerEl,
+          state.slides[index].graphic,
+          index,
+          (data) => { /* onComplete */ sendResponse(index, 'graphic', data); },
+          (data) => { /* onInteraction */ addActivityItem('🎨', state.participantName || 'Participant', `interacted with graphic`); }
+        );
+      }
+    }
+
+    // Prefetch upcoming graphics
+    if (typeof GraphicContainer !== 'undefined') {
+      GraphicContainer.prefetchUpcoming(state.slides, index, 3);
+    }
 
     // Update progress bar
     const progress = ((index + 1) / state.slides.length) * 100;
@@ -834,8 +866,36 @@
 
   // --- Initialisation ---
   function init(config) {
-    // config = { slides: [...], mode: 'presenter'|'participant'|'self', containerId: '...' }
-    state.slides = config.slides || [];
+    // config = { slides: [...], courseId: '...', mode: 'presenter'|'participant'|'self', containerId: '...' }
+    //
+    // Slide resolution priority:
+    //   1. config.courseId → resolve via SlideRegistry.getCourse()
+    //   2. config.slides → use directly (legacy path)
+    //   3. window.AI_PRIMER_SLIDES → final fallback
+    //
+    if (config.courseId && typeof SlideRegistry !== 'undefined') {
+      const course = SlideRegistry.getCourse(config.courseId);
+      if (course) {
+        state.slides = course.slides;
+        state.courseId = config.courseId;
+        state.courseMeta = { title: course.title, sections: course.sections, metadata: course.metadata };
+        console.log(`[Engine] Loaded course '${config.courseId}' with ${course.slides.length} slides`);
+      } else {
+        console.warn(`[Engine] Course '${config.courseId}' not found, falling back to slides array`);
+        state.slides = config.slides || window.AI_PRIMER_SLIDES || [];
+      }
+    } else if (config.slides) {
+      // Legacy path: enrich with registry IDs if available
+      if (typeof SlideRegistry !== 'undefined') {
+        state.slides = SlideRegistry.enrichLegacySlides(config.slides);
+        console.log(`[Engine] Enriched ${state.slides.length} legacy slides with registry IDs`);
+      } else {
+        state.slides = config.slides;
+      }
+    } else {
+      state.slides = window.AI_PRIMER_SLIDES || [];
+    }
+
     state.mode = config.mode || 'self';
     state.sessionCode = config.sessionCode || null;
     state.participantName = config.participantName || null;
@@ -951,6 +1011,8 @@
   AIPrimer.prev = prev;
   AIPrimer.goToSlide = goToSlide;
   AIPrimer.getState = () => ({ ...state });
+  AIPrimer.getCourseId = () => state.courseId;
+  AIPrimer.getCourseMeta = () => state.courseMeta;
   AIPrimer.toggleSessionPanel = toggleSessionPanel;
   AIPrimer.toggleAdminConsole = toggleAdminConsole;
   AIPrimer.switchAdminTab = switchAdminTab;

@@ -51,7 +51,10 @@ async function supabaseQuery(table, method, opts = {}) {
       return { data: null, error: null };
     }
 
-    const data = await res.json();
+    // DELETE and some responses return empty body
+    const text = await res.text();
+    if (!text) return { data: null, error: null };
+    const data = JSON.parse(text);
     return { data, error: null };
   } catch (err) {
     console.error(`Supabase ${method} ${table} error:`, err.message);

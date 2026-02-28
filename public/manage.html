@@ -501,8 +501,7 @@
                 const statusBadgeClass = `badge-${session.status || 'created'}`;
                 const formattedDate = formatDate(session.createdAt);
                 const participantCount = session.participantCount || 0;
-                const isLive = session.status === 'started' || session.status === 'active';
-                const canDelete = !session.status || !isLive;
+                const canDelete = true;
 
                 html += `
                     <tr>

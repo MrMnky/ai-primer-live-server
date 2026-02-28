@@ -427,6 +427,12 @@
       case 'f':
         toggleFullscreen();
         break;
+      case 's':
+        if (state.mode === 'presenter') toggleSectionNav();
+        break;
+      case 'Escape':
+        if (sectionNavOpen) { toggleSectionNav(); e.preventDefault(); }
+        break;
     }
   }
 
@@ -967,6 +973,137 @@
   function updateSessionPanel() { updateAdminConsole(); }
   function toggleSessionPanel() { toggleAdminConsole(); }
 
+  // --- Section Navigator (presenter-only overlay) ---
+  let sectionNavOpen = false;
+
+  function getSectionMap() {
+    // Build section → slide index mapping from course metadata or slide prefixes
+    const sections = [];
+    const meta = state.courseMeta;
+
+    if (meta && meta.sections && meta.sections.length > 0) {
+      // Use course metadata sections
+      meta.sections.forEach(sec => {
+        const firstIdx = state.slides.findIndex(s => s.id && s.id.startsWith(sec.prefix + '-'));
+        if (firstIdx >= 0) {
+          // Count slides in this section
+          let count = 0;
+          for (let i = firstIdx; i < state.slides.length; i++) {
+            if (state.slides[i].id && state.slides[i].id.startsWith(sec.prefix + '-')) count++;
+            else if (count > 0) break;
+          }
+          sections.push({
+            label: sec.label,
+            prefix: sec.prefix,
+            startIndex: firstIdx,
+            slideCount: count,
+          });
+        }
+      });
+    } else {
+      // Fallback: detect from section-type slides
+      state.slides.forEach((slide, i) => {
+        if (slide.type === 'section') {
+          sections.push({
+            label: slide.title || `Section ${sections.length + 1}`,
+            prefix: '',
+            startIndex: i,
+            slideCount: 0,
+          });
+        }
+      });
+      // Calculate counts
+      for (let i = 0; i < sections.length; i++) {
+        const nextStart = (i + 1 < sections.length) ? sections[i + 1].startIndex : state.slides.length;
+        sections[i].slideCount = nextStart - sections[i].startIndex;
+      }
+    }
+
+    return sections;
+  }
+
+  function getCurrentSectionIndex(sections) {
+    for (let i = sections.length - 1; i >= 0; i--) {
+      if (state.currentSlide >= sections[i].startIndex) return i;
+    }
+    return 0;
+  }
+
+  function renderSectionNav() {
+    const sections = getSectionMap();
+    const currentSec = getCurrentSectionIndex(sections);
+
+    let html = `
+      <div class="section-nav-overlay" onclick="AIPrimer.toggleSectionNav()">
+        <div class="section-nav" onclick="event.stopPropagation()">
+          <div class="section-nav__header">
+            <div class="section-nav__title">Sections</div>
+            <div class="section-nav__hint">Click to jump · Press S or Esc to close</div>
+            <button class="section-nav__close" onclick="AIPrimer.toggleSectionNav()">&times;</button>
+          </div>
+          <div class="section-nav__grid">
+    `;
+
+    sections.forEach((sec, i) => {
+      const isCurrent = i === currentSec;
+      const slide = state.slides[sec.startIndex];
+      const slideNum = sec.startIndex + 1;
+      const endNum = sec.startIndex + sec.slideCount;
+
+      html += `
+        <div class="section-nav__card${isCurrent ? ' section-nav__card--current' : ''}" onclick="AIPrimer.goToSlide(${sec.startIndex}); AIPrimer.toggleSectionNav();">
+          <div class="section-nav__thumbnail">
+            <div class="section-nav__thumbnail-inner" data-section-thumb="${sec.startIndex}"></div>
+          </div>
+          <div class="section-nav__info">
+            <div class="section-nav__label">${sec.label}</div>
+            <div class="section-nav__meta">${sec.slideCount} slides · ${slideNum}–${endNum}</div>
+          </div>
+          ${isCurrent ? '<div class="section-nav__badge">Current</div>' : ''}
+        </div>
+      `;
+    });
+
+    html += `
+          </div>
+        </div>
+      </div>
+    `;
+
+    return { html, sections };
+  }
+
+  function toggleSectionNav() {
+    let overlay = qs('.section-nav-overlay');
+    if (overlay) {
+      overlay.remove();
+      sectionNavOpen = false;
+      return;
+    }
+
+    const { html, sections } = renderSectionNav();
+    const layout = qs('.presenter-layout');
+    if (!layout) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    const overlayEl = wrapper.firstElementChild;
+    layout.appendChild(overlayEl);
+    sectionNavOpen = true;
+
+    // Render mini thumbnails into each card
+    requestAnimationFrame(() => {
+      sections.forEach(sec => {
+        const thumbContainer = overlayEl.querySelector(`[data-section-thumb="${sec.startIndex}"]`);
+        if (thumbContainer && state.slides[sec.startIndex]) {
+          const mini = renderSlide(state.slides[sec.startIndex], sec.startIndex);
+          mini.classList.add('active');
+          thumbContainer.appendChild(mini);
+        }
+      });
+    });
+  }
+
   // --- Initialisation ---
   function init(config) {
     // config = { slides: [...], courseId: '...', mode: 'presenter'|'participant'|'self', containerId: '...' }
@@ -1079,6 +1216,12 @@
             <button class="presenter-controls__btn" onclick="AIPrimer.next()">Next &#9654;</button>
           </div>
           <div class="presenter-controls__stats">
+            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleSectionNav()" title="Section navigator (S)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              Sections
+            </button>
             <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleAdminConsole()" title="Open admin console">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
@@ -1119,6 +1262,7 @@
   AIPrimer.toggleSessionPanel = toggleSessionPanel;
   AIPrimer.toggleAdminConsole = toggleAdminConsole;
   AIPrimer.switchAdminTab = switchAdminTab;
+  AIPrimer.toggleSectionNav = toggleSectionNav;
   AIPrimer.adminPause = function () {
     if (state.socket) state.socket.emit('session-pause');
     if (typeof pauseAndExit === 'function') pauseAndExit(state.sessionCode);

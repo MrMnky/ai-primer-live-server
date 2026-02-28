@@ -578,18 +578,23 @@
   // --- Touch Controls (mobile swipe) ---
   let touchStartX = 0;
   let touchStartY = 0;
+  let touchStartTime = 0;
 
   function handleTouchStart(e) {
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
+    touchStartTime = Date.now();
   }
 
   function handleTouchEnd(e) {
     const dx = e.changedTouches[0].screenX - touchStartX;
     const dy = e.changedTouches[0].screenY - touchStartY;
-    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+    const dt = Date.now() - touchStartTime;
 
-    if (state.mode === 'participant') return; // participants don't navigate
+    // Require horizontal swipe > 40px, more horizontal than vertical, within 500ms
+    if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx) || dt > 500) return;
+
+    if (state.mode === 'participant') return; // participants don't navigate (synced to presenter)
 
     if (dx < 0) next();
     else prev();

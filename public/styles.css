@@ -61,6 +61,9 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   height: 100%;
+  /* Prevent iOS overscroll bounce */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* --- Slide Container --- */
@@ -1768,21 +1771,56 @@ html, body {
   background: var(--mountain-meadow);
 }
 
-/* --- Mobile Overrides --- */
+/* --- Mobile Overrides — Participant Experience --- */
+
+/* Safe area insets for notched phones */
+@supports (padding: env(safe-area-inset-top)) {
+  .slide-viewport {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .progress-bar {
+    bottom: env(safe-area-inset-bottom);
+  }
+  .slide-counter {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    right: calc(24px + env(safe-area-inset-right));
+  }
+}
+
+/* Tablet breakpoint */
+@media (max-width: 1024px) {
+  .slide--split {
+    gap: 32px;
+  }
+  .slide__media--interactive iframe {
+    min-height: 340px;
+  }
+}
+
+/* Mobile breakpoint */
 @media (max-width: 768px) {
+  /* --- Layout --- */
   .slide {
     padding: var(--slide-padding-mobile);
+    padding-bottom: calc(var(--slide-padding-mobile) + 20px); /* room for progress bar */
   }
 
   .slide--split {
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     padding: var(--slide-padding-mobile);
   }
 
   .stat-row {
-    gap: 24px;
+    gap: 20px;
     justify-content: center;
+  }
+
+  .stat-number {
+    font-size: clamp(2rem, 10vw, 3rem);
   }
 
   .presenter-layout {
@@ -1793,10 +1831,273 @@ html, body {
     display: none;
   }
 
+  /* --- Logo & Counters --- */
   .logo-watermark {
-    width: 50px;
-    top: 12px;
-    right: 12px;
+    width: 44px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .slide-counter {
+    font-size: 0.7rem;
+    bottom: 12px;
+    right: 16px;
+  }
+
+  .progress-bar {
+    height: 6px; /* thicker on mobile for visibility */
+  }
+
+  /* --- Typography (bump up for readability) --- */
+  .slide__body {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .slide__section-label {
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+  }
+
+  .callout {
+    padding: 18px 18px 18px 22px;
+    margin-top: 20px;
+  }
+
+  .callout__body {
+    font-size: 0.9rem;
+  }
+
+  /* --- Interactive Components — Touch-friendly --- */
+
+  /* Quiz: 48px min touch target (WCAG 2.5.8) */
+  .quiz {
+    margin-top: 24px;
+    max-width: 100%;
+  }
+
+  .quiz__question {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+
+  .quiz__option {
+    padding: 14px 16px;
+    min-height: 48px;
+    font-size: 0.95rem;
+    gap: 10px;
+    border-radius: 8px;
+  }
+
+  .quiz__option-marker {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  .quiz__options {
+    gap: 10px;
+  }
+
+  /* Poll: larger hit area */
+  .poll {
+    margin-top: 24px;
+    max-width: 100%;
+  }
+
+  .poll__bar-track {
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .poll__bar-label {
+    font-size: 0.85rem;
+  }
+
+  .poll__bar-container {
+    margin-bottom: 10px;
+  }
+
+  /* Text input: full width, bigger submit */
+  .text-input {
+    margin-top: 24px;
+    max-width: 100%;
+  }
+
+  .text-input__prompt {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .text-input__field {
+    padding: 14px;
+    font-size: 1rem;
+    min-height: 72px;
+    border-radius: 8px;
+  }
+
+  .text-input__submit {
+    margin-top: 10px;
+  }
+
+  /* Buttons: bigger touch targets */
+  .btn {
+    padding: 14px 24px;
+    font-size: 1rem;
+    min-height: 48px;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  /* Reveal buttons */
+  .btn--reveal {
+    padding: 12px 20px;
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  /* --- Media --- */
+  .slide__media {
+    border-radius: 8px;
+    margin-top: 16px;
+  }
+
+  .slide__media--interactive iframe {
+    min-height: 280px;
+  }
+
+  .slide__media--inline {
+    margin: 16px auto 0;
+  }
+
+  /* Cover slide */
+  .slide--cover .slide__logo {
+    width: 80px;
+    margin-bottom: 24px;
+  }
+
+  /* Badge */
+  .badge {
+    font-size: 0.6rem;
+    padding: 3px 10px;
+    margin-bottom: 10px;
+  }
+
+  /* --- Word cloud mobile --- */
+  .text-responses-container {
+    gap: 6px;
+  }
+  .word-cloud-word {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* --- Join Screen mobile --- */
+  .join-screen {
+    padding: 20px 24px;
+  }
+
+  .join-screen__logo {
+    width: 72px;
+    margin-bottom: 24px;
+  }
+
+  .join-screen__title {
+    font-size: 1.3rem;
+  }
+
+  .join-screen__subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  .join-screen__input {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px 20px;
+    font-size: 1.3rem;
+    min-height: 52px;
+  }
+
+  .join-screen__name-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px 20px;
+    font-size: 1rem;
+    min-height: 52px;
+  }
+
+  .join-screen .btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px 28px;
+    min-height: 52px;
+    font-size: 1rem;
+  }
+
+  /* --- Lobby / Waiting screens mobile --- */
+  .lobby-screen,
+  .waiting-screen {
+    padding: 24px 20px;
+  }
+
+  .waiting-screen__title {
+    font-size: 1.2rem;
+  }
+
+  .session-overlay {
+    padding: 20px;
+  }
+
+  .session-overlay h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Small phone breakpoint (iPhone SE, Galaxy S8 etc) */
+@media (max-width: 375px) {
+  :root {
+    --slide-padding-mobile: 16px;
+  }
+
+  .slide__title {
+    font-size: clamp(1.4rem, 6vw, 2rem);
+    margin-bottom: 12px;
+  }
+
+  .slide__subtitle {
+    font-size: clamp(0.95rem, 3vw, 1.2rem);
+  }
+
+  .stat-row {
+    gap: 16px;
+  }
+
+  .stat-number {
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .quiz__option {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+
+  .poll__bar-track {
+    height: 40px;
+  }
+
+  .callout {
+    padding: 14px 14px 14px 18px;
+  }
+
+  .join-screen__input {
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+  }
+
+  .join-screen__title {
+    font-size: 1.1rem;
   }
 }
 

@@ -154,28 +154,7 @@
     }
     .setup-back:hover { color: #fff; }
 
-    /* --- Presenter exit button (overlay on slide view) --- */
-    .presenter-exit-btn {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 100;
-      font-family: var(--font-family);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(0,0,0,0.6);
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .presenter-exit-btn:hover {
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      border-color: rgba(255,255,255,0.3);
-    }
+    /* (exit button removed — controls now live in admin console) */
   </style>
 </head>
 <body>
@@ -378,13 +357,6 @@
       const app = document.getElementById('app');
       app.innerHTML = '';
 
-      // Add exit button
-      const exitBtn = document.createElement('button');
-      exitBtn.className = 'presenter-exit-btn';
-      exitBtn.textContent = '⏸ Pause & Exit';
-      exitBtn.onclick = () => pauseAndExit(code);
-      document.body.appendChild(exitBtn);
-
       AIPrimer.init({
         slides: AI_PRIMER_SLIDES,
         mode: 'presenter',
@@ -397,17 +369,13 @@
       });
     }
 
-    // --- Pause & Exit ---
+    // --- Pause & Exit (called from admin console) ---
     function pauseAndExit(code) {
       // Tell engine's socket to pause
       if (typeof AIPrimer !== 'undefined' && AIPrimer.getSocket && AIPrimer.getSocket()) {
         AIPrimer.getSocket().emit('session-pause');
         AIPrimer.getSocket().disconnect();
       }
-
-      // Remove exit button
-      const exitBtn = document.querySelector('.presenter-exit-btn');
-      if (exitBtn) exitBtn.remove();
 
       showDashboard();
     }

@@ -369,22 +369,38 @@ io.on('connection', (socket) => {
     socket.emit('session-state', {
       currentSlide: sessionCache[sessionCode].currentSlide,
       status: sessionCache[sessionCode].status,
-      participants: (liveParticipants[sessionCode] || []).map(p => ({ id: p.id, name: p.name })),
+      participants: (liveParticipants[sessionCode] || []).map(p => ({
+        id: p.id, name: p.name, currentSlide: p.currentSlide,
+        joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
+      })),
     });
   }
 
   if (mode === 'participant') {
     const pId = participantId || uuidv4();
-    const participant = { id: pId, name: participantName || 'Anonymous', socketId: socket.id };
+    const participant = {
+      id: pId,
+      name: participantName || 'Anonymous',
+      socketId: socket.id,
+      currentSlide: sessionCache[sessionCode].currentSlide,
+      joinedAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+      lastActivityType: 'joined',
+    };
 
     if (!liveParticipants[sessionCode]) liveParticipants[sessionCode] = [];
     liveParticipants[sessionCode].push(participant);
 
     socket.emit('slide-change', { slideIndex: sessionCache[sessionCode].currentSlide });
 
+    const participantList = liveParticipants[sessionCode].map(p => ({
+      id: p.id, name: p.name, currentSlide: p.currentSlide,
+      joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
+    }));
+
     io.to(`${sessionCode}:presenter`).emit('participant-joined', {
       participantName: participant.name,
-      participants: liveParticipants[sessionCode].map(p => ({ id: p.id, name: p.name })),
+      participants: participantList,
     });
 
     logInteraction(sessionCode, 'participant_joined', {
@@ -444,6 +460,10 @@ io.on('connection', (socket) => {
       slideIndex: data.slideIndex,
       eventData: { from: prevSlide, to: data.slideIndex },
     });
+    // Update all participants' tracked slide position
+    if (liveParticipants[sessionCode]) {
+      liveParticipants[sessionCode].forEach(p => { p.currentSlide = data.slideIndex; });
+    }
     socket.to(sessionCode).emit('slide-change', data);
   });
 
@@ -471,8 +491,21 @@ io.on('connection', (socket) => {
       createdAt: new Date().toISOString(),
     });
 
-    // Forward to presenter
-    io.to(`${sessionCode}:presenter`).emit('response', data);
+    // Update participant activity tracking
+    if (liveParticipants[sessionCode]) {
+      const participant = liveParticipants[sessionCode].find(p => p.id === data.participantId);
+      if (participant) {
+        participant.lastActivity = new Date().toISOString();
+        participant.lastActivityType = data.type;
+      }
+    }
+
+    // Forward to presenter (include updated participant list)
+    const participantList = (liveParticipants[sessionCode] || []).map(p => ({
+      id: p.id, name: p.name, currentSlide: p.currentSlide,
+      joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
+    }));
+    io.to(`${sessionCode}:presenter`).emit('response', { ...data, participants: participantList });
 
     // Poll aggregation
     if (data.type === 'poll') {
@@ -522,10 +555,19 @@ io.on('connection', (socket) => {
   // Disconnect
   socket.on('disconnect', () => {
     if (mode === 'participant' && liveParticipants[sessionCode]) {
+      const leaving = liveParticipants[sessionCode].find(p => p.socketId === socket.id);
       liveParticipants[sessionCode] = liveParticipants[sessionCode].filter(p => p.socketId !== socket.id);
-      logInteraction(sessionCode, 'participant_left', { participantId, participantName });
+      logInteraction(sessionCode, 'participant_left', {
+        participantId: leaving?.id || participantId,
+        participantName: leaving?.name || participantName,
+      });
+      const participantList = liveParticipants[sessionCode].map(p => ({
+        id: p.id, name: p.name, currentSlide: p.currentSlide,
+        joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
+      }));
       io.to(`${sessionCode}:presenter`).emit('participant-left', {
-        participants: liveParticipants[sessionCode].map(p => ({ id: p.id, name: p.name })),
+        participantName: leaving?.name || participantName,
+        participants: participantList,
       });
     }
   });

@@ -581,16 +581,23 @@
 
       state.socket.on('response', (data) => {
         handleIncomingResponse(data);
+        // Update participant list if included
+        if (data.participants) {
+          state.participants = data.participants;
+          updateAdminConsole();
+        }
       });
 
       state.socket.on('participant-joined', (data) => {
         state.participants = data.participants || [];
         updateParticipantCount();
+        addActivityItem('🟢', data.participantName || 'Someone', 'joined the session');
       });
 
       state.socket.on('participant-left', (data) => {
         state.participants = data.participants || [];
         updateParticipantCount();
+        addActivityItem('🔴', data.participantName || 'Someone', 'left the session');
       });
     }
 
@@ -625,6 +632,20 @@
       stream.appendChild(item);
       stream.scrollTop = stream.scrollHeight;
     }
+
+    // Log to admin console activity feed
+    const name = data.participantName || 'Anonymous';
+    if (data.type === 'quiz') {
+      addActivityItem('📝', name, `answered quiz (option ${['A','B','C','D'][data.data.option]})`);
+    } else if (data.type === 'poll') {
+      addActivityItem('📊', name, `voted in poll`);
+    } else if (data.type === 'text') {
+      const preview = data.data.text.substring(0, 40) + (data.data.text.length > 40 ? '...' : '');
+      addActivityItem('💬', name, `submitted: "${preview}"`);
+    }
+
+    // Update response counter
+    updateAdminConsole();
   }
 
   function updateParticipantCount() {
@@ -633,62 +654,150 @@
     updateSessionPanel();
   }
 
-  // --- Session Panel (slide-out drawer for presenter) ---
-  function renderSessionPanel() {
-    const panel = el('div', 'session-panel');
-    panel.id = 'session-panel';
+  // --- Admin Console (slide-out panel for presenter) ---
+  let adminConsoleTab = 'participants';
+  let activityLog = [];
 
-    const joinUrl = window.location.origin + '/?code=' + (state.sessionCode || '');
-    const qrUrl = state.sessionCode
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`
-      : '';
+  function renderAdminConsole() {
+    const panel = el('div', 'admin-console');
+    panel.id = 'admin-console';
+
+    const joinUrl = window.location.origin + '/join.html?code=' + (state.sessionCode || '');
 
     panel.innerHTML = `
-      <div class="session-panel__header">
-        <span>Session Info</span>
-        <button class="session-panel__close" onclick="AIPrimer.toggleSessionPanel()">&times;</button>
-      </div>
-
-      <div class="session-panel__code">${state.sessionCode || '—'}</div>
-
-      ${qrUrl ? `<div class="session-panel__qr"><img src="${qrUrl}" alt="QR Code"></div>` : ''}
-
-      <div class="session-panel__url">${joinUrl}</div>
-
-      <div class="session-panel__stat-row">
-        <div class="session-panel__stat">
-          <div class="session-panel__stat-number" id="sp-participant-count">${state.participants.length}</div>
-          <div class="session-panel__stat-label">Participants</div>
+      <div class="ac-header">
+        <div class="ac-header__title">
+          <span class="ac-header__dot"></span>
+          <span>Live Console</span>
+          <span class="ac-header__code">${state.sessionCode || ''}</span>
         </div>
-        <div class="session-panel__stat">
-          <div class="session-panel__stat-number" id="sp-slide-progress">${state.currentSlide + 1}/${state.slides.length}</div>
-          <div class="session-panel__stat-label">Slide</div>
+        <button class="ac-header__close" onclick="AIPrimer.toggleAdminConsole()">&times;</button>
+      </div>
+
+      <div class="ac-stats">
+        <div class="ac-stat">
+          <div class="ac-stat__number" id="ac-participant-count">${state.participants.length}</div>
+          <div class="ac-stat__label">Connected</div>
+        </div>
+        <div class="ac-stat">
+          <div class="ac-stat__number" id="ac-slide-progress">${state.currentSlide + 1}/${state.slides.length}</div>
+          <div class="ac-stat__label">Slide</div>
+        </div>
+        <div class="ac-stat">
+          <div class="ac-stat__number" id="ac-response-count">${Object.keys(state.responses).reduce((sum, k) => sum + Object.keys(state.responses[k]).length, 0)}</div>
+          <div class="ac-stat__label">Responses</div>
         </div>
       </div>
 
-      <div class="session-panel__status">
-        <span class="session-panel__status-dot"></span>
-        <span id="sp-connection-status">${state.connected ? 'Connected' : 'Connecting...'}</span>
+      <div class="ac-tabs">
+        <button class="ac-tab ac-tab--active" data-tab="participants" onclick="AIPrimer.switchAdminTab('participants')">Participants</button>
+        <button class="ac-tab" data-tab="activity" onclick="AIPrimer.switchAdminTab('activity')">Activity</button>
+        <button class="ac-tab" data-tab="session" onclick="AIPrimer.switchAdminTab('session')">Session</button>
       </div>
 
-      <div class="session-panel__participant-list" id="sp-participant-list">
-        ${state.participants.map(p =>
-          `<div class="session-panel__participant">
-            <div class="session-panel__participant-avatar">${(p.name || 'A').charAt(0).toUpperCase()}</div>
-            <span>${p.name || 'Anonymous'}</span>
-          </div>`
-        ).join('')}
+      <div class="ac-panel" id="ac-panel-participants">
+        <div id="ac-participant-list" class="ac-participant-list">
+          ${renderParticipantList()}
+        </div>
+      </div>
+
+      <div class="ac-panel ac-panel--hidden" id="ac-panel-activity">
+        <div id="ac-activity-log" class="ac-activity-log">
+          ${activityLog.length === 0 ? '<div class="ac-empty">No activity yet</div>' : activityLog.map(renderActivityItem).join('')}
+        </div>
+      </div>
+
+      <div class="ac-panel ac-panel--hidden" id="ac-panel-session">
+        <div class="ac-session-info">
+          <div class="ac-session-row">
+            <span class="ac-session-label">Join Link</span>
+            <a href="${joinUrl}" target="_blank" class="ac-session-link">${joinUrl}</a>
+          </div>
+          <div class="ac-session-row">
+            <span class="ac-session-label">Status</span>
+            <span class="ac-session-value" id="ac-connection-status">${state.connected ? 'Connected' : 'Connecting...'}</span>
+          </div>
+        </div>
+        <div class="ac-controls">
+          <button class="ac-control-btn ac-control-btn--pause" onclick="AIPrimer.adminPause()">⏸ Pause Session</button>
+          <button class="ac-control-btn ac-control-btn--end" onclick="AIPrimer.adminEnd()">⏹ End Session</button>
+        </div>
       </div>
     `;
 
     return panel;
   }
 
-  function toggleSessionPanel() {
-    let panel = document.getElementById('session-panel');
+  function renderParticipantList() {
+    if (state.participants.length === 0) {
+      return '<div class="ac-empty">No participants yet</div>';
+    }
+
+    return state.participants.map(p => {
+      const initial = (p.name || 'A').charAt(0).toUpperCase();
+      const slideLabel = (p.currentSlide !== undefined) ? `Slide ${p.currentSlide + 1}` : '';
+      const activityIcon = p.lastActivityType === 'quiz' ? '📝' :
+                           p.lastActivityType === 'poll' ? '📊' :
+                           p.lastActivityType === 'text' ? '💬' :
+                           p.lastActivityType === 'joined' ? '🟢' : '';
+      const timeSince = p.lastActivity ? getTimeSince(p.lastActivity) : '';
+
+      return `<div class="ac-participant">
+        <div class="ac-participant__avatar">${initial}</div>
+        <div class="ac-participant__info">
+          <div class="ac-participant__name">${p.name || 'Anonymous'}</div>
+          <div class="ac-participant__meta">${slideLabel}${timeSince ? ' · ' + timeSince : ''}</div>
+        </div>
+        <div class="ac-participant__activity">${activityIcon}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderActivityItem(item) {
+    return `<div class="ac-activity-item">
+      <span class="ac-activity-item__icon">${item.icon || '•'}</span>
+      <span class="ac-activity-item__text"><strong>${item.name}</strong> ${item.action}</span>
+      <span class="ac-activity-item__time">${item.timeLabel || ''}</span>
+    </div>`;
+  }
+
+  function getTimeSince(isoString) {
+    const diff = Date.now() - new Date(isoString).getTime();
+    if (diff < 10000) return 'just now';
+    if (diff < 60000) return Math.floor(diff / 1000) + 's ago';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    return Math.floor(diff / 3600000) + 'h ago';
+  }
+
+  function addActivityItem(icon, name, action) {
+    const item = { icon, name, action, timeLabel: 'just now', timestamp: Date.now() };
+    activityLog.unshift(item);
+    if (activityLog.length > 50) activityLog.pop();
+
+    const logEl = document.getElementById('ac-activity-log');
+    if (logEl) {
+      if (logEl.querySelector('.ac-empty')) logEl.innerHTML = '';
+      logEl.insertAdjacentHTML('afterbegin', renderActivityItem(item));
+    }
+  }
+
+  function switchAdminTab(tab) {
+    adminConsoleTab = tab;
+    const console = document.getElementById('admin-console');
+    if (!console) return;
+
+    console.querySelectorAll('.ac-tab').forEach(t => {
+      t.classList.toggle('ac-tab--active', t.dataset.tab === tab);
+    });
+    console.querySelectorAll('.ac-panel').forEach(p => {
+      p.classList.toggle('ac-panel--hidden', !p.id.endsWith(tab));
+    });
+  }
+
+  function toggleAdminConsole() {
+    let panel = document.getElementById('admin-console');
     if (!panel) {
-      // First open — build and attach
-      panel = renderSessionPanel();
+      panel = renderAdminConsole();
       const layout = qs('.presenter-layout');
       if (layout) layout.appendChild(panel);
       requestAnimationFrame(() => {
@@ -699,26 +808,29 @@
     }
   }
 
-  function updateSessionPanel() {
-    const countEl = document.getElementById('sp-participant-count');
+  function updateAdminConsole() {
+    const countEl = document.getElementById('ac-participant-count');
     if (countEl) countEl.textContent = state.participants.length;
 
-    const slideEl = document.getElementById('sp-slide-progress');
+    const slideEl = document.getElementById('ac-slide-progress');
     if (slideEl) slideEl.textContent = `${state.currentSlide + 1}/${state.slides.length}`;
 
-    const statusEl = document.getElementById('sp-connection-status');
+    const responseCount = Object.keys(state.responses).reduce((sum, k) => sum + Object.keys(state.responses[k]).length, 0);
+    const respEl = document.getElementById('ac-response-count');
+    if (respEl) respEl.textContent = responseCount;
+
+    const statusEl = document.getElementById('ac-connection-status');
     if (statusEl) statusEl.textContent = state.connected ? 'Connected' : 'Disconnected';
 
-    const listEl = document.getElementById('sp-participant-list');
+    const listEl = document.getElementById('ac-participant-list');
     if (listEl) {
-      listEl.innerHTML = state.participants.map(p =>
-        `<div class="session-panel__participant">
-          <div class="session-panel__participant-avatar">${(p.name || 'A').charAt(0).toUpperCase()}</div>
-          <span>${p.name || 'Anonymous'}</span>
-        </div>`
-      ).join('') || '<div style="opacity:0.3;font-size:0.8rem;padding:8px">No participants yet</div>';
+      listEl.innerHTML = renderParticipantList();
     }
   }
+
+  // Keep backward compat
+  function updateSessionPanel() { updateAdminConsole(); }
+  function toggleSessionPanel() { toggleAdminConsole(); }
 
   // --- Initialisation ---
   function init(config) {
@@ -804,11 +916,11 @@
             <button class="presenter-controls__btn" onclick="AIPrimer.next()">Next &#9654;</button>
           </div>
           <div class="presenter-controls__stats">
-            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleSessionPanel()" title="Session info">
+            <button class="presenter-controls__session-btn" onclick="AIPrimer.toggleAdminConsole()" title="Open admin console">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
               </svg>
-              Session
+              Console
             </button>
             <div class="presenter-controls__stat">
               <span class="presenter-controls__stat-dot"></span>
@@ -840,5 +952,20 @@
   AIPrimer.goToSlide = goToSlide;
   AIPrimer.getState = () => ({ ...state });
   AIPrimer.toggleSessionPanel = toggleSessionPanel;
+  AIPrimer.toggleAdminConsole = toggleAdminConsole;
+  AIPrimer.switchAdminTab = switchAdminTab;
+  AIPrimer.adminPause = function () {
+    if (state.socket) state.socket.emit('session-pause');
+    if (typeof pauseAndExit === 'function') pauseAndExit(state.sessionCode);
+  };
+  AIPrimer.adminEnd = function () {
+    if (confirm('End this session? Participants will be disconnected.')) {
+      if (state.socket) {
+        state.socket.emit('session-end');
+        state.socket.disconnect();
+      }
+      if (typeof showDashboard === 'function') showDashboard();
+    }
+  };
 
 })();

@@ -23,6 +23,7 @@ function registerSection(sectionArray, sectionPrefix, idList) {
 // ── Section 1: Foundation (13 slides) ────────────────────
 registerSection(SECTION_1_FOUNDATION, 's1', [
   's1-opener',
+  's1-find-us',
   's1-cover-welcome',
   's1-not-an-engineer',
   's1-objectives',
@@ -126,11 +127,12 @@ registerSection(SECTION_5_PROMPTING, 's5', [
   's5-prompting-quiz',
 ]);
 
-// ── Section 6: Applying AI (10 slides) ───────────────────
+// ── Section 6: Applying AI (11 slides) ───────────────────
 registerSection(SECTION_6_APPLYING_AI, 's6', [
   's6-opener',
   's6-better-thinking-question',
   's6-three-approaches',
+  's6-picking-pilots',
   's6-four-ds-interactive',
   's6-tools-come-and-go',
   's6-transcription',

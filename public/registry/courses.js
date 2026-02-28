@@ -25,8 +25,9 @@ const COURSE_DEFINITIONS = {
       { label: 'Close', prefix: 's7' },
     ],
     slides: [
-      // Section 1: Foundation (12)
+      // Section 1: Foundation (13)
       's1-opener',
+      's1-find-us',
       's1-cover-welcome',
       's1-not-an-engineer',
       's1-objectives',
@@ -121,10 +122,11 @@ const COURSE_DEFINITIONS = {
       's5-prompting-summary',
       's5-prompting-quiz',
 
-      // Section 6: Applying AI (10)
+      // Section 6: Applying AI (11)
       's6-opener',
       's6-better-thinking-question',
       's6-three-approaches',
+      's6-picking-pilots',
       's6-four-ds-interactive',
       's6-tools-come-and-go',
       's6-transcription',

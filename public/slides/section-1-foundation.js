@@ -16,6 +16,23 @@ const SECTION_1_FOUNDATION = [
     notes: `This is the opening section. The goal is to set the tone, frame the course, and make the case for why the foundational work matters more than jumping to tools and pilots. Keep it warm, direct, and reassuring — the room needs to feel like this is going to be useful, not academic.`,
   },
 
+  // ── 1.0b  Find Us ───────────────────────────
+  {
+    type: 'content',
+    theme: 'light',
+    sectionLabel: 'FOUNDATION',
+    title: 'Find us',
+    body: '<p><strong>AI Accelerator</strong><br>2 Appleby Yard, Soames Walk<br>Design District, London SE10 0BJ</p><p>We\'re in the Design District at Greenwich Peninsula — look for the colourful buildings near the O2. Enter via Soames Walk from North Greenwich station.</p>',
+    media: {
+      type: 'image',
+      src: '/media/design-district-map.png',
+      position: 'split',
+      fit: 'contain',
+      alt: 'Design District campus map showing building locations',
+    },
+    notes: `Logistics slide — show briefly at the start or use as a holding slide while people arrive. The map shows the full Design District layout. Our office is in the A2 building area.`,
+  },
+
   // ── 1.1  Course Welcome ──────────────────────
   {
     type: 'cover',

@@ -42,6 +42,24 @@ const SECTION_6_APPLYING_AI = [
     notes: `Three approaches that stack on top of each other. Most audiences gravitate toward automation because it's visible and easy to justify. But augmentation is where real advantage lives. "How does AI make your best people better?" That's the strategic question. Pace is steady — let each approach settle before moving to the next.`,
   },
 
+  // ── 6.1c Picking Your Pilots ────────────────
+  {
+    type: 'content',
+    theme: 'light',
+    sectionLabel: 'APPLYING AI',
+    title: 'Picking your pilots',
+    body: '<p>AI is improving so quickly that if you build something too close to what consumer tools already do, it will either become a generic feature or be overtaken before you finish.</p><p>The smart move is to focus on use cases where <strong>your data, workflows, and expertise</strong> create real, defensible value.</p>',
+    media: {
+      type: 'image',
+      src: '/media/picking-pilots.png',
+      position: 'background',
+      fit: 'contain',
+      overlay: 0.85,
+      alt: 'AI Development timeline showing commodity risk and overtake risk when picking pilot projects',
+    },
+    notes: `This is the strategic framing slide. The graphic shows the timeline from 2022 to today — capabilities that seemed novel two years ago are now built into consumer tools. The two risks (commodity and overtake) should feel real and slightly uncomfortable. Then land the positive reframe: focus where your own data and expertise create defensible value.`,
+  },
+
   // ── 6.1b Four Ds Interactive ────────────────
   {
     type: 'graphic',

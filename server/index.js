@@ -1,6 +1,6 @@
 /* ============================================
    AI Primer Live — Server
-   Express + Socket.io + Supabase persistence
+   Express + Socket.io + Supabase REST API
    ============================================ */
 
 const express = require('express');
@@ -8,7 +8,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,36 +16,83 @@ const io = new Server(server, { cors: { origin: ALLOWED_ORIGINS, methods: ['GET'
 
 const PORT = process.env.PORT || 3000;
 
-// --- Supabase Client (service role — bypasses RLS) ---
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://vwrwdzdievlmftrfusna.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || ''
-);
+// --- Supabase REST API helper ---
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vwrwdzdievlmftrfusna.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+
+async function supabaseQuery(table, method, opts = {}) {
+  let url = `${SUPABASE_URL}/rest/v1/${table}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
+  };
+
+  if (opts.select) headers['Accept'] = 'application/json';
+  if (opts.filters) url += `?${opts.filters}`;
+  if (opts.select && !opts.filters) url += `?select=${opts.select}`;
+  else if (opts.select && opts.filters) url += `&select=${opts.select}`;
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: (method === 'POST' || method === 'PATCH') ? JSON.stringify(opts.body) : undefined,
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`Supabase ${method} ${table} failed:`, err);
+      return { data: null, error: err };
+    }
+
+    if (method === 'PATCH' && headers['Prefer'] === 'return=minimal') {
+      return { data: null, error: null };
+    }
+
+    const data = await res.json();
+    return { data, error: null };
+  } catch (err) {
+    console.error(`Supabase ${method} ${table} error:`, err.message);
+    return { data: null, error: err.message };
+  }
+}
+
+// Convenience wrappers
+const db = {
+  async select(table, filters = '', select = '*') {
+    return supabaseQuery(table, 'GET', { filters: `select=${select}&${filters}`, select: null });
+  },
+  async insert(table, body) {
+    return supabaseQuery(table, 'POST', { body, select: '*' });
+  },
+  async update(table, filters, body) {
+    return supabaseQuery(table, 'PATCH', { filters, body });
+  },
+};
 
 // --- In-Memory Caches (for real-time performance) ---
-// Sessions cache: code -> session object
 const sessionCache = {};
-
-// Live participant tracking (socket-based, not persisted)
-const liveParticipants = {}; // sessionCode -> [{ id, name, socketId }]
-
-// Response cache for real-time aggregation (rebuilt from DB on startup for active sessions)
-const responseCache = {}; // sessionCode -> [{ slideIndex, type, data, participantId, participantName, ... }]
+const liveParticipants = {};
+const responseCache = {};
 
 // --- Load active sessions from Supabase on startup ---
 async function loadActiveSessions() {
-  const { data, error } = await supabase
-    .from('sessions')
-    .select('*')
-    .in('status', ['active', 'started', 'paused']);
+  if (!SUPABASE_KEY) {
+    console.warn('No SUPABASE_SERVICE_KEY set — running without persistence');
+    return;
+  }
+
+  const { data, error } = await db.select('sessions', 'status=in.(active,started,paused)&order=created_at.desc');
 
   if (error) {
-    console.error('Failed to load sessions from Supabase:', error.message);
+    console.error('Failed to load sessions from Supabase:', error);
     return;
   }
 
   if (data) {
-    data.forEach(s => {
+    for (const s of data) {
       sessionCache[s.code] = {
         id: s.id,
         code: s.code,
@@ -61,15 +107,14 @@ async function loadActiveSessions() {
       };
       liveParticipants[s.code] = [];
       responseCache[s.code] = [];
-    });
+    }
 
-    // Load responses for active sessions (for aggregation)
+    // Load responses for active sessions (for real-time aggregation)
     for (const s of data) {
-      const { data: responses } = await supabase
-        .from('interactions')
-        .select('*')
-        .eq('session_code', s.code)
-        .in('event_type', ['quiz_answer', 'poll_vote', 'text_response']);
+      const { data: responses } = await db.select(
+        'interactions',
+        `session_code=eq.${s.code}&event_type=in.(quiz_answer,poll_vote,text_response)&order=created_at.asc`
+      );
 
       if (responses) {
         responseCache[s.code] = responses.map(r => ({
@@ -91,6 +136,8 @@ async function loadActiveSessions() {
 
 // --- Interaction Logger (async, non-blocking) ---
 function logInteraction(sessionCode, eventType, opts = {}) {
+  if (!SUPABASE_KEY) return;
+
   const row = {
     session_code: sessionCode,
     event_type: eventType,
@@ -100,10 +147,7 @@ function logInteraction(sessionCode, eventType, opts = {}) {
     event_data: opts.eventData || {},
   };
 
-  // Fire and forget — don't block the socket event
-  supabase.from('interactions').insert(row).then(({ error }) => {
-    if (error) console.error(`Failed to log ${eventType}:`, error.message);
-  });
+  db.insert('interactions', row).catch(() => {});
 }
 
 // --- CORS ---
@@ -141,26 +185,32 @@ function generateCode() {
 app.get('/api/sessions', async (req, res) => {
   const status = req.query.status;
 
-  // Fetch from Supabase (includes ended sessions too)
-  let query = supabase.from('sessions').select('*').order('created_at', { ascending: false });
-  if (status) query = query.eq('status', status);
+  if (SUPABASE_KEY) {
+    let filters = 'order=created_at.desc';
+    if (status) filters += `&status=eq.${status}`;
+    const { data, error } = await db.select('sessions', filters);
+    if (error) return res.status(500).json({ error });
 
-  const { data, error } = await query;
-  if (error) return res.status(500).json({ error: error.message });
+    return res.json((data || []).map(s => ({
+      id: s.id,
+      code: s.code,
+      title: s.title,
+      presenterName: s.presenter_name,
+      slideCount: s.slide_count,
+      currentSlide: s.current_slide,
+      status: s.status,
+      createdAt: s.created_at,
+      startedAt: s.started_at,
+      endedAt: s.ended_at,
+      participantCount: (liveParticipants[s.code] || []).length,
+    })));
+  }
 
-  res.json((data || []).map(s => ({
-    id: s.id,
-    code: s.code,
-    title: s.title,
-    presenterName: s.presenter_name,
-    slideCount: s.slide_count,
-    currentSlide: s.current_slide,
-    status: s.status,
-    createdAt: s.created_at,
-    startedAt: s.started_at,
-    endedAt: s.ended_at,
-    participantCount: (liveParticipants[s.code] || []).length,
-  })));
+  // Fallback: in-memory only
+  let sessions = Object.values(sessionCache);
+  if (status) sessions = sessions.filter(s => s.status === status);
+  sessions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(sessions.map(s => ({ ...s, participantCount: (liveParticipants[s.code] || []).length })));
 });
 
 // Create session
@@ -179,10 +229,11 @@ app.post('/api/sessions', async (req, res) => {
     status: 'active',
   };
 
-  const { error } = await supabase.from('sessions').insert(session);
-  if (error) return res.status(500).json({ error: error.message });
+  if (SUPABASE_KEY) {
+    const { error } = await db.insert('sessions', session);
+    if (error) return res.status(500).json({ error });
+  }
 
-  // Update cache
   sessionCache[code] = {
     id: session.id,
     code,
@@ -214,83 +265,89 @@ app.get('/api/sessions/:code', (req, res) => {
   });
 });
 
-// Get all responses for a session (from Supabase)
+// Get all responses for a session
 app.get('/api/sessions/:code/responses', async (req, res) => {
-  const session = sessionCache[req.params.code];
-  if (!session) return res.status(404).json({ error: 'Session not found' });
+  if (!sessionCache[req.params.code]) return res.status(404).json({ error: 'Session not found' });
 
-  const { data, error } = await supabase
-    .from('interactions')
-    .select('*')
-    .eq('session_code', req.params.code)
-    .in('event_type', ['quiz_answer', 'poll_vote', 'text_response'])
-    .order('created_at', { ascending: true });
+  if (SUPABASE_KEY) {
+    const { data, error } = await db.select(
+      'interactions',
+      `session_code=eq.${req.params.code}&event_type=in.(quiz_answer,poll_vote,text_response)&order=created_at.asc`
+    );
+    if (error) return res.status(500).json({ error });
+    return res.json(data || []);
+  }
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  res.json(responseCache[req.params.code] || []);
 });
 
 // Get responses for a specific slide
 app.get('/api/sessions/:code/responses/:slideIndex', async (req, res) => {
-  const session = sessionCache[req.params.code];
-  if (!session) return res.status(404).json({ error: 'Session not found' });
+  if (!sessionCache[req.params.code]) return res.status(404).json({ error: 'Session not found' });
 
   const slideIndex = parseInt(req.params.slideIndex);
-  const { data, error } = await supabase
-    .from('interactions')
-    .select('*')
-    .eq('session_code', req.params.code)
-    .eq('slide_index', slideIndex)
-    .in('event_type', ['quiz_answer', 'poll_vote', 'text_response'])
-    .order('created_at', { ascending: true });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
-});
-
-// Export session data (full event log for post-workshop analysis)
-app.get('/api/sessions/:code/export', async (req, res) => {
-  const session = sessionCache[req.params.code];
-  if (!session) {
-    // Try Supabase directly (may be an old ended session not in cache)
-    const { data: s } = await supabase.from('sessions').select('*').eq('code', req.params.code).single();
-    if (!s) return res.status(404).json({ error: 'Session not found' });
+  if (SUPABASE_KEY) {
+    const { data, error } = await db.select(
+      'interactions',
+      `session_code=eq.${req.params.code}&slide_index=eq.${slideIndex}&event_type=in.(quiz_answer,poll_vote,text_response)&order=created_at.asc`
+    );
+    if (error) return res.status(500).json({ error });
+    return res.json(data || []);
   }
 
-  const { data: interactions, error } = await supabase
-    .from('interactions')
-    .select('*')
-    .eq('session_code', req.params.code)
-    .order('created_at', { ascending: true });
+  const responses = (responseCache[req.params.code] || []).filter(r => r.slideIndex === slideIndex);
+  res.json(responses);
+});
 
-  if (error) return res.status(500).json({ error: error.message });
+// Export session data (full event log)
+app.get('/api/sessions/:code/export', async (req, res) => {
+  const session = sessionCache[req.params.code];
 
-  // Group responses by slide
-  const responsesBySlide = {};
-  const responses = (interactions || []).filter(i =>
-    ['quiz_answer', 'poll_vote', 'text_response'].includes(i.event_type)
-  );
-  responses.forEach(r => {
-    if (!responsesBySlide[r.slide_index]) responsesBySlide[r.slide_index] = [];
-    responsesBySlide[r.slide_index].push(r);
-  });
+  if (SUPABASE_KEY) {
+    // Get session from DB if not in cache (ended sessions)
+    let sessionData = session;
+    if (!sessionData) {
+      const { data } = await db.select('sessions', `code=eq.${req.params.code}`);
+      if (!data || !data.length) return res.status(404).json({ error: 'Session not found' });
+      sessionData = data[0];
+    }
 
-  // Session timeline (all events)
-  const timeline = (interactions || []).map(i => ({
-    time: i.created_at,
-    event: i.event_type,
-    participant: i.participant_name,
-    slide: i.slide_index,
-    data: i.event_data,
-  }));
+    const { data: interactions, error } = await db.select(
+      'interactions',
+      `session_code=eq.${req.params.code}&order=created_at.asc`
+    );
+    if (error) return res.status(500).json({ error });
 
-  res.json({
-    session: session || { code: req.params.code },
-    totalInteractions: (interactions || []).length,
-    totalResponses: responses.length,
-    responsesBySlide,
-    timeline,
-  });
+    const responses = (interactions || []).filter(i =>
+      ['quiz_answer', 'poll_vote', 'text_response'].includes(i.event_type)
+    );
+
+    const responsesBySlide = {};
+    responses.forEach(r => {
+      if (!responsesBySlide[r.slide_index]) responsesBySlide[r.slide_index] = [];
+      responsesBySlide[r.slide_index].push(r);
+    });
+
+    const timeline = (interactions || []).map(i => ({
+      time: i.created_at,
+      event: i.event_type,
+      participant: i.participant_name,
+      slide: i.slide_index,
+      data: i.event_data,
+    }));
+
+    return res.json({
+      session: sessionData,
+      totalInteractions: (interactions || []).length,
+      totalResponses: responses.length,
+      responsesBySlide,
+      timeline,
+    });
+  }
+
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+  res.json({ session, totalResponses: (responseCache[req.params.code] || []).length });
 });
 
 // --- Socket.io ---
@@ -309,7 +366,6 @@ io.on('connection', (socket) => {
     socket.join(`${sessionCode}:presenter`);
     console.log(`Presenter connected: ${sessionCode}`);
 
-    // Send current session state so presenter can resume
     socket.emit('session-state', {
       currentSlide: sessionCache[sessionCode].currentSlide,
       status: sessionCache[sessionCode].status,
@@ -324,16 +380,13 @@ io.on('connection', (socket) => {
     if (!liveParticipants[sessionCode]) liveParticipants[sessionCode] = [];
     liveParticipants[sessionCode].push(participant);
 
-    // Send current slide
     socket.emit('slide-change', { slideIndex: sessionCache[sessionCode].currentSlide });
 
-    // Notify presenter
     io.to(`${sessionCode}:presenter`).emit('participant-joined', {
       participantName: participant.name,
       participants: liveParticipants[sessionCode].map(p => ({ id: p.id, name: p.name })),
     });
 
-    // Log interaction
     logInteraction(sessionCode, 'participant_joined', {
       participantId: pId,
       participantName: participant.name,
@@ -342,92 +395,63 @@ io.on('connection', (socket) => {
     console.log(`"${participant.name}" joined ${sessionCode} (${liveParticipants[sessionCode].length} total)`);
   }
 
-  // Presenter starts session (releases lobby)
+  // Session lifecycle events
   socket.on('session-start', () => {
     if (mode !== 'presenter') return;
     sessionCache[sessionCode].status = 'started';
     sessionCache[sessionCode].startedAt = new Date().toISOString();
-
-    supabase.from('sessions')
-      .update({ status: 'started', started_at: sessionCache[sessionCode].startedAt })
-      .eq('code', sessionCode).then(({ error }) => {
-        if (error) console.error('Failed to update session status:', error.message);
-      });
-
+    db.update('sessions', `code=eq.${sessionCode}`, { status: 'started', started_at: sessionCache[sessionCode].startedAt });
     logInteraction(sessionCode, 'session_started');
     io.to(sessionCode).emit('session-start');
-    console.log(`Session ${sessionCode} started by presenter`);
+    console.log(`Session ${sessionCode} started`);
   });
 
-  // Presenter pauses session
   socket.on('session-pause', () => {
     if (mode !== 'presenter') return;
     sessionCache[sessionCode].status = 'paused';
-
-    supabase.from('sessions').update({ status: 'paused' }).eq('code', sessionCode).then(({ error }) => {
-      if (error) console.error('Failed to update session status:', error.message);
-    });
-
+    db.update('sessions', `code=eq.${sessionCode}`, { status: 'paused' });
     logInteraction(sessionCode, 'session_paused');
     io.to(sessionCode).emit('session-pause');
     console.log(`Session ${sessionCode} paused`);
   });
 
-  // Presenter resumes session
   socket.on('session-resume', () => {
     if (mode !== 'presenter') return;
     sessionCache[sessionCode].status = 'started';
-
-    supabase.from('sessions').update({ status: 'started' }).eq('code', sessionCode).then(({ error }) => {
-      if (error) console.error('Failed to update session status:', error.message);
-    });
-
+    db.update('sessions', `code=eq.${sessionCode}`, { status: 'started' });
     logInteraction(sessionCode, 'session_resumed');
     io.to(sessionCode).emit('session-resume');
     console.log(`Session ${sessionCode} resumed`);
   });
 
-  // Presenter ends session
   socket.on('session-end', () => {
     if (mode !== 'presenter') return;
     sessionCache[sessionCode].status = 'ended';
     sessionCache[sessionCode].endedAt = new Date().toISOString();
-
-    supabase.from('sessions')
-      .update({ status: 'ended', ended_at: sessionCache[sessionCode].endedAt })
-      .eq('code', sessionCode).then(({ error }) => {
-        if (error) console.error('Failed to update session status:', error.message);
-      });
-
+    db.update('sessions', `code=eq.${sessionCode}`, { status: 'ended', ended_at: sessionCache[sessionCode].endedAt });
     logInteraction(sessionCode, 'session_ended');
     io.to(sessionCode).emit('session-end');
     console.log(`Session ${sessionCode} ended`);
   });
 
-  // Presenter changes slide
+  // Slide changes
   socket.on('slide-change', (data) => {
     if (mode !== 'presenter') return;
+    const prevSlide = sessionCache[sessionCode].currentSlide;
     sessionCache[sessionCode].currentSlide = data.slideIndex;
-
-    supabase.from('sessions').update({ current_slide: data.slideIndex }).eq('code', sessionCode).then(({ error }) => {
-      if (error) console.error('Failed to update current slide:', error.message);
-    });
-
+    db.update('sessions', `code=eq.${sessionCode}`, { current_slide: data.slideIndex });
     logInteraction(sessionCode, 'slide_change', {
       slideIndex: data.slideIndex,
-      eventData: { from: sessionCache[sessionCode].currentSlide, to: data.slideIndex },
+      eventData: { from: prevSlide, to: data.slideIndex },
     });
-
     socket.to(sessionCode).emit('slide-change', data);
   });
 
-  // Response from participant
+  // Participant responses
   socket.on('response', (data) => {
-    // Map to event type for Supabase
     const eventTypeMap = { quiz: 'quiz_answer', poll: 'poll_vote', text: 'text_response' };
     const eventType = eventTypeMap[data.type] || data.type;
 
-    // Log to Supabase
     logInteraction(sessionCode, eventType, {
       participantId: data.participantId,
       participantName: data.participantName,
@@ -435,8 +459,9 @@ io.on('connection', (socket) => {
       eventData: data.data,
     });
 
-    // Cache for real-time aggregation
-    const cached = {
+    // Cache for aggregation
+    if (!responseCache[sessionCode]) responseCache[sessionCode] = [];
+    responseCache[sessionCode].push({
       sessionCode,
       slideIndex: data.slideIndex,
       type: data.type,
@@ -444,9 +469,7 @@ io.on('connection', (socket) => {
       participantId: data.participantId,
       participantName: data.participantName,
       createdAt: new Date().toISOString(),
-    };
-    if (!responseCache[sessionCode]) responseCache[sessionCode] = [];
-    responseCache[sessionCode].push(cached);
+    });
 
     // Forward to presenter
     io.to(`${sessionCode}:presenter`).emit('response', data);
@@ -456,20 +479,12 @@ io.on('connection', (socket) => {
       const pollResponses = responseCache[sessionCode].filter(
         r => r.slideIndex === data.slideIndex && r.type === 'poll'
       );
-
       const counts = {};
-      pollResponses.forEach(r => {
-        counts[r.data.option] = (counts[r.data.option] || 0) + 1;
-      });
-
+      pollResponses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
       const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
       const options = [];
       for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
-
-      io.to(sessionCode).emit('poll-update', {
-        slideIndex: data.slideIndex,
-        results: { options, total: pollResponses.length },
-      });
+      io.to(sessionCode).emit('poll-update', { slideIndex: data.slideIndex, results: { options, total: pollResponses.length } });
     }
 
     // Quiz aggregation
@@ -477,20 +492,12 @@ io.on('connection', (socket) => {
       const quizResponses = responseCache[sessionCode].filter(
         r => r.slideIndex === data.slideIndex && r.type === 'quiz'
       );
-
       const counts = {};
-      quizResponses.forEach(r => {
-        counts[r.data.option] = (counts[r.data.option] || 0) + 1;
-      });
-
+      quizResponses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
       const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
       const options = [];
       for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
-
-      io.to(sessionCode).emit('quiz-update', {
-        slideIndex: data.slideIndex,
-        results: { options, total: quizResponses.length },
-      });
+      io.to(sessionCode).emit('quiz-update', { slideIndex: data.slideIndex, results: { options, total: quizResponses.length } });
     }
 
     // Text aggregation
@@ -498,33 +505,17 @@ io.on('connection', (socket) => {
       const textResponses = responseCache[sessionCode].filter(
         r => r.slideIndex === data.slideIndex && r.type === 'text'
       );
-
       const wordCounts = {};
       const stopWords = new Set(['the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','can','could','and','but','or','nor','for','yet','so','in','on','at','to','of','by','with','from','up','out','it','its','i','we','they','you','he','she','my','our','their','your','his','her','this','that','these','those','not','no','all','each','every','both','few','more','most','other','some','such','than','too','very']);
-
       textResponses.forEach(r => {
         const text = (r.data.text || '').toLowerCase().replace(/[^a-z0-9\s'-]/g, '');
         text.split(/\s+/).forEach(w => {
-          if (w.length > 2 && !stopWords.has(w)) {
-            wordCounts[w] = (wordCounts[w] || 0) + 1;
-          }
+          if (w.length > 2 && !stopWords.has(w)) wordCounts[w] = (wordCounts[w] || 0) + 1;
         });
       });
-
-      const words = Object.entries(wordCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 30)
-        .map(([word, count]) => ({ word, count }));
-
-      const texts = textResponses.map(r => ({
-        name: r.participantName || 'Anonymous',
-        text: r.data.text || '',
-      }));
-
-      io.to(sessionCode).emit('text-update', {
-        slideIndex: data.slideIndex,
-        results: { words, texts, total: textResponses.length },
-      });
+      const words = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([word, count]) => ({ word, count }));
+      const texts = textResponses.map(r => ({ name: r.participantName || 'Anonymous', text: r.data.text || '' }));
+      io.to(sessionCode).emit('text-update', { slideIndex: data.slideIndex, results: { words, texts, total: textResponses.length } });
     }
   });
 
@@ -532,12 +523,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (mode === 'participant' && liveParticipants[sessionCode]) {
       liveParticipants[sessionCode] = liveParticipants[sessionCode].filter(p => p.socketId !== socket.id);
-
-      logInteraction(sessionCode, 'participant_left', {
-        participantId: participantId,
-        participantName: participantName,
-      });
-
+      logInteraction(sessionCode, 'participant_left', { participantId, participantName });
       io.to(`${sessionCode}:presenter`).emit('participant-left', {
         participants: liveParticipants[sessionCode].map(p => ({ id: p.id, name: p.name })),
       });
@@ -548,12 +534,9 @@ io.on('connection', (socket) => {
 // --- Start ---
 async function start() {
   await loadActiveSessions();
-
   server.listen(PORT, () => {
-    console.log(`\n  AI Primer Live running on http://localhost:${PORT}\n`);
-    console.log(`  Self-paced:   http://localhost:${PORT}/`);
-    console.log(`  Presenter:    http://localhost:${PORT}/presenter.html`);
-    console.log(`  Participant:  http://localhost:${PORT}/join.html\n`);
+    console.log(`\n  AI Primer Live running on http://localhost:${PORT}`);
+    console.log(`  Supabase: ${SUPABASE_KEY ? 'connected' : 'NOT configured (in-memory only)'}\n`);
   });
 }
 

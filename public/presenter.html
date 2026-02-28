@@ -296,13 +296,18 @@
       }
 
       const courses = SlideRegistry.listCourses();
-      if (courses.length <= 1) {
-        createNewSession(courses[0]?.id || null, 'en');
+      const defaultCourse = courses[0] || { id: null, languages: ['en'] };
+      const defaultLangs = defaultCourse.languages || ['en'];
+
+      // Skip picker only if one course AND one language
+      if (courses.length <= 1 && defaultLangs.length <= 1) {
+        createNewSession(defaultCourse.id, 'en');
         return;
       }
 
-      // Show course picker
+      // Show course/language picker
       const app = document.getElementById('app');
+      const showCourseDropdown = courses.length > 1;
       const courseOptions = courses.map(c =>
         `<option value="${c.id}">${c.title} (${c.slideCount} slides)</option>`
       ).join('');
@@ -312,7 +317,7 @@
         <div class="setup-screen" id="course-picker">
           <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:24px;">
           <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Create New Session</h1>
-          <div style="margin:24px 0;width:100%;max-width:320px;">
+          <div style="margin:24px 0;width:100%;max-width:320px;${showCourseDropdown ? '' : 'display:none;'}">
             <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Course</label>
             <select id="course-select" onchange="updateLanguageOptions()" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-size:0.95rem;appearance:auto;">
               ${courseOptions}

@@ -390,6 +390,8 @@
       // Update slide counter in controls bar
       const slideInfo = qs('.presenter-controls__slide-info');
       if (slideInfo) slideInfo.textContent = `${index + 1} / ${state.slides.length}`;
+      // Update section progress strip
+      updateSectionProgress(index);
       // Update session panel slide progress
       updateSessionPanel();
     }
@@ -1104,6 +1106,81 @@
     });
   }
 
+  // --- Section Progress Strip (presenter-only, above controls bar) ---
+  let sectionProgressCache = null;
+
+  function buildSectionProgress() {
+    const container = document.getElementById('section-progress');
+    if (!container) return;
+
+    const sections = getSectionMap();
+    if (sections.length === 0) return;
+
+    sectionProgressCache = sections;
+    const total = state.slides.length;
+
+    let html = '<div class="section-progress__track">';
+
+    sections.forEach((sec, i) => {
+      const widthPct = (sec.slideCount / total) * 100;
+      html += `
+        <div class="section-progress__segment" data-section="${i}"
+             style="width:${widthPct}%"
+             onclick="AIPrimer.goToSlide(${sec.startIndex})"
+             title="${sec.label} (slides ${sec.startIndex + 1}–${sec.startIndex + sec.slideCount})">
+          <div class="section-progress__fill"></div>
+          <span class="section-progress__label">${sec.label}</span>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    html += '<div class="section-progress__marker" id="section-progress-marker"></div>';
+
+    container.innerHTML = html;
+    updateSectionProgress(state.currentSlide);
+  }
+
+  function updateSectionProgress(slideIndex) {
+    const container = document.getElementById('section-progress');
+    if (!container) return;
+
+    const sections = sectionProgressCache || getSectionMap();
+    if (sections.length === 0) return;
+
+    const total = state.slides.length;
+
+    // Update segment active states
+    const currentSec = getCurrentSectionIndex(sections);
+    container.querySelectorAll('.section-progress__segment').forEach((seg, i) => {
+      seg.classList.toggle('section-progress__segment--past', i < currentSec);
+      seg.classList.toggle('section-progress__segment--current', i === currentSec);
+      seg.classList.toggle('section-progress__segment--future', i > currentSec);
+
+      // Fill proportionally within current section
+      const fillEl = seg.querySelector('.section-progress__fill');
+      if (fillEl) {
+        if (i < currentSec) {
+          fillEl.style.width = '100%';
+        } else if (i === currentSec) {
+          const secStart = sections[i].startIndex;
+          const secCount = sections[i].slideCount;
+          const progressInSection = Math.min(((slideIndex - secStart + 1) / secCount) * 100, 100);
+          fillEl.style.width = progressInSection + '%';
+        } else {
+          fillEl.style.width = '0%';
+        }
+      }
+    });
+
+    // Position the marker
+    const marker = document.getElementById('section-progress-marker');
+    if (marker) {
+      const pct = ((slideIndex + 0.5) / total) * 100;
+      marker.style.left = pct + '%';
+    }
+  }
+
   // --- Initialisation ---
   function init(config) {
     // config = { slides: [...], courseId: '...', mode: 'presenter'|'participant'|'self', containerId: '...' }
@@ -1209,6 +1286,7 @@
             <div class="response-stream__label">Live Responses</div>
           </div>
         </div>
+        <div class="section-progress" id="section-progress"></div>
         <div class="presenter-controls">
           <div class="presenter-controls__nav">
             <button class="presenter-controls__btn" onclick="AIPrimer.prev()">&#9664; Prev</button>
@@ -1245,6 +1323,9 @@
     state.slides.forEach((slide, i) => {
       viewport.appendChild(renderSlide(slide, i));
     });
+
+    // Build section progress strip
+    buildSectionProgress();
   }
 
   function generateId() {

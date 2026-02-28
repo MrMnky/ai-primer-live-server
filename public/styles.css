@@ -774,7 +774,7 @@ html, body {
 .presenter-layout {
   display: grid;
   grid-template-columns: 1fr 380px;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
   height: 100vh;
   background: #111;
   color: var(--white);
@@ -1936,5 +1936,135 @@ html, body {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 16px;
+  }
+}
+
+/* --- Section Progress Strip (presenter, above controls) --- */
+.section-progress {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 28px;
+  background: #111;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #222;
+}
+
+.section-progress__track {
+  display: flex;
+  width: 100%;
+  height: 16px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+}
+
+.section-progress__segment {
+  position: relative;
+  height: 100%;
+  cursor: pointer;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+
+.section-progress__segment:last-child {
+  border-right: none;
+}
+
+.section-progress__segment:hover {
+  opacity: 0.9;
+}
+
+/* Fill bar within each segment — shows progress through current section */
+.section-progress__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.section-progress__segment--past .section-progress__fill {
+  background: var(--bright-turquoise);
+  opacity: 0.5;
+}
+
+.section-progress__segment--current .section-progress__fill {
+  background: var(--bright-turquoise);
+  opacity: 0.85;
+}
+
+.section-progress__segment--future .section-progress__fill {
+  background: transparent;
+}
+
+/* Section labels inside segments */
+.section-progress__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+  z-index: 1;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.section-progress__segment--current .section-progress__label {
+  color: rgba(255,255,255,0.7);
+}
+
+.section-progress__segment--past .section-progress__label {
+  color: rgba(0, 255, 188, 0.5);
+}
+
+.section-progress__segment:hover .section-progress__label {
+  color: rgba(255,255,255,0.6);
+}
+
+/* Position marker — small triangle/dot showing exact slide position */
+.section-progress__marker {
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 28px;
+  background: var(--bright-turquoise);
+  transform: translateX(-50%);
+  transition: left 0.3s ease;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.section-progress__marker::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--bright-turquoise);
+  border-radius: 50%;
+}
+
+/* Hide labels on very small segments (< 80px) */
+@media (max-width: 1200px) {
+  .section-progress__label {
+    font-size: 0.5rem;
   }
 }

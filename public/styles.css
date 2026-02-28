@@ -1939,42 +1939,45 @@ html, body {
   }
 }
 
-/* --- Section Progress Strip (presenter, above controls) --- */
+/* --- Section Progress Scrubber (presenter, above controls) --- */
 .section-progress {
   grid-column: 1 / -1;
   position: relative;
-  height: 28px;
+  height: 32px;
   background: #111;
   padding: 0 20px;
   display: flex;
   align-items: center;
   border-top: 1px solid #222;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .section-progress__track {
   display: flex;
   width: 100%;
-  height: 16px;
+  height: 18px;
   border-radius: 3px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255,255,255,0.03);
+  cursor: pointer;
+}
+
+/* Expand hit area while scrubbing */
+.section-progress--scrubbing .section-progress__track {
+  cursor: grabbing;
 }
 
 .section-progress__segment {
   position: relative;
   height: 100%;
-  cursor: pointer;
-  border-right: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  border-right: 1.5px solid rgba(255,255,255,0.12);
   overflow: hidden;
-  transition: opacity 0.2s;
 }
 
 .section-progress__segment:last-child {
   border-right: none;
-}
-
-.section-progress__segment:hover {
-  opacity: 0.9;
 }
 
 /* Fill bar within each segment — shows progress through current section */
@@ -1985,21 +1988,47 @@ html, body {
   height: 100%;
   width: 0%;
   transition: width 0.3s ease;
-  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Disable transition while scrubbing for instant feedback */
+.section-progress--scrubbing .section-progress__fill {
+  transition: none;
 }
 
 .section-progress__segment--past .section-progress__fill {
   background: var(--bright-turquoise);
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .section-progress__segment--current .section-progress__fill {
   background: var(--bright-turquoise);
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
 .section-progress__segment--future .section-progress__fill {
   background: transparent;
+}
+
+/* Individual slide ticks inside each segment */
+.section-progress__tick {
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  border-right: 1px solid transparent;
+  transition: background 0.1s;
+}
+
+.section-progress__tick:last-child {
+  border-right: none;
+}
+
+.section-progress__tick:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.section-progress__tick--current {
+  background: rgba(0, 255, 188, 0.2);
 }
 
 /* Section labels inside segments */
@@ -2014,55 +2043,92 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 4px;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   transition: color 0.2s;
 }
 
 .section-progress__segment--current .section-progress__label {
-  color: rgba(255,255,255,0.7);
-}
-
-.section-progress__segment--past .section-progress__label {
-  color: rgba(0, 255, 188, 0.5);
-}
-
-.section-progress__segment:hover .section-progress__label {
   color: rgba(255,255,255,0.6);
 }
 
-/* Position marker — small triangle/dot showing exact slide position */
+.section-progress__segment--past .section-progress__label {
+  color: rgba(0, 255, 188, 0.4);
+}
+
+.section-progress__segment:hover .section-progress__label {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Position marker — vertical line + dot showing exact slide */
 .section-progress__marker {
   position: absolute;
   bottom: 0;
   width: 2px;
-  height: 28px;
+  height: 32px;
   background: var(--bright-turquoise);
   transform: translateX(-50%);
   transition: left 0.3s ease;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.8;
+}
+
+.section-progress--scrubbing .section-progress__marker {
+  transition: none;
 }
 
 .section-progress__marker::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
   background: var(--bright-turquoise);
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 188, 0.4);
 }
 
-/* Hide labels on very small segments (< 80px) */
+/* Hover tooltip — shows slide number + title */
+.section-progress__tooltip {
+  position: absolute;
+  top: -30px;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-progress__tooltip--visible {
+  opacity: 1;
+}
+
+/* Hide tooltip while scrubbing — the slide itself is the feedback */
+.section-progress--scrubbing .section-progress__tooltip {
+  opacity: 0 !important;
+}
+
+/* Responsive: smaller labels on narrow screens */
 @media (max-width: 1200px) {
   .section-progress__label {
     font-size: 0.5rem;

@@ -1106,8 +1106,9 @@
     });
   }
 
-  // --- Section Progress Strip (presenter-only, above controls bar) ---
+  // --- Section Progress Scrubber (presenter-only, above controls bar) ---
   let sectionProgressCache = null;
+  let scrubbing = false;
 
   function buildSectionProgress() {
     const container = document.getElementById('section-progress');
@@ -1119,27 +1120,105 @@
     sectionProgressCache = sections;
     const total = state.slides.length;
 
-    let html = '<div class="section-progress__track">';
+    // Build section segments with individual slide ticks inside
+    let html = '<div class="section-progress__track" id="sp-track">';
 
     sections.forEach((sec, i) => {
       const widthPct = (sec.slideCount / total) * 100;
-      html += `
-        <div class="section-progress__segment" data-section="${i}"
-             style="width:${widthPct}%"
-             onclick="AIPrimer.goToSlide(${sec.startIndex})"
-             title="${sec.label} (slides ${sec.startIndex + 1}–${sec.startIndex + sec.slideCount})">
-          <div class="section-progress__fill"></div>
-          <span class="section-progress__label">${sec.label}</span>
-        </div>
-      `;
+      html += `<div class="section-progress__segment" data-section="${i}" style="width:${widthPct}%">`;
+      html += `<div class="section-progress__fill"></div>`;
+      html += `<span class="section-progress__label">${sec.label}</span>`;
+
+      // Render individual slide ticks within this segment
+      for (let s = 0; s < sec.slideCount; s++) {
+        const slideIdx = sec.startIndex + s;
+        const tickWidthPct = (1 / sec.slideCount) * 100;
+        html += `<div class="section-progress__tick" data-slide="${slideIdx}" style="width:${tickWidthPct}%"></div>`;
+      }
+
+      html += `</div>`;
     });
 
     html += '</div>';
+
+    // Marker dot
     html += '<div class="section-progress__marker" id="section-progress-marker"></div>';
 
+    // Hover tooltip
+    html += '<div class="section-progress__tooltip" id="sp-tooltip"></div>';
+
     container.innerHTML = html;
+
+    // --- Scrub interaction: click and drag ---
+    const track = document.getElementById('sp-track');
+
+    function slideIndexFromX(clientX) {
+      const rect = track.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      return Math.min(Math.floor(pct * total), total - 1);
+    }
+
+    track.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      scrubbing = true;
+      container.classList.add('section-progress--scrubbing');
+      const idx = slideIndexFromX(e.clientX);
+      goToSlide(idx);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!scrubbing) return;
+      e.preventDefault();
+      const idx = slideIndexFromX(e.clientX);
+      goToSlide(idx);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (scrubbing) {
+        scrubbing = false;
+        container.classList.remove('section-progress--scrubbing');
+      }
+    });
+
+    // --- Hover tooltip ---
+    track.addEventListener('mousemove', (e) => {
+      if (scrubbing) return; // Don't show tooltip while dragging
+      const idx = slideIndexFromX(e.clientX);
+      const slide = state.slides[idx];
+      if (!slide) return;
+
+      const tooltip = document.getElementById('sp-tooltip');
+      if (!tooltip) return;
+
+      const rect = track.getBoundingClientRect();
+      const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+
+      // Find which section this slide belongs to
+      const secIdx = getCurrentSectionIndex(sectionProgressCache, idx);
+      const secLabel = sectionProgressCache[secIdx] ? sectionProgressCache[secIdx].label : '';
+
+      tooltip.textContent = `${idx + 1}. ${slide.title || slide.type}`;
+      tooltip.style.left = xPct + '%';
+      tooltip.classList.add('section-progress__tooltip--visible');
+    });
+
+    track.addEventListener('mouseleave', () => {
+      const tooltip = document.getElementById('sp-tooltip');
+      if (tooltip) tooltip.classList.remove('section-progress__tooltip--visible');
+    });
+
     updateSectionProgress(state.currentSlide);
   }
+
+  // Allow getCurrentSectionIndex to optionally accept a custom slideIndex
+  const _origGetCurrentSectionIndex = getCurrentSectionIndex;
+  getCurrentSectionIndex = function(sections, overrideIndex) {
+    const idx = overrideIndex !== undefined ? overrideIndex : state.currentSlide;
+    for (let i = sections.length - 1; i >= 0; i--) {
+      if (idx >= sections[i].startIndex) return i;
+    }
+    return 0;
+  };
 
   function updateSectionProgress(slideIndex) {
     const container = document.getElementById('section-progress');
@@ -1151,7 +1230,7 @@
     const total = state.slides.length;
 
     // Update segment active states
-    const currentSec = getCurrentSectionIndex(sections);
+    const currentSec = getCurrentSectionIndex(sections, slideIndex);
     container.querySelectorAll('.section-progress__segment').forEach((seg, i) => {
       seg.classList.toggle('section-progress__segment--past', i < currentSec);
       seg.classList.toggle('section-progress__segment--current', i === currentSec);
@@ -1171,6 +1250,13 @@
           fillEl.style.width = '0%';
         }
       }
+
+      // Update tick active states within this segment
+      seg.querySelectorAll('.section-progress__tick').forEach(tick => {
+        const tickIdx = parseInt(tick.dataset.slide, 10);
+        tick.classList.toggle('section-progress__tick--past', tickIdx < slideIndex);
+        tick.classList.toggle('section-progress__tick--current', tickIdx === slideIndex);
+      });
     });
 
     // Position the marker

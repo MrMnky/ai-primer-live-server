@@ -33,11 +33,14 @@
       const session = await PrimerAuth.requireAuth('/');
       if (!session) return;
 
-      AIPrimer.init({
-        slides: AI_PRIMER_SLIDES,
-        mode: 'self',
-        containerId: 'app',
-      });
+      // Use registry course if available, fall back to legacy slides
+      const initConfig = { mode: 'self', containerId: 'app' };
+      if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse('ai-primer-full')) {
+        initConfig.courseId = 'ai-primer-full';
+      } else {
+        initConfig.slides = AI_PRIMER_SLIDES;
+      }
+      AIPrimer.init(initConfig);
     })();
   </script>
 </body>

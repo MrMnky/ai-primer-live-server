@@ -40,6 +40,21 @@ const SECTION_4_HOW_AI_WORKS = [
     notes: `The "momentum not meaning" line is a mini-revelation. Pause before and after. This explains why AI can sound brilliant: the training data included brilliant writing, so the patterns reproduce brilliance. But fluency is seductive — when something sounds coherent, we believe it. That coherence comes from pattern-matching, not knowing.`,
   },
 
+  // ── 4.1b Text Completion Interactive ────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: Text Completion',
+    subtitle: 'See how an LLM predicts the next word — one token at a time.',
+    graphic: {
+      id: 'text-completion',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive activity. Let participants explore for 2-3 minutes. They type a prompt and see the model complete it token by token. Debrief: "Notice how each word choice opens up different paths? That's probability in action."`,
+  },
+
   // ── 4.2  Tokens ──────────────────────────────
   {
     type: 'content',

@@ -80,11 +80,12 @@ registerSection(SECTION_3_AI_RISKS, 's3', [
   's3-risk-quiz',
 ]);
 
-// ── Section 4: How AI Works (13 slides) ─────────────────
+// ── Section 4: How AI Works (15 slides) ─────────────────
 registerSection(SECTION_4_HOW_AI_WORKS, 's4', [
   's4-opener',
   's4-text-completion',
   's4-simplicity-scales',
+  's4-text-completion-interactive',
   's4-tokens',
   's4-what-happens-when-you-send',
   's4-model-rereads',

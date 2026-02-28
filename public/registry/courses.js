@@ -83,6 +83,7 @@ const COURSE_DEFINITIONS = {
       's4-opener',
       's4-text-completion',
       's4-simplicity-scales',
+      's4-text-completion-interactive',
       's4-tokens',
       's4-what-happens-when-you-send',
       's4-model-rereads',

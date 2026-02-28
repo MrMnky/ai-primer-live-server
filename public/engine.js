@@ -645,6 +645,19 @@
     state.socket.on('text-update', (data) => {
       updateTextResults(data.slideIndex, data.results);
     });
+
+    // Graphic interaction sync — forward to active graphic iframe
+    state.socket.on('graphic-update', (data) => {
+      if (typeof GraphicContainer !== 'undefined') {
+        const instance = GraphicContainer._instances[data.slideIndex];
+        if (instance && instance.iframe && instance.iframe.contentWindow) {
+          instance.iframe.contentWindow.postMessage({
+            type: 'SESSION_DATA',
+            data: data.results,
+          }, '*');
+        }
+      }
+    });
   }
 
   function handleIncomingResponse(data) {

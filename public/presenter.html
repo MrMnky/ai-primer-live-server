@@ -271,15 +271,31 @@
     }
 
     // --- Create New Session ---
+    // Default course — use registry if available, fall back to legacy
+    const DEFAULT_COURSE_ID = 'ai-primer-full';
+
     async function createNewSession() {
       try {
+        // Resolve slide count from registry or legacy
+        let slideCount = AI_PRIMER_SLIDES.length;
+        let courseId = null;
+
+        if (typeof SlideRegistry !== 'undefined') {
+          const course = SlideRegistry.getCourse(DEFAULT_COURSE_ID);
+          if (course) {
+            slideCount = course.slides.length;
+            courseId = DEFAULT_COURSE_ID;
+          }
+        }
+
         const res = await fetch(serverUrl + '/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: 'AI Primer',
             presenterName: currentUser?.full_name || 'Presenter',
-            slideCount: AI_PRIMER_SLIDES.length,
+            slideCount,
+            courseId,
           }),
         });
         const data = await res.json();
@@ -362,8 +378,8 @@
       const app = document.getElementById('app');
       app.innerHTML = '';
 
-      AIPrimer.init({
-        slides: AI_PRIMER_SLIDES,
+      // Use registry course if available, fall back to legacy slides
+      const initConfig = {
         mode: 'presenter',
         containerId: 'app',
         sessionCode: code,
@@ -371,7 +387,15 @@
           // Emit resume if we're rejoining a paused session
           socket.emit('session-resume');
         },
-      });
+      };
+
+      if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse(DEFAULT_COURSE_ID)) {
+        initConfig.courseId = DEFAULT_COURSE_ID;
+      } else {
+        initConfig.slides = AI_PRIMER_SLIDES;
+      }
+
+      AIPrimer.init(initConfig);
     }
 
     // --- Pause & Exit (called from admin console) ---

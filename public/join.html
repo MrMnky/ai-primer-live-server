@@ -241,8 +241,8 @@
       const lobby = document.getElementById('lobby-screen');
       if (lobby) lobby.remove();
 
-      AIPrimer.init({
-        slides: AI_PRIMER_SLIDES,
+      // Use registry course if available, fall back to legacy slides
+      const initConfig = {
         mode: 'participant',
         containerId: 'app',
         sessionCode: code,
@@ -258,7 +258,15 @@
             showOverlay('Session Ended', 'Thank you for joining!');
           });
         },
-      });
+      };
+
+      if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse('ai-primer-full')) {
+        initConfig.courseId = 'ai-primer-full';
+      } else {
+        initConfig.slides = AI_PRIMER_SLIDES;
+      }
+
+      AIPrimer.init(initConfig);
     }
 
     // Enter key on inputs

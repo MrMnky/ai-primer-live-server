@@ -113,7 +113,7 @@ async function loadActiveSessions() {
     for (const s of data) {
       const { data: responses } = await db.select(
         'interactions',
-        `session_code=eq.${s.code}&event_type=in.(quiz_answer,poll_vote,text_response)&order=created_at.asc`
+        `session_code=eq.${s.code}&event_type=in.(quiz_answer,poll_vote,text_response,graphic_interaction)&order=created_at.asc`
       );
 
       if (responses) {
@@ -121,7 +121,8 @@ async function loadActiveSessions() {
           sessionCode: r.session_code,
           slideIndex: r.slide_index,
           type: r.event_type === 'quiz_answer' ? 'quiz' :
-                r.event_type === 'poll_vote' ? 'poll' : 'text',
+                r.event_type === 'poll_vote' ? 'poll' :
+                r.event_type === 'graphic_interaction' ? 'graphic' : 'text',
           data: r.event_data,
           participantId: r.participant_id,
           participantName: r.participant_name,
@@ -215,7 +216,7 @@ app.get('/api/sessions', async (req, res) => {
 
 // Create session
 app.post('/api/sessions', async (req, res) => {
-  const { title, presenterName, slideCount } = req.body;
+  const { title, presenterName, slideCount, courseId } = req.body;
   let code = generateCode();
   while (sessionCache[code]) code = generateCode();
 
@@ -227,6 +228,7 @@ app.post('/api/sessions', async (req, res) => {
     slide_count: slideCount || 0,
     current_slide: 0,
     status: 'active',
+    course_id: courseId || null,
   };
 
   if (SUPABASE_KEY) {
@@ -240,6 +242,7 @@ app.post('/api/sessions', async (req, res) => {
     title: session.title,
     presenterName: session.presenter_name,
     slideCount: session.slide_count,
+    courseId: session.course_id,
     currentSlide: 0,
     status: 'active',
     createdAt: new Date().toISOString(),
@@ -298,6 +301,33 @@ app.get('/api/sessions/:code/responses/:slideIndex', async (req, res) => {
 
   const responses = (responseCache[req.params.code] || []).filter(r => r.slideIndex === slideIndex);
   res.json(responses);
+});
+
+// Get aggregated results for a slide (for graphics requesting session data)
+app.get('/api/sessions/:code/slides/:slideIndex/results', (req, res) => {
+  if (!sessionCache[req.params.code]) return res.status(404).json({ error: 'Session not found' });
+
+  const slideIndex = parseInt(req.params.slideIndex);
+  const responses = (responseCache[req.params.code] || []).filter(r => r.slideIndex === slideIndex);
+
+  if (responses.length === 0) return res.json({ total: 0, responses: [] });
+
+  const type = responses[0].type;
+  const result = { total: responses.length, type };
+
+  if (type === 'poll' || type === 'quiz') {
+    const counts = {};
+    responses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
+    const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
+    result.options = [];
+    for (let i = 0; i <= maxOpt; i++) result.options.push(counts[i] || 0);
+  } else if (type === 'text') {
+    result.texts = responses.map(r => ({ name: r.participantName, text: r.data.text }));
+  } else if (type === 'graphic') {
+    result.interactions = responses.map(r => ({ name: r.participantName, data: r.data }));
+  }
+
+  res.json(result);
 });
 
 // Export session data (full event log)
@@ -469,7 +499,7 @@ io.on('connection', (socket) => {
 
   // Participant responses
   socket.on('response', (data) => {
-    const eventTypeMap = { quiz: 'quiz_answer', poll: 'poll_vote', text: 'text_response' };
+    const eventTypeMap = { quiz: 'quiz_answer', poll: 'poll_vote', text: 'text_response', graphic: 'graphic_interaction' };
     const eventType = eventTypeMap[data.type] || data.type;
 
     logInteraction(sessionCode, eventType, {
@@ -549,6 +579,25 @@ io.on('connection', (socket) => {
       const words = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([word, count]) => ({ word, count }));
       const texts = textResponses.map(r => ({ name: r.participantName || 'Anonymous', text: r.data.text || '' }));
       io.to(sessionCode).emit('text-update', { slideIndex: data.slideIndex, results: { words, texts, total: textResponses.length } });
+    }
+
+    // Graphic interaction — broadcast to all participants + presenter for real-time sync
+    if (data.type === 'graphic') {
+      const graphicResponses = responseCache[sessionCode].filter(
+        r => r.slideIndex === data.slideIndex && r.type === 'graphic'
+      );
+      io.to(sessionCode).emit('graphic-update', {
+        slideIndex: data.slideIndex,
+        results: {
+          interactions: graphicResponses.map(r => ({
+            participantId: r.participantId,
+            participantName: r.participantName,
+            data: r.data,
+          })),
+          total: graphicResponses.length,
+          latest: data.data,
+        },
+      });
     }
   });
 

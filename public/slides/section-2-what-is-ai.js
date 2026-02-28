@@ -215,6 +215,58 @@ const SECTION_2_WHAT_IS_AI = [
     notes: `The smartphone analogy is the payload. Land it clearly — not as hype, but as a genuine shift in category. "This is like that" should feel like a measured observation, not breathless excitement. The question at the end: "Are we ready for what gets unlocked when they do?" — leave it hanging. That's the bridge to risks.`,
   },
 
+  // ── 2.6b  Media Demo: Background Image ──────
+  {
+    type: 'statement',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'We\'re building on a foundation that didn\'t exist five years ago.',
+    body: '<p>The infrastructure, the models, the interfaces — all new. And all accelerating.</p>',
+    media: {
+      type: 'image',
+      src: '/media/ai-network-bg.svg',
+      position: 'background',
+      fit: 'cover',
+      overlay: 0.55,
+      alt: 'AI neural network visualisation',
+    },
+    notes: `Background image demo slide — statement over a full-bleed visual. The overlay keeps text readable. This shows how a bold visual can add emotional weight to a simple statement without distracting from it.`,
+  },
+
+  // ── 2.6c  Media Demo: Split Image ─────────
+  {
+    type: 'content',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'AI milestones: faster than you think',
+    body: `<p>From academic curiosity to global platform in under a decade.</p>
+<p>The timeline isn't just accelerating — the gaps between breakthroughs are shrinking. Each one builds on the last.</p>`,
+    media: {
+      type: 'image',
+      src: '/media/ai-timeline.svg',
+      position: 'split',
+      fit: 'contain',
+      alt: 'Timeline of key AI milestones from 1956 to 2022',
+    },
+    notes: `Split layout demo — text on left, image on right. The timeline visual gives people a reference point. Don't read the timeline out — let people absorb it while you narrate the acceleration story.`,
+  },
+
+  // ── 2.6d  Media Demo: Inline Video ────────
+  {
+    type: 'content',
+    theme: 'light',
+    sectionLabel: 'WHAT IS AI',
+    title: 'See it in action',
+    body: `<p>A quick look at how these models actually work in practice — from prompt to response.</p>`,
+    media: {
+      type: 'video',
+      src: 'https://www.youtube.com/watch?v=aircAruvnKk',
+      position: 'inline',
+      aspectRatio: '16/9',
+    },
+    notes: `Inline video demo — YouTube embed below the text content. This is 3Blue1Brown's neural network explainer. Good for visual learners. Play 1-2 minutes if time allows, otherwise skip — it's here as a reference people can revisit.`,
+  },
+
   // ── 2.7  Foundation Models ───────────────────
   {
     type: 'content',

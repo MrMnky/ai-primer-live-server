@@ -36,7 +36,7 @@ registerSection(SECTION_1_FOUNDATION, 's1', [
   's1-pulse-check-poll',
 ]);
 
-// ── Section 2: What is AI (20 slides) ───────────────────
+// ── Section 2: What is AI (24 slides) ───────────────────
 registerSection(SECTION_2_WHAT_IS_AI, 's2', [
   's2-opener',
   's2-ai-definition',
@@ -54,6 +54,9 @@ registerSection(SECTION_2_WHAT_IS_AI, 's2', [
   's2-emergence-why-it-matters',
   's2-llm-progress-trajectory',
   's2-platform-shift',
+  's2-media-bg-demo',
+  's2-media-split-demo',
+  's2-media-inline-demo',
   's2-foundation-model-landscape',
   's2-strategic-implications',
   's2-llms-recap',

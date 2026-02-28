@@ -317,14 +317,57 @@ html, body {
 }
 
 .slide__media--background img,
-.slide__media--background video {
+.slide__media--background video,
+.slide__media--background iframe {
   width: 100%; height: 100%;
   object-fit: cover;
 }
 
-.slide__media--background + .slide__content,
-.slide__media--background ~ * {
-  position: relative; z-index: 1;
+/* Dark overlay for text readability on background media */
+.slide__media-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: #000;
+  pointer-events: none;
+}
+
+/* All elements after background media stack above it */
+.slide--has-bg-media > *:not(.slide__media--background) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Inline media (below body content) */
+.slide__media--inline {
+  max-width: 720px;
+  margin: 24px auto 0;
+}
+
+.slide__media--inline iframe {
+  aspect-ratio: 16/9;
+}
+
+/* Split media — image/video fills its half of the slide */
+.slide__media--split {
+  max-width: none;
+  border-radius: 0;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.slide--split .slide__media--split {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide--split .slide__media--split img,
+.slide--split .slide__media--split video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 /* Full-media slide — media fills below title */

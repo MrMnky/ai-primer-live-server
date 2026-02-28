@@ -58,12 +58,25 @@
   // --- Slide Renderer ---
   function renderSlide(slide, index) {
     const themeClass = `slide--${slide.theme || 'dark'}`;
-    const typeClass = slide.type === 'cover' ? 'slide--cover' :
-                      slide.type === 'split' ? 'slide--split' :
-                      slide.type === 'section' ? 'slide--cover' :
-                      slide.type === 'full-media' ? 'slide--full-media' :
-                      slide.type === 'graphic' ? 'slide--graphic' :
-                      slide.type === 'results' ? '' : '';
+    // Resolve media position early so we can set type classes
+    const hasMedia = !!slide.media;
+    const mediaPosEarly = hasMedia ? (slide.media.position || slide.mediaLayout || null) : null;
+
+    let typeClass = slide.type === 'cover' ? 'slide--cover' :
+                    slide.type === 'split' ? 'slide--split' :
+                    slide.type === 'section' ? 'slide--cover' :
+                    slide.type === 'full-media' ? 'slide--full-media' :
+                    slide.type === 'graphic' ? 'slide--graphic' :
+                    slide.type === 'results' ? '' : '';
+
+    // Add split class if media position is split (even if type isn't 'split')
+    if (mediaPosEarly === 'split' && !typeClass.includes('split')) {
+      typeClass = 'slide--split';
+    }
+    // Add background media class for overlay z-index stacking
+    if (mediaPosEarly === 'background') {
+      typeClass += ' slide--has-bg-media';
+    }
 
     const div = el('div', `slide ${themeClass} ${typeClass}`.trim());
     div.dataset.index = index;
@@ -87,19 +100,36 @@
       html += `<img class="slide__logo" src="assets/${logoFile}" alt="AI Accelerator">`;
     }
 
+    // --- Media layer ---
+    // Resolve media position: new `media.position` takes priority, legacy `mediaLayout` as fallback
+    const mediaPos = slide.media ? (slide.media.position || slide.mediaLayout || null) : null;
+
     // Background media: render before content (absolute positioned via CSS)
-    if (slide.media && slide.mediaLayout === 'background') {
-      html += `<div class="slide__media slide__media--background">`;
+    if (slide.media && mediaPos === 'background') {
+      const overlay = slide.media.overlay != null ? slide.media.overlay : 0.5;
+      const fit = slide.media.fit || 'cover';
+      html += `<div class="slide__media slide__media--background" data-overlay="${overlay}">`;
       if (slide.media.type === 'image') {
-        html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy">`;
+        html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy" style="object-fit:${fit}">`;
       } else if (slide.media.type === 'video') {
-        html += `<video src="${slide.media.src}" autoplay muted loop playsinline></video>`;
+        const autoplay = slide.media.autoplay !== false;
+        const loop = slide.media.loop !== false;
+        const muted = slide.media.muted !== false;
+        // Videos are lazy-loaded: render with data-src, activated in goToSlide()
+        html += `<video data-src="${slide.media.src}" ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="object-fit:${fit}" preload="none"></video>`;
+      } else if (slide.media.type === 'embed') {
+        html += `<iframe data-src="${slide.media.src}" allowfullscreen frameborder="0" style="width:100%;height:100%;border:none;"></iframe>`;
+      }
+      if (overlay > 0) {
+        html += `<div class="slide__media-overlay" style="opacity:${overlay}"></div>`;
       }
       html += '</div>';
     }
 
     // For split layout, wrap content in a div
-    if (slide.type === 'split' || slide.type === 'full-media') {
+    const isSplit = slide.type === 'split' || mediaPos === 'split';
+    const isFullMedia = slide.type === 'full-media';
+    if (isSplit || isFullMedia) {
       html += '<div class="slide__content">';
     }
 
@@ -149,30 +179,42 @@
       html += renderTextInput(slide.textInput, index);
     }
 
-    if (slide.type === 'split' || slide.type === 'full-media') {
+    if (isSplit || isFullMedia) {
       html += '</div>'; // close .slide__content
     }
 
-    // Media (image, video, iframe) with layout variant classes
+    // Media (image, video, embed) — inline or split position
     // Skip if already rendered as background
-    if (slide.media && slide.mediaLayout !== 'background') {
-      const layoutClass = slide.mediaLayout ? ` slide__media--${slide.mediaLayout}` : '';
-      html += `<div class="slide__media${layoutClass}">`;
+    if (slide.media && mediaPos !== 'background') {
+      const posClass = mediaPos ? ` slide__media--${mediaPos}` : '';
+      // Legacy layout class support
+      const layoutClass = slide.mediaLayout && !slide.media.position ? ` slide__media--${slide.mediaLayout}` : '';
+      const fit = slide.media.fit || (mediaPos === 'split' ? 'cover' : 'contain');
+      const aspect = slide.media.aspectRatio || null;
+
+      html += `<div class="slide__media${posClass}${layoutClass}"${aspect ? ` style="aspect-ratio:${aspect}"` : ''}>`;
+
       if (slide.media.type === 'image') {
-        html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy">`;
+        html += `<img src="${slide.media.src}" alt="${slide.media.alt || ''}" loading="lazy" style="object-fit:${fit}">`;
       } else if (slide.media.type === 'video') {
         const videoSrc = slide.media.src;
-        // Support YouTube URLs as iframes
+        // Support YouTube/Vimeo URLs as iframes
         if (videoSrc.includes('youtube.com') || videoSrc.includes('youtu.be')) {
           const vid = videoSrc.includes('youtu.be') ? videoSrc.split('/').pop() :
                       new URL(videoSrc).searchParams.get('v') || videoSrc.split('/').pop();
-          html += `<iframe src="https://www.youtube.com/embed/${vid}?rel=0" allowfullscreen frameborder="0"></iframe>`;
+          html += `<iframe data-src="https://www.youtube.com/embed/${vid}?rel=0&autoplay=0" allowfullscreen frameborder="0"></iframe>`;
+        } else if (videoSrc.includes('vimeo.com')) {
+          const vid = videoSrc.split('/').pop();
+          html += `<iframe data-src="https://player.vimeo.com/video/${vid}" allowfullscreen frameborder="0"></iframe>`;
         } else {
-          html += `<video src="${videoSrc}" controls playsinline></video>`;
+          // Local/hosted MP4 — lazy-loaded
+          const controls = slide.media.controls !== false;
+          html += `<video data-src="${videoSrc}" ${controls ? 'controls' : ''} playsinline style="object-fit:${fit}" preload="none"></video>`;
         }
-      } else if (slide.media.type === 'iframe') {
-        html += `<iframe src="${slide.media.src}" allowfullscreen></iframe>`;
+      } else if (slide.media.type === 'embed') {
+        html += `<iframe data-src="${slide.media.src}" allowfullscreen frameborder="0"></iframe>`;
       }
+
       html += '</div>';
     }
 
@@ -229,6 +271,47 @@
     return html;
   }
 
+  // --- Lazy Media Management ---
+  // Activates/deactivates videos and iframes on slide transitions to save bandwidth
+  function manageSlideMedia(slideIndex, action) {
+    const slideEl = document.querySelector(`.slide[data-index="${slideIndex}"]`);
+    if (!slideEl) return;
+
+    // Handle videos with data-src (lazy loaded)
+    slideEl.querySelectorAll('video[data-src]').forEach(video => {
+      if (action === 'activate') {
+        if (!video.src) {
+          video.src = video.dataset.src;
+          video.load();
+        }
+        video.play().catch(() => {}); // autoplay may be blocked
+      } else if (action === 'deactivate') {
+        video.pause();
+        video.currentTime = 0;
+      } else if (action === 'prefetch') {
+        // Set src but don't play — browser will buffer
+        if (!video.src) {
+          video.src = video.dataset.src;
+          video.preload = 'auto';
+        }
+      }
+    });
+
+    // Handle iframes with data-src (lazy loaded embeds/YouTube/Vimeo)
+    slideEl.querySelectorAll('iframe[data-src]').forEach(iframe => {
+      if (action === 'activate' || action === 'prefetch') {
+        if (!iframe.src) {
+          iframe.src = iframe.dataset.src;
+        }
+      } else if (action === 'deactivate') {
+        // For YouTube/Vimeo, remove src to stop playback and save resources
+        if (iframe.src && (iframe.src.includes('youtube') || iframe.src.includes('vimeo'))) {
+          iframe.src = '';
+        }
+      }
+    });
+  }
+
   // --- Navigation ---
   function goToSlide(index) {
     if (index < 0 || index >= state.slides.length) return;
@@ -240,6 +323,13 @@
     if (typeof GraphicContainer !== 'undefined' && state.slides[prevIndex]?.type === 'graphic') {
       GraphicContainer.unmount(prevIndex);
     }
+
+    // --- Lazy media: pause/unload previous slide media, activate current + prefetch next ---
+    manageSlideMedia(prevIndex, 'deactivate');
+    manageSlideMedia(index, 'activate');
+    // Prefetch next 1-2 slides
+    if (index + 1 < state.slides.length) manageSlideMedia(index + 1, 'prefetch');
+    if (index + 2 < state.slides.length) manageSlideMedia(index + 2, 'prefetch');
 
     // Update active slide
     const slideEls = document.querySelectorAll('.slide-viewport .slide');

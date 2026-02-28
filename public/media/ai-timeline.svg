@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#0d1f2d" rx="12"/>
+  <g font-family="sans-serif" fill="#fff">
+    <!-- Timeline line -->
+    <line x1="100" y1="100" x2="100" y2="500" stroke="#00FFBC" stroke-width="2" opacity="0.4"/>
+    <!-- Milestones -->
+    <circle cx="100" cy="120" r="8" fill="#00FFBC"/>
+    <text x="130" y="118" font-size="14" font-weight="bold">1956</text>
+    <text x="130" y="138" font-size="12" opacity="0.6">Dartmouth Conference — AI is born</text>
+    <circle cx="100" cy="200" r="8" fill="#00FFBC"/>
+    <text x="130" y="198" font-size="14" font-weight="bold">1997</text>
+    <text x="130" y="218" font-size="12" opacity="0.6">Deep Blue beats Kasparov at chess</text>
+    <circle cx="100" cy="280" r="8" fill="#00B1FF"/>
+    <text x="130" y="278" font-size="14" font-weight="bold">2012</text>
+    <text x="130" y="298" font-size="12" opacity="0.6">Deep learning breakthrough (ImageNet)</text>
+    <circle cx="100" cy="360" r="8" fill="#00B1FF"/>
+    <text x="130" y="358" font-size="14" font-weight="bold">2017</text>
+    <text x="130" y="378" font-size="12" opacity="0.6">Transformer architecture published</text>
+    <circle cx="100" cy="440" r="8" fill="#00FFBC"/>
+    <text x="130" y="438" font-size="14" font-weight="bold">2022</text>
+    <text x="130" y="458" font-size="12" opacity="0.6">ChatGPT launches — AI goes mainstream</text>
+  </g>
+</svg>

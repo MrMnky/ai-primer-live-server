@@ -531,17 +531,36 @@ io.on('connection', (socket) => {
     // Aggregate current results for this slide
     const responses = (responseCache[sessionCode] || []).filter(r => r.slideIndex === slideIndex);
     const type = data.type || (responses[0] ? responses[0].type : 'poll');
-    const counts = {};
-    responses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
-    const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
-    const options = [];
-    for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
+    let resultPayload;
+
+    if (type === 'text') {
+      // Text aggregation: word cloud + response wall
+      const stopWords = new Set(['the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','can','could','and','but','or','nor','for','yet','so','in','on','at','to','of','by','with','from','up','out','it','its','i','we','they','you','he','she','my','our','their','your','his','her','this','that','these','those','not','no','all','each','every','both','few','more','most','other','some','such','than','too','very']);
+      const wordCounts = {};
+      responses.forEach(r => {
+        const text = (r.data.text || '').toLowerCase().replace(/[^a-z0-9\s'-]/g, '');
+        text.split(/\s+/).forEach(w => {
+          if (w.length > 2 && !stopWords.has(w)) wordCounts[w] = (wordCounts[w] || 0) + 1;
+        });
+      });
+      const words = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([word, count]) => ({ word, count }));
+      const texts = responses.map(r => ({ name: r.participantName || 'Anonymous', text: r.data.text || '' }));
+      resultPayload = { words, texts, total: responses.length };
+    } else {
+      // Poll/quiz aggregation: option counts
+      const counts = {};
+      responses.forEach(r => { counts[r.data.option] = (counts[r.data.option] || 0) + 1; });
+      const maxOpt = Math.max(...Object.keys(counts).map(Number), 0);
+      const options = [];
+      for (let i = 0; i <= maxOpt; i++) options.push(counts[i] || 0);
+      resultPayload = { options, total: responses.length };
+    }
 
     // Broadcast to all clients in session
     io.to(sessionCode).emit('results-revealed', {
       slideIndex,
       type,
-      results: { options, total: responses.length },
+      results: resultPayload,
     });
 
     logInteraction(sessionCode, 'results_revealed', {

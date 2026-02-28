@@ -381,10 +381,21 @@
   }
 
   function renderTextInput(textInput, slideIndex) {
-    let html = `<div class="text-input" data-slide="${slideIndex}">`;
+    const isRevealed = state.revealedSlides[slideIndex];
+    let html = `<div class="text-input${isRevealed ? ' revealed' : ''}" data-slide="${slideIndex}">`;
     html += `<div class="text-input__prompt">${textInput.prompt}</div>`;
     html += `<textarea class="text-input__field" placeholder="${textInput.placeholder || t('engine.textInput.placeholder')}" data-slide="${slideIndex}"></textarea>`;
     html += `<button class="btn btn--primary text-input__submit" onclick="AIPrimer.submitTextInput(${slideIndex})">${t('engine.textInput.submit')}</button>`;
+    if (state.mode === 'presenter') {
+      html += `<button class="btn btn--reveal${isRevealed ? ' revealed' : ''}" onclick="AIPrimer.revealResults(${slideIndex})"${isRevealed ? ' disabled' : ''}>${isRevealed ? t('engine.reveal.revealed') + ' ✓' : t('engine.reveal.button')}</button>`;
+    }
+    // Inline word cloud + response wall (presenter sees live, participants see after reveal)
+    const hideResults = state.mode === 'participant' && !isRevealed;
+    html += `<div class="text-input__results${hideResults ? ' hidden' : ''}" data-slide="${slideIndex}">`;
+    html += `<div class="results__wordcloud results__wordcloud--large" data-source="${slideIndex}"></div>`;
+    html += `<div class="results__wall" data-source="${slideIndex}"></div>`;
+    html += `<div class="results__total" data-source="${slideIndex}">0 ${t('engine.poll.responses')}</div>`;
+    html += `</div>`;
     html += `</div>`;
     return html;
   }
@@ -640,11 +651,11 @@
   AIPrimer.revealResults = function (slideIndex) {
     if (!state.socket || !state.connected) return;
     const slide = state.slides[slideIndex];
-    const type = slide.poll ? 'poll' : 'quiz';
+    const type = slide.poll ? 'poll' : slide.quiz ? 'quiz' : 'text';
     state.socket.emit('results-reveal', { slideIndex, type });
 
     // Optimistic UI — disable button immediately
-    const btn = document.querySelector(`.poll[data-slide="${slideIndex}"] .btn--reveal, .quiz[data-slide="${slideIndex}"] .btn--reveal`);
+    const btn = document.querySelector(`.poll[data-slide="${slideIndex}"] .btn--reveal, .quiz[data-slide="${slideIndex}"] .btn--reveal, .text-input[data-slide="${slideIndex}"] .btn--reveal`);
     if (btn) {
       btn.disabled = true;
       btn.classList.add('revealed');
@@ -749,27 +760,44 @@
     });
   }
 
+  // --- Word Cloud + Response Wall Helpers ---
+  function renderWordCloudInto(cloudEl, words) {
+    if (!cloudEl || !words) return;
+    const maxCount = words.length ? words[0].count : 1;
+    cloudEl.innerHTML = words.slice(0, 40).map((w, i) => {
+      // Dynamic sizing based on actual frequency (more granular than tiers)
+      const ratio = w.count / maxCount;
+      const size = 0.75 + (ratio * 1.8); // 0.75rem to 2.55rem
+      const tier = ratio > 0.7 ? 1 : ratio > 0.45 ? 2 : ratio > 0.25 ? 3 : ratio > 0.1 ? 4 : 5;
+      return `<span class="results__word results__word--${tier}" style="font-size:${size.toFixed(2)}rem;animation-delay:${i * 0.04}s">${w.word}<sup class="results__word-count">${w.count}</sup></span>`;
+    }).join('');
+  }
+
+  function renderWallInto(wallEl, texts) {
+    if (!wallEl || !texts) return;
+    wallEl.innerHTML = texts.slice(-12).reverse().map((t, i) =>
+      `<div class="results__wall-item" style="animation-delay:${i * 0.06}s"><span class="results__wall-name">${t.name}</span> ${t.text.substring(0, 120)}${t.text.length > 120 ? '…' : ''}</div>`
+    ).join('');
+  }
+
   // --- Text Results Update ---
   function updateTextResults(slideIndex, results) {
     // results = { words: [{word, count}, ...], texts: [{name, text}, ...], total: N }
+    // In participant mode, don't update until results are revealed
+    if (state.mode === 'participant' && !state.revealedSlides[slideIndex]) return;
+
+    // Update inline text-input results (word cloud on same slide)
+    document.querySelectorAll(`.text-input__results[data-slide="${slideIndex}"]`).forEach(container => {
+      renderWordCloudInto(container.querySelector('.results__wordcloud'), results.words);
+      renderWallInto(container.querySelector('.results__wall'), results.texts);
+      const totalEl = container.querySelector('.results__total');
+      if (totalEl) totalEl.textContent = `${results.total} response${results.total !== 1 ? 's' : ''}`;
+    });
+
+    // Update dedicated results slides that reference this slide
     document.querySelectorAll(`.results[data-source="${slideIndex}"][data-response-type="text"]`).forEach(container => {
-      // Word cloud
-      const cloud = container.querySelector('.results__wordcloud');
-      if (cloud && results.words) {
-        cloud.innerHTML = results.words.slice(0, 30).map((w, i) => {
-          const tier = i < 3 ? 1 : i < 7 ? 2 : i < 12 ? 3 : i < 20 ? 4 : 5;
-          return `<span class="results__word results__word--${tier}" style="animation-delay:${i * 0.05}s">${w.word}</span>`;
-        }).join('');
-      }
-
-      // Response wall (latest 10)
-      const wall = container.querySelector('.results__wall');
-      if (wall && results.texts) {
-        wall.innerHTML = results.texts.slice(-10).reverse().map(t =>
-          `<div class="results__wall-item"><span class="results__wall-name">${t.name}</span> ${t.text.substring(0, 100)}${t.text.length > 100 ? '…' : ''}</div>`
-        ).join('');
-      }
-
+      renderWordCloudInto(container.querySelector('.results__wordcloud'), results.words);
+      renderWallInto(container.querySelector('.results__wall'), results.texts);
       const totalEl = container.querySelector('.results__total');
       if (totalEl) totalEl.textContent = `${results.total} response${results.total !== 1 ? 's' : ''}`;
     });
@@ -913,8 +941,22 @@
         }
       }
 
+      if (data.type === 'text') {
+        // Show inline results container
+        const resultsContainer = document.querySelector(`.text-input__results[data-slide="${data.slideIndex}"]`);
+        if (resultsContainer) {
+          resultsContainer.classList.remove('hidden');
+          renderWordCloudInto(resultsContainer.querySelector('.results__wordcloud'), data.results.words);
+          renderWallInto(resultsContainer.querySelector('.results__wall'), data.results.texts);
+          const totalEl = resultsContainer.querySelector('.results__total');
+          if (totalEl) totalEl.textContent = `${data.results.total} response${data.results.total !== 1 ? 's' : ''}`;
+        }
+        // Also update any dedicated results slides
+        updateTextResults(data.slideIndex, data.results);
+      }
+
       // Update reveal button if present (presenter view)
-      const btn = document.querySelector(`.poll[data-slide="${data.slideIndex}"] .btn--reveal, .quiz[data-slide="${data.slideIndex}"] .btn--reveal`);
+      const btn = document.querySelector(`.poll[data-slide="${data.slideIndex}"] .btn--reveal, .quiz[data-slide="${data.slideIndex}"] .btn--reveal, .text-input[data-slide="${data.slideIndex}"] .btn--reveal`);
       if (btn) {
         btn.disabled = true;
         btn.classList.add('revealed');

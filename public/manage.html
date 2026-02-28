@@ -239,7 +239,7 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        .badge-started {
+        .badge-started, .badge-active {
             background-color: rgba(23, 206, 149, 0.2);
             color: var(--mountain-meadow);
         }
@@ -247,6 +247,11 @@
         .badge-ended {
             background-color: rgba(255, 193, 7, 0.2);
             color: #FFC107;
+        }
+
+        .badge-paused {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #FFD54F;
         }
 
         .actions {
@@ -383,7 +388,7 @@
                 <select id="statusFilter">
                     <option value="">All</option>
                     <option value="created">Created</option>
-                    <option value="started">Started</option>
+                    <option value="active">Active</option>
                     <option value="ended">Ended</option>
                 </select>
             </div>
@@ -496,14 +501,15 @@
                 const statusBadgeClass = `badge-${session.status || 'created'}`;
                 const formattedDate = formatDate(session.createdAt);
                 const participantCount = session.participantCount || 0;
-                const canDelete = !session.status || session.status !== 'started';
+                const isLive = session.status === 'started' || session.status === 'active';
+                const canDelete = !session.status || !isLive;
 
                 html += `
                     <tr>
                         <td><code style="background-color: rgba(0,177,255,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">${escapeHtml(session.code)}</code></td>
                         <td>${escapeHtml(session.title)}</td>
                         <td>${escapeHtml(session.presenterName || '—')}</td>
-                        <td><span class="badge ${statusBadgeClass}">${escapeHtml(session.status || 'Created')}</span></td>
+                        <td><span class="badge ${statusBadgeClass}">${escapeHtml((session.status || 'created').replace(/^\w/, c => c.toUpperCase()))}</span></td>
                         <td>${escapeHtml(session.language || '—')}</td>
                         <td>${participantCount}</td>
                         <td>${formattedDate}</td>

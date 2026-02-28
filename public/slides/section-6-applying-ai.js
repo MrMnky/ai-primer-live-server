@@ -42,6 +42,21 @@ const SECTION_6_APPLYING_AI = [
     notes: `Three approaches that stack on top of each other. Most audiences gravitate toward automation because it's visible and easy to justify. But augmentation is where real advantage lives. "How does AI make your best people better?" That's the strategic question. Pace is steady — let each approach settle before moving to the next.`,
   },
 
+  // ── 6.1b Four Ds Interactive ────────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Explore: The 4 Ds of AI Fluency',
+    subtitle: 'A framework for approaching any AI opportunity.',
+    graphic: {
+      id: 'four-ds',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive framework exploration. The four Ds give participants a structured way to think about applying AI to their own work. Let them explore for 2 minutes, then ask: "Which D is your team strongest at? Which needs the most work?"`,
+  },
+
   // ── 6.2  Five Core Techniques ─────────────────
   {
     type: 'statement',

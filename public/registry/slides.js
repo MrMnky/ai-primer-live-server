@@ -36,7 +36,7 @@ registerSection(SECTION_1_FOUNDATION, 's1', [
   's1-pulse-check-poll',
 ]);
 
-// ── Section 2: What is AI (24 slides) ───────────────────
+// ── Section 2: What is AI (25 slides) ───────────────────
 registerSection(SECTION_2_WHAT_IS_AI, 's2', [
   's2-opener',
   's2-ai-definition',
@@ -52,6 +52,7 @@ registerSection(SECTION_2_WHAT_IS_AI, 's2', [
   's2-emergence',
   's2-emergence-examples',
   's2-emergence-why-it-matters',
+  's2-capabilities-explorer-interactive',
   's2-llm-progress-trajectory',
   's2-platform-shift',
   's2-media-bg-demo',
@@ -64,7 +65,7 @@ registerSection(SECTION_2_WHAT_IS_AI, 's2', [
   's2-break',
 ]);
 
-// ── Section 3: AI Risks (14 slides) ─────────────────────
+// ── Section 3: AI Risks (15 slides) ─────────────────────
 registerSection(SECTION_3_AI_RISKS, 's3', [
   's3-opener',
   's3-risk-not-avoiding',
@@ -77,6 +78,7 @@ registerSection(SECTION_3_AI_RISKS, 's3', [
   's3-environmental-impact',
   's3-ethics-responsible-ai',
   's3-safety-checklist',
+  's3-risk-radar-interactive',
   's3-human-in-the-loop',
   's3-eu-ai-act',
   's3-eu-ai-act-changes',
@@ -102,7 +104,7 @@ registerSection(SECTION_4_HOW_AI_WORKS, 's4', [
   's4-how-ai-works-quiz',
 ]);
 
-// ── Section 5: Prompting (15 slides) ────────────────────
+// ── Section 5: Prompting (16 slides) ────────────────────
 registerSection(SECTION_5_PROMPTING, 's5', [
   's5-opener',
   's5-steering-probability',
@@ -111,6 +113,7 @@ registerSection(SECTION_5_PROMPTING, 's5', [
   's5-techniques-6-to-10',
   's5-three-principles',
   's5-four-levels-maturity',
+  's5-fluency-levels-interactive',
   's5-intent-context-constraints',
   's5-practical-dos-donts',
   's5-before-and-after',
@@ -123,11 +126,12 @@ registerSection(SECTION_5_PROMPTING, 's5', [
   's5-prompting-quiz',
 ]);
 
-// ── Section 6: Applying AI (9 slides) ───────────────────
+// ── Section 6: Applying AI (10 slides) ───────────────────
 registerSection(SECTION_6_APPLYING_AI, 's6', [
   's6-opener',
   's6-better-thinking-question',
   's6-three-approaches',
+  's6-four-ds-interactive',
   's6-tools-come-and-go',
   's6-transcription',
   's6-deep-research',

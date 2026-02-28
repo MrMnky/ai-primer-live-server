@@ -106,6 +106,21 @@ const SECTION_5_PROMPTING = [
     notes: `Four levels, each briefly stated. The layering concept is crucial — don't let the audience think it's a hierarchy. Level 1 handles most daily tasks. Level 2 is where quality jumps. Level 3 is for hard problems. Level 4 is for teams building systems. Reassure: "most people stay at Level 1" removes pressure.`,
   },
 
+  // ── 5.3b Fluency Levels Interactive ──────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Explore: Prompting Maturity Levels',
+    subtitle: 'Click through each level to see what it looks like in practice.',
+    graphic: {
+      id: 'fluency-levels',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive reinforcement of the four levels. Participants click through each level seeing practical examples and characteristics. Debrief: "Which level do you operate at now? Which level would make the biggest difference to your work?"`,
+  },
+
   // ── 5.4  Prompting Tips ───────────────────────
   {
     type: 'content',

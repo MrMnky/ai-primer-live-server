@@ -158,6 +158,21 @@ const SECTION_3_AI_RISKS = [
     notes: `The closing argument. Pull threads together into something scannable and memorable. Each item gets its own beat. The checklist should feel manageable, not overwhelming. Close with conviction: "Sceptical but productive. Thoughtful but not paralysed. That's how you use AI well."`,
   },
 
+  // ── 3.5b Risk Radar Interactive ─────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'AI RISKS',
+    title: 'Explore: Risk Radar',
+    subtitle: 'Tap each risk to see what it means and how to mitigate it.',
+    graphic: {
+      id: 'risk-radar',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive deep-dive. Participants explore risk categories at their own pace. Each card reveals severity, real examples, and mitigation advice. Debrief: "Which risk surprised you most? Which one are you already managing well?"`,
+  },
+
   {
     type: 'statement',
     theme: 'gradient',

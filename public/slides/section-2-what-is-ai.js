@@ -190,6 +190,21 @@ const SECTION_2_WHAT_IS_AI = [
     notes: `Balance the dual nature: exciting and concerning, without being alarmist. This is the honest state of things. Models are revealing capabilities we didn't know were in there. That's a discovery opportunity — but it also means we can't fully predict what these systems will do as they scale.`,
   },
 
+  // ── 2.5b Capabilities Explorer Interactive ──
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Explore: AI Capabilities',
+    subtitle: 'What are LLMs good at — and where should you be cautious?',
+    graphic: {
+      id: 'capabilities-explorer',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive exploration. Let participants browse the capability categories for 2-3 minutes. Debrief: "Notice how many of these capabilities weren't explicitly trained — they emerged from understanding language at scale."`,
+  },
+
   // ── 2.6  LLM Progress ───────────────────────
   {
     type: 'content',
@@ -260,7 +275,7 @@ const SECTION_2_WHAT_IS_AI = [
     body: `<p>A quick look at how these models actually work in practice — from prompt to response.</p>`,
     media: {
       type: 'video',
-      src: 'https://www.youtube.com/watch?v=aircAruvnKk',
+      src: 'https://youtu.be/IpEA12_6VFc',
       position: 'inline',
       aspectRatio: '16/9',
     },

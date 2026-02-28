@@ -25,7 +25,7 @@ const COURSE_DEFINITIONS = {
       { label: 'Close', prefix: 's7' },
     ],
     slides: [
-      // Section 1: Foundation
+      // Section 1: Foundation (12)
       's1-opener',
       's1-cover-welcome',
       's1-not-an-engineer',
@@ -39,7 +39,7 @@ const COURSE_DEFINITIONS = {
       's1-fomo-strategy',
       's1-pulse-check-poll',
 
-      // Section 2: What is AI
+      // Section 2: What is AI (25)
       's2-opener',
       's2-ai-definition',
       's2-deterministic-vs-probabilistic',
@@ -54,6 +54,7 @@ const COURSE_DEFINITIONS = {
       's2-emergence',
       's2-emergence-examples',
       's2-emergence-why-it-matters',
+      's2-capabilities-explorer-interactive',
       's2-llm-progress-trajectory',
       's2-platform-shift',
       's2-media-bg-demo',
@@ -65,7 +66,7 @@ const COURSE_DEFINITIONS = {
       's2-will-this-get-better',
       's2-break',
 
-      // Section 3: AI Risks
+      // Section 3: AI Risks (16)
       's3-opener',
       's3-risk-not-avoiding',
       's3-hallucinations',
@@ -77,12 +78,13 @@ const COURSE_DEFINITIONS = {
       's3-environmental-impact',
       's3-ethics-responsible-ai',
       's3-safety-checklist',
+      's3-risk-radar-interactive',
       's3-human-in-the-loop',
       's3-eu-ai-act',
       's3-eu-ai-act-changes',
       's3-risk-quiz',
 
-      // Section 4: How AI Works
+      // Section 4: How AI Works (15)
       's4-opener',
       's4-text-completion',
       's4-simplicity-scales',
@@ -99,7 +101,7 @@ const COURSE_DEFINITIONS = {
       's4-prompt-for-system2',
       's4-how-ai-works-quiz',
 
-      // Section 5: Prompting
+      // Section 5: Prompting (18)
       's5-opener',
       's5-steering-probability',
       's5-what-prompting-achieves',
@@ -107,6 +109,7 @@ const COURSE_DEFINITIONS = {
       's5-techniques-6-to-10',
       's5-three-principles',
       's5-four-levels-maturity',
+      's5-fluency-levels-interactive',
       's5-intent-context-constraints',
       's5-practical-dos-donts',
       's5-before-and-after',
@@ -118,10 +121,11 @@ const COURSE_DEFINITIONS = {
       's5-prompting-summary',
       's5-prompting-quiz',
 
-      // Section 6: Applying AI
+      // Section 6: Applying AI (10)
       's6-opener',
       's6-better-thinking-question',
       's6-three-approaches',
+      's6-four-ds-interactive',
       's6-tools-come-and-go',
       's6-transcription',
       's6-deep-research',
@@ -129,7 +133,7 @@ const COURSE_DEFINITIONS = {
       's6-applying-ai-summary',
       's6-applying-ai-quiz',
 
-      // Section 7: Close
+      // Section 7: Close (6)
       's7-opener',
       's7-where-weve-been',
       's7-real-work-starts',

@@ -222,7 +222,10 @@
               <div class="dashboard__title">Presenter Dashboard</div>
               <div class="dashboard__subtitle">AI Primer Live</div>
             </div>
-            <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <a href="manage.html" class="btn btn--secondary" style="text-decoration:none;font-size:0.85rem;">Manage Sessions</a>
+              <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
+            </div>
           </div>
           <div id="session-list" class="session-list">
             <div class="empty-state">Loading sessions...</div>

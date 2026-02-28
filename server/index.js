@@ -70,6 +70,9 @@ const db = {
   async update(table, filters, body) {
     return supabaseQuery(table, 'PATCH', { filters, body });
   },
+  async delete(table, filters) {
+    return supabaseQuery(table, 'DELETE', { filters });
+  },
 };
 
 // --- In-Memory Caches (for real-time performance) ---
@@ -395,6 +398,33 @@ app.get('/api/sessions/:code/export', async (req, res) => {
 
   if (!session) return res.status(404).json({ error: 'Session not found' });
   res.json({ session, totalResponses: (responseCache[req.params.code] || []).length });
+});
+
+// Delete a session (and its interactions)
+app.delete('/api/sessions/:code', async (req, res) => {
+  const code = req.params.code;
+
+  if (SUPABASE_KEY) {
+    // Delete interactions first (foreign key), then session
+    await db.delete('interactions', `session_code=eq.${code}`);
+    const { error } = await db.delete('sessions', `code=eq.${code}`);
+    if (error) return res.status(500).json({ error });
+  }
+
+  // Clean up in-memory caches
+  delete sessionCache[code];
+  delete responseCache[code];
+  delete liveParticipants[code];
+
+  // Disconnect any remaining sockets in this room
+  const room = io.sockets.adapter.rooms.get(code);
+  if (room) {
+    for (const socketId of room) {
+      io.sockets.sockets.get(socketId)?.disconnect(true);
+    }
+  }
+
+  res.json({ ok: true });
 });
 
 // --- Socket.io ---

@@ -750,7 +750,7 @@ html, body {
 }
 
 .join-screen__input {
-  width: 200px;
+  width: 280px;
   padding: 14px 20px;
   font-family: var(--font-family);
   font-size: 1.2rem;
@@ -771,7 +771,7 @@ html, body {
 
 .join-screen__name-input {
   width: 280px;
-  padding: 12px 20px;
+  padding: 14px 20px;
   font-family: var(--font-family);
   font-size: 1rem;
   text-align: center;
@@ -785,6 +785,12 @@ html, body {
 .join-screen__name-input:focus {
   outline: none;
   border-color: var(--dodger-blue);
+}
+
+.join-screen .btn {
+  width: 280px;
+  justify-content: center;
+  padding: 14px 28px;
 }
 
 /* --- Waiting Screen (participant waiting for presenter) --- */

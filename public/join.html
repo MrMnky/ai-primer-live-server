@@ -137,8 +137,8 @@
     }
 
     function t(key, vars) {
-      // Use AIPrimer.t if available (after engine init), else local lookup
-      if (typeof AIPrimer !== 'undefined' && AIPrimer.t) return AIPrimer.t(key, vars);
+      // Use AIPrimer.t if available AND initialised (language loaded), else local lookup
+      if (typeof AIPrimer !== 'undefined' && AIPrimer.t && AIPrimer.getLanguage && AIPrimer.getLanguage()) return AIPrimer.t(key, vars);
       let str = (_i18n && _i18n.ui && _i18n.ui[key]) ||
                 (_i18nFallback && _i18nFallback.ui && _i18nFallback.ui[key]) ||
                 key;

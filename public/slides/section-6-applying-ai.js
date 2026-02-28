@@ -51,10 +51,9 @@ const SECTION_6_APPLYING_AI = [
     body: '<p>AI is improving so quickly that if you build something too close to what consumer tools already do, it will either become a generic feature or be overtaken before you finish.</p><p>The smart move is to focus on use cases where <strong>your data, workflows, and expertise</strong> create real, defensible value.</p>',
     media: {
       type: 'image',
-      src: '/media/picking-pilots.png',
-      position: 'background',
+      src: '/media/picking-pilots.gif',
+      position: 'inline',
       fit: 'contain',
-      overlay: 0.85,
       alt: 'AI Development timeline showing commodity risk and overtake risk when picking pilot projects',
     },
     notes: `This is the strategic framing slide. The graphic shows the timeline from 2022 to today — capabilities that seemed novel two years ago are now built into consumer tools. The two risks (commodity and overtake) should feel real and slightly uncomfortable. Then land the positive reframe: focus where your own data and expertise create defensible value.`,

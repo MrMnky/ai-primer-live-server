@@ -1169,6 +1169,28 @@ io.on('connection', (socket) => {
     console.log(`Q&A: Question ${question.answered ? 'answered' : 'unmarked'} in ${sessionCode}`);
   });
 
+  // Answer question with text (presenter only)
+  socket.on('question-answer-text', (data) => {
+    if (mode !== 'presenter') return;
+    if (!questionCache[sessionCode]) return;
+    const question = questionCache[sessionCode].find(q => q.id === data.questionId);
+    if (!question) return;
+
+    question.answerText = (data.answerText || '').trim().slice(0, 1000);
+    question.answered = true; // Auto-mark as answered when text is provided
+
+    logInteraction(sessionCode, 'question_answer_text', {
+      eventData: { questionId: question.id, answerText: question.answerText },
+    });
+
+    const questions = questionCache[sessionCode]
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    io.to(sessionCode).emit('questions-update', { questions });
+
+    console.log(`Q&A: Answer text added to question in ${sessionCode}`);
+  });
+
   // Dismiss question (presenter only)
   socket.on('question-dismiss', (data) => {
     if (mode !== 'presenter') return;

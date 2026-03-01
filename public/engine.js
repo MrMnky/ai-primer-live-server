@@ -136,6 +136,11 @@
     console.log('[Engine] Switching language to:', language);
     await loadI18n(language);
 
+    // Re-localise all slides from originals with new language
+    if (state.slidesOriginal) {
+      state.slides = state.slidesOriginal.map(function (s) { return localiseSlide(Object.assign({}, s)); });
+    }
+
     // Re-render all slides in the viewport
     var viewport = document.querySelector('.slide-viewport');
     if (viewport) {
@@ -1837,8 +1842,10 @@
       state.slides = window.AI_PRIMER_SLIDES || [];
     }
 
+    // Keep un-localised originals for re-localisation on language change
+    state.slidesOriginal = state.slides.map(function (s) { return Object.assign({}, s); });
     // Localise all slides using i18n data
-    state.slides = state.slides.map(localiseSlide);
+    state.slides = state.slidesOriginal.map(function (s) { return localiseSlide(Object.assign({}, s)); });
 
     state.mode = config.mode || 'self';
     state.sessionCode = config.sessionCode || null;
@@ -2226,6 +2233,7 @@
       const hasUpvoted = q.upvotedBy && q.upvotedBy.includes(state.participantId);
       const answeredClass = q.answered ? ' pm-qa-item--answered' : '';
       const slideLabel = getSlideLabel(q.slideIndex);
+      const answerHtml = q.answerText ? `<div class="pm-qa-item__answer"><span class="pm-qa-item__answer-label">Presenter:</span> ${escapeHtml(q.answerText)}</div>` : '';
       return `<div class="pm-qa-item${answeredClass}" data-qid="${q.id}">
         <button class="pm-qa-item__upvote ${hasUpvoted ? 'active' : ''}" onclick="AIPrimer.upvoteQuestion('${q.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -2235,6 +2243,7 @@
           <div class="pm-qa-item__text">${escapeHtml(q.text)}</div>
           <div class="pm-qa-item__meta">${q.participantName || 'Anonymous'}${q.answered ? ' · ✓ Answered' : ''}</div>
           <div class="pm-qa-item__slide-ref">${slideLabel}</div>
+          ${answerHtml}
         </div>
       </div>`;
     }).join('');
@@ -2261,12 +2270,19 @@
     return state.questions.slice().sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).map(q => {
       const answeredClass = q.answered ? ' ac-qa-item--answered' : '';
       const slideLabel = getSlideLabel(q.slideIndex);
+      const answerText = q.answerText ? escapeHtml(q.answerText) : '';
+      const hasAnswer = !!q.answerText;
       return `<div class="ac-qa-item${answeredClass}" data-qid="${q.id}">
         <div class="ac-qa-item__votes">${q.upvotes || 0}</div>
         <div class="ac-qa-item__content">
           <div class="ac-qa-item__text">${escapeHtml(q.text)}</div>
           <div class="ac-qa-item__meta">${q.participantName || 'Anonymous'}</div>
           <div class="ac-qa-item__slide-ref">${slideLabel}</div>
+          ${hasAnswer ? `<div class="ac-qa-item__answer"><span class="ac-qa-item__answer-label">Answer:</span> ${answerText}</div>` : ''}
+          <div class="ac-qa-item__reply-row" id="qa-reply-${q.id}">
+            <input type="text" class="ac-qa-item__reply-input" id="qa-input-${q.id}" placeholder="Type your answer…" value="${answerText}" onkeydown="if(event.key==='Enter'){AIPrimer.submitAnswer('${q.id}')}" />
+            <button class="ac-qa-item__reply-btn" onclick="AIPrimer.submitAnswer('${q.id}')">${hasAnswer ? 'Update' : 'Answer'}</button>
+          </div>
         </div>
         <div class="ac-qa-item__actions">
           <button class="ac-qa-item__btn ${q.answered ? 'active' : ''}" onclick="AIPrimer.markQuestionAnswered('${q.id}')" title="${q.answered ? 'Mark unanswered' : 'Mark answered'}">
@@ -2303,6 +2319,16 @@
       btn.classList.add('has-questions');
     } else if (btn) {
       btn.classList.remove('has-questions');
+    }
+  }
+
+  function submitAnswer(questionId) {
+    const input = document.getElementById('qa-input-' + questionId);
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    if (state.socket && state.connected) {
+      state.socket.emit('question-answer-text', { questionId, answerText: text });
     }
   }
 
@@ -2459,6 +2485,7 @@
   AIPrimer.submitQuestion = submitQuestion;
   AIPrimer.upvoteQuestion = upvoteQuestion;
   AIPrimer.toggleBookmark = toggleBookmark;
+  AIPrimer.submitAnswer = submitAnswer;
   AIPrimer.markQuestionAnswered = markQuestionAnswered;
   AIPrimer.dismissQuestion = dismissQuestion;
 

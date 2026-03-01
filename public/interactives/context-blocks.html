@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Blocks — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --gable-lighter: #2d4f64;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --seapink: #EFACA8;
+    --bittersweet: #FF5F5F;
+    --white: #FFFFFF;
+    --accessible-accent: #007A5E;
+    --slate: #8FA4B3;
+    --cloud: #D4DFE6;
+    --amber: #FFC107;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 16px 40px 12px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .header-text h1 { font-size: 22px; font-weight: 700; line-height: 1.15; }
+  .header-text h1 span { color: var(--meadow); }
+  .header-text .subtitle { font-size: 10.5px; font-weight: 300; color: var(--slate); margin-top: 1px; }
+
+  /* ─── SCENE PILLS ─── */
+  .scene-nav {
+    display: flex;
+    gap: 4px;
+    margin: 8px 0 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .scene-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--slate);
+    font-family: 'Poppins', sans-serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .scene-pill:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+  .scene-pill.active {
+    border-color: var(--meadow);
+    background: rgba(23,206,149,0.08);
+    color: var(--white);
+  }
+  .scene-pill.visited {
+    border-color: rgba(23,206,149,0.3);
+    color: var(--cloud);
+  }
+  .scene-pill .num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+    transition: all 0.25s;
+    flex-shrink: 0;
+  }
+  .scene-pill.active .num { background: var(--meadow); color: var(--gable); }
+  .scene-pill.visited .num { background: rgba(23,206,149,0.25); color: var(--meadow); }
+
+  /* ─── MAIN AREA ─── */
+  .main { flex: 1; min-height: 0; position: relative; }
+  .scene { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.4s; display: flex; flex-direction: column; }
+  .scene.active { opacity: 1; pointer-events: all; }
+
+  /* ─── SHARED COMPONENTS ─── */
+  .scene-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--slate); margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .insight-bar {
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 11.5px;
+    color: var(--cloud);
+    line-height: 1.5;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .insight-bar.red { background: rgba(255,95,95,0.06); border: 1px solid rgba(255,95,95,0.15); }
+  .insight-bar.red strong { color: var(--bittersweet); }
+  .insight-bar.green { background: rgba(23,206,149,0.06); border: 1px solid rgba(23,206,149,0.12); }
+  .insight-bar.green strong { color: var(--turquoise); }
+  .insight-bar.blue { background: rgba(0,177,255,0.06); border: 1px solid rgba(0,177,255,0.12); }
+  .insight-bar.blue strong { color: var(--dodger); }
+
+  .next-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--meadow);
+    color: var(--gable);
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 12px;
+  }
+  .next-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .next-btn svg { width: 14px; height: 14px; }
+
+  .person-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--gable);
+    flex-shrink: 0;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  /* ═══════════════════════════════════════
+     SCENE 1: ONE PERSON, NO SHARED CONTEXT
+  ═══════════════════════════════════════ */
+  .s1-layout {
+    flex: 1; display: flex;
+    gap: 24px;
+    align-items: stretch;
+    min-height: 0;
+  }
+  .s1-person-panel {
+    width: 260px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s1-arrow {
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; width: 40px; color: var(--slate);
+  }
+  .s1-arrow svg { width: 32px; height: 32px; }
+  .s1-llm-panel {
+    flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0;
+  }
+  .s1-llm-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 14px;
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
+  }
+  .s1-output-box {
+    background: rgba(255,95,95,0.04);
+    border: 1px solid rgba(255,95,95,0.1);
+    border-radius: 10px; padding: 14px;
+    flex: 1; display: flex; flex-direction: column; gap: 6px;
+  }
+  .error-tag {
+    font-size: 9px; padding: 2px 8px; border-radius: 4px;
+    background: rgba(255,95,95,0.12); color: var(--bittersweet);
+    font-weight: 600; display: inline-block;
+  }
+
+  /* ═══════════════════════════════════════
+     SCENE 2: THE PROBLEM AT SCALE
+  ═══════════════════════════════════════ */
+  .s2-grid {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px; min-height: 0;
+  }
+  .s2-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 5px; overflow: hidden;
+  }
+  .s2-card .card-header { display: flex; align-items: center; gap: 8px; }
+  .s2-card .card-name { font-size: 12px; font-weight: 600; }
+  .s2-card .card-role { font-size: 9.5px; color: var(--slate); }
+  .s2-card .card-context {
+    background: rgba(0,0,0,0.2); border-radius: 6px; padding: 5px 8px;
+    color: var(--slate); flex: 1; overflow: hidden;
+  }
+  .s2-card .ctx-label {
+    font-size: 8.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 2px; color: var(--bittersweet);
+  }
+  .s2-card .card-output {
+    border-left: 3px solid var(--bittersweet);
+    padding: 4px 8px; color: var(--cloud); font-size: 10.5px; line-height: 1.4;
+  }
+  .s2-card .card-tags { display: flex; gap: 3px; flex-wrap: wrap; }
+
+  /* ═══════════════════════════════════════
+     SCENE 3: WHAT IS A CONTEXT BLOCK?
+  ═══════════════════════════════════════ */
+  .s3-layout {
+    flex: 1; display: flex; gap: 30px; align-items: center; min-height: 0;
+  }
+  .s3-block-demo { width: 380px; flex-shrink: 0; }
+  .s3-block-card {
+    background: rgba(0,177,255,0.06);
+    border: 2px solid var(--dodger);
+    border-radius: 12px; padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .s3-block-card .block-type {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--dodger);
+  }
+  .s3-block-card .block-name { font-size: 17px; font-weight: 700; }
+  .s3-block-card .block-owner {
+    font-size: 11px; color: var(--slate);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .s3-block-card .block-owner .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--dodger);
+  }
+  .s3-block-card .block-content {
+    background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px 12px; color: var(--cloud);
+  }
+  .s3-explanation {
+    flex: 1; display: flex; flex-direction: column; gap: 14px;
+  }
+  .s3-explanation h2 { font-size: 16px; font-weight: 700; }
+  .s3-bullet { display: flex; gap: 10px; align-items: flex-start; }
+  .s3-bullet .icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(0,177,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--dodger); font-size: 14px;
+  }
+  .s3-bullet .text { font-size: 12.5px; color: var(--cloud); line-height: 1.5; }
+  .s3-bullet .text strong { color: var(--white); }
+
+  /* ═══════════════════════════════════════
+     SCENE 4: THE LIBRARY
+  ═══════════════════════════════════════ */
+  .s4-grid {
+    flex: 1; display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px; min-height: 0; align-content: start;
+  }
+  .s4-block {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .s4-block:hover { border-color: rgba(255,255,255,0.2); }
+  .s4-block.selected { border-width: 2px; }
+  .s4-block .b-type {
+    font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+  }
+  .s4-block .b-name { font-size: 13px; font-weight: 600; }
+  .s4-block .b-owner { font-size: 10px; color: var(--slate); display: flex; align-items: center; gap: 4px; }
+  .s4-block .b-owner .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .s4-block .b-desc {
+    font-size: 10px; color: var(--slate); line-height: 1.4;
+    font-family: 'JetBrains Mono', monospace; flex: 1;
+  }
+  .s4-block .b-users { display: flex; gap: 3px; margin-top: auto; }
+  .s4-block .b-users .pip {
+    width: 20px; height: 20px; border-radius: 50%;
+    font-size: 8px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06); color: var(--slate);
+    border: 2px solid var(--gable); transition: all 0.3s;
+  }
+  .s4-detail {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 14px;
+    margin-top: 8px; display: none;
+  }
+  .s4-detail.visible { display: flex; gap: 20px; align-items: flex-start; }
+  .s4-detail .detail-content { flex: 1; }
+  .s4-detail .detail-users { width: 180px; flex-shrink: 0; }
+
+  /* ═══════════════════════════════════════
+     SCENE 5: SHARED CONTEXT → CONSISTENT OUTPUT
+  ═══════════════════════════════════════ */
+  .s5-layout {
+    flex: 1; display: grid;
+    grid-template-columns: 220px 40px 1fr;
+    gap: 0; min-height: 0; align-items: stretch;
+  }
+  .s5-lib {
+    display: flex; flex-direction: column; gap: 5px;
+    overflow-y: auto; padding-right: 4px;
+  }
+  .s5-lib-block {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 7px 10px;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .s5-lib-block:hover { border-color: rgba(255,255,255,0.2); }
+  .s5-lib-block.active { border-width: 2px; }
+  .s5-lib-block .lb-type { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .s5-lib-block .lb-name { font-size: 11px; font-weight: 600; }
+  .s5-arrows {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--slate); gap: 4px;
+  }
+  .s5-arrows .arrow-line {
+    width: 2px; flex: 1; background: rgba(255,255,255,0.08); transition: background 0.4s;
+  }
+  .s5-arrows .arrow-line.active { background: var(--meadow); }
+  .s5-people {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .s5-person {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 5px;
+    transition: all 0.4s; overflow: hidden;
+  }
+  .s5-person.lit {
+    border-color: var(--meadow); background: rgba(23,206,149,0.04);
+  }
+  .s5-person .sp-header { display: flex; align-items: center; gap: 7px; }
+  .s5-person .sp-name { font-size: 11px; font-weight: 600; }
+  .s5-person .sp-role { font-size: 9px; color: var(--slate); }
+  .s5-person .sp-blocks { display: flex; gap: 3px; flex-wrap: wrap; }
+  .s5-person .sp-blocks .tag {
+    font-size: 8px; padding: 1px 6px; border-radius: 3px;
+    font-weight: 600; letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.05); color: var(--slate);
+    border: 1px solid rgba(255,255,255,0.08); transition: all 0.4s;
+  }
+  .s5-person .sp-blocks .tag.lit {
+    border-color: currentColor; background: currentColor;
+    color: var(--gable) !important;
+  }
+  .s5-person .sp-output {
+    background: rgba(0,0,0,0.15); border-radius: 5px;
+    padding: 5px 7px; flex: 1; overflow: hidden; transition: all 0.4s;
+  }
+  .s5-person .sp-output.good { border-left: 2px solid var(--meadow); }
+
+  /* ═══════════════════════════════════════
+     SCENE 6: THE RUDDER EFFECT
+  ═══════════════════════════════════════ */
+  .s6-layout { flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 16px; min-height: 0; }
+  .rudder-edit { display: flex; flex-direction: column; gap: 8px; }
+  .rudder-block-select { display: flex; flex-direction: column; gap: 4px; }
+  .r-block-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px; padding: 6px 10px;
+    cursor: pointer; transition: all 0.25s;
+    text-align: left; font-family: 'Poppins', sans-serif; color: var(--white);
+  }
+  .r-block-btn:hover { border-color: rgba(255,255,255,0.2); }
+  .r-block-btn.active { border-width: 2px; }
+  .r-block-btn .rb-name { font-size: 11px; font-weight: 600; }
+  .r-block-btn .rb-owner { font-size: 9.5px; color: var(--slate); }
+  .rudder-editor {
+    flex: 1; background: rgba(0,0,0,0.2); border-radius: 10px;
+    padding: 10px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto;
+  }
+  .rudder-editor .ed-header {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.2px; color: var(--slate);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ed-box {
+    font-size: 10.5px; font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5; border-radius: 6px; padding: 7px 9px;
+  }
+  .ed-old {
+    color: var(--slate); background: rgba(255,95,95,0.06);
+    border: 1px solid rgba(255,95,95,0.1);
+    text-decoration: line-through; opacity: 0.6;
+  }
+  .ed-new {
+    color: var(--cloud); background: rgba(23,206,149,0.06);
+    border: 1px solid rgba(23,206,149,0.15);
+  }
+  .ed-new .highlight { color: var(--turquoise); font-weight: 500; }
+  .propagate-btn {
+    background: var(--meadow); color: var(--gable); border: none;
+    font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600;
+    padding: 8px 16px; border-radius: 7px; cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px; justify-content: center;
+    flex-shrink: 0;
+  }
+  .propagate-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .propagate-btn.done { background: var(--gable-lighter); color: var(--meadow); cursor: default; }
+  .propagate-btn svg { width: 14px; height: 14px; }
+  .rudder-people {
+    display: flex; flex-direction: column; gap: 6px;
+    overflow-y: auto; min-height: 0;
+  }
+  .r-person {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 9px; padding: 10px 12px;
+    transition: all 0.5s; display: flex; gap: 10px;
+  }
+  .r-person.rippled {
+    border-color: var(--meadow); background: rgba(23,206,149,0.05);
+  }
+  .r-person .rp-left { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 55px; }
+  .r-person .rp-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--gable);
+  }
+  .r-person .rp-name { font-size: 10px; font-weight: 600; text-align: center; }
+  .r-person .rp-status {
+    font-size: 8.5px; padding: 2px 7px; border-radius: 4px;
+    font-weight: 600; text-align: center;
+    background: rgba(255,255,255,0.06); color: var(--slate);
+    transition: all 0.5s;
+  }
+  .r-person.rippled .rp-status { background: rgba(23,206,149,0.15); color: var(--meadow); }
+  .r-person .rp-output {
+    flex: 1; font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    color: var(--slate); line-height: 1.45; transition: all 0.5s;
+  }
+  .r-person.rippled .rp-output { color: var(--cloud); }
+  .r-person .rp-output .updated-text { color: var(--turquoise); font-weight: 500; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    margin-top: 4px; padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .footer-left { font-size: 9.5px; color: var(--slate); opacity: 0.5; }
+  .footer-right { font-size: 9.5px; color: var(--white); opacity: 0.2; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-text">
+      <h1><span>Context Blocks</span> — Reusable Context That Scales</h1>
+      <div class="subtitle">AI Primer — How organisations standardise the way they communicate with AI</div>
+    </div>
+  </div>
+
+  <!-- SCENE NAVIGATION -->
+  <div class="scene-nav" id="sceneNav"></div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="scene active" id="scene0"></div>
+    <div class="scene" id="scene1"></div>
+    <div class="scene" id="scene2"></div>
+    <div class="scene" id="scene3"></div>
+    <div class="scene" id="scene4"></div>
+    <div class="scene" id="scene5"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">Context blocks are defined once, owned by a named person, and reused across every AI interaction</div>
+    <div class="footer-right">© aiaccelerator.uk</div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════
+
+const SCENES = [
+  { num: 1, label: 'One Person, No Context' },
+  { num: 2, label: 'The Problem at Scale' },
+  { num: 3, label: 'What\'s a Context Block?' },
+  { num: 4, label: 'The Context Library' },
+  { num: 5, label: 'Shared Outcomes' },
+  { num: 6, label: 'The Rudder Effect' }
+];
+
+const BLOCKS = [
+  {
+    id: 'org', name: 'Organisation Context', type: 'CORE',
+    owner: 'CEO', ownerName: 'Sarah Chen', color: '#00B1FF',
+    desc: 'We are a 200-person fintech. We serve UK SMEs. Our tone is professional but approachable. We prioritise compliance and trust.',
+    descNew: 'We are a 200-person fintech. We serve UK and <span class="highlight">European</span> SMEs. Our tone is professional but approachable. We prioritise compliance, trust, <span class="highlight">and transparency under the EU AI Act</span>.',
+    users: [0,1,2,3]
+  },
+  {
+    id: 'product', name: 'Product Context', type: 'PRODUCT',
+    owner: 'CPO', ownerName: 'James Park', color: '#6161FF',
+    desc: 'PayFlow: automated invoice processing for SMEs. Key features: OCR extraction, approval workflows, Xero/QBO integration. USP: 90-second processing.',
+    descNew: 'PayFlow: automated invoice processing for SMEs. Key features: OCR extraction, approval workflows, Xero/QBO/<span class="highlight">FreeAgent</span> integration. USP: <span class="highlight">60-second</span> processing.',
+    users: [0,1,3]
+  },
+  {
+    id: 'process', name: 'Process & Standards', type: 'PROCESS',
+    owner: 'COO', ownerName: 'Priya Sharma', color: '#17CE95',
+    desc: 'We write in UK English. All customer comms require two-person review. Response SLA: 4 hours. Escalation: Support → Team Lead → Head of CX.',
+    descNew: 'We write in UK English. All customer comms require two-person review. Response SLA: <span class="highlight">2 hours</span>. Escalation: Support → Team Lead → Head of CX. <span class="highlight">AI-drafted responses must be human-approved before sending.</span>',
+    users: [1,2,3]
+  },
+  {
+    id: 'persona', name: 'Customer Personas', type: 'PERSONA',
+    owner: 'CMO', ownerName: 'Aisha Okonkwo', color: '#C5B6F1',
+    desc: 'Primary: "Rachel" — FD at 20-person agency, cares about cash flow visibility. Secondary: "Tom" — sole trader, needs simplicity over features.',
+    descNew: 'Primary: "Rachel" — FD at 20-person agency, cares about cash flow visibility <span class="highlight">and regulatory reporting</span>. Secondary: "Tom" — sole trader, needs simplicity. <span class="highlight">Tertiary: "Elena" — EU-based freelancer, multi-currency.</span>',
+    users: [0,2]
+  },
+  {
+    id: 'tone', name: 'Tone of Voice', type: 'BRAND',
+    owner: 'CMO', ownerName: 'Aisha Okonkwo', color: '#EFACA8',
+    desc: 'Confident, not arrogant. Helpful, not patronising. Technical accuracy matters — never dumb things down, but always explain jargon.',
+    descNew: 'Confident, not arrogant. Helpful, not patronising. Technical accuracy matters — never dumb things down, but always explain jargon. <span class="highlight">When discussing AI features, lead with the user benefit, not the technology.</span>',
+    users: [0,1,2,3]
+  }
+];
+
+const PEOPLE = [
+  { id: 0, name: 'Marketing', initials: 'MK', color: '#00B1FF', role: 'Content Team' },
+  { id: 1, name: 'Sales', initials: 'SL', color: '#6161FF', role: 'Business Dev' },
+  { id: 2, name: 'Support', initials: 'CX', color: '#17CE95', role: 'Customer Experience' },
+  { id: 3, name: 'Product', initials: 'PD', color: '#C5B6F1', role: 'Product Team' }
+];
+
+const S2_DATA = [
+  {
+    person: PEOPLE[0],
+    context: '"We\'re a fintech startup... I think we do invoicing? Tone should be fun and casual."',
+    output: 'Hey there! We\'re a cool fintech startup that makes invoicing super easy!',
+    problems: ['Wrong tone', 'Missing product details']
+  },
+  {
+    person: PEOPLE[1],
+    context: '"PayFlow is an enterprise payment solution. Our clients are large corporates."',
+    output: 'PayFlow is an enterprise-grade platform for corporate clients worldwide.',
+    problems: ['Wrong segment', 'Overstated scale']
+  },
+  {
+    person: PEOPLE[2],
+    context: '"We\'re some kind of invoice tool. Response time is same-day? Not sure."',
+    output: 'Thanks for reaching out! We\'ll get back to you within 24 hours.',
+    problems: ['Wrong SLA', 'No escalation path']
+  },
+  {
+    person: PEOPLE[3],
+    context: '"PayFlow does OCR. We\'re building approval workflows next quarter."',
+    output: 'PayFlow extracts data via OCR. Approval workflows coming Q3.',
+    problems: ['Workflows already exist', 'Missing USP']
+  }
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let currentScene = 0;
+let visited = new Set([0]);
+let s4Selected = null;
+let s5Selected = null;
+let rudderBlock = 0;
+let propagated = false;
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════
+function renderNav() {
+  const nav = document.getElementById('sceneNav');
+  nav.innerHTML = SCENES.map((s, i) => {
+    let cls = 'scene-pill';
+    if (i === currentScene) cls += ' active';
+    else if (visited.has(i)) cls += ' visited';
+    return `<div class="${cls}" onclick="setScene(${i})"><span class="num">${s.num}</span> ${s.label}</div>`;
+  }).join('');
+}
+
+function setScene(idx) {
+  currentScene = idx;
+  visited.add(idx);
+  document.querySelectorAll('.scene').forEach((s, i) => s.classList.toggle('active', i === idx));
+  renderNav();
+  renderers[idx]();
+}
+
+function nextScene() {
+  if (currentScene < SCENES.length - 1) setScene(currentScene + 1);
+}
+
+function nextBtn() {
+  if (currentScene >= SCENES.length - 1) return '';
+  return `<button class="next-btn" onclick="nextScene()">Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></button>`;
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 1: ONE PERSON, NO CONTEXT
+// ═══════════════════════════════════════════════
+function renderScene1() {
+  const el = document.getElementById('scene0');
+  el.innerHTML = `
+    <div class="scene-title">What happens when someone uses AI without shared context</div>
+    <div class="s1-layout">
+      <div class="s1-person-panel">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="person-avatar" style="background:${PEOPLE[0].color}">${PEOPLE[0].initials}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${PEOPLE[0].name}</div>
+            <div style="font-size:10px;color:var(--slate);">${PEOPLE[0].role}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--slate);font-weight:600;text-transform:uppercase;letter-spacing:1px;">Context (from memory)</div>
+        <div class="mono" style="background:rgba(0,0,0,0.2);border-radius:7px;padding:8px 10px;color:var(--slate);flex:1;">
+          "We're a fintech startup... I think we do invoicing? Something about SMEs. Tone should be fun and casual I reckon."
+        </div>
+        <div style="font-size:10px;color:var(--bittersweet);font-weight:500;">Incomplete. Inaccurate. From memory.</div>
+      </div>
+
+      <div class="s1-arrow">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 20h24m-8-8 8 8-8 8"/></svg>
+      </div>
+
+      <div class="s1-llm-panel">
+        <div class="s1-llm-box">
+          <div style="font-size:10px;color:var(--dodger);font-weight:600;text-transform:uppercase;letter-spacing:1px;">Prompt sent to AI</div>
+          <div class="mono" style="color:var(--cloud);flex:1;">"Write a short description of our company for the website."</div>
+          <div style="font-size:10px;color:var(--slate);">The AI only knows what it's told. It fills gaps with assumptions.</div>
+        </div>
+        <div class="s1-output-box">
+          <div style="font-size:10px;color:var(--bittersweet);font-weight:600;text-transform:uppercase;letter-spacing:1px;">AI Output</div>
+          <div class="mono" style="color:var(--cloud);">
+            "Hey there! We're a cool fintech startup that makes invoicing super easy! Check us out!"
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="error-tag">Wrong tone</span>
+            <span class="error-tag">Missing product details</span>
+            <span class="error-tag">No compliance awareness</span>
+            <span class="error-tag">"Startup" — wrong positioning</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-bar red" style="margin-top:8px;">
+      <strong>The AI isn't wrong — it's uninformed.</strong> It only knows what one person remembered to type. And that person got half of it wrong.
+      ${nextBtn()}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 2: THE PROBLEM AT SCALE
+// ═══════════════════════════════════════════════
+function renderScene2() {
+  const el = document.getElementById('scene1');
+  el.innerHTML = `
+    <div class="scene-title">Now multiply that across four teams — same question, four different answers</div>
+    <div class="s2-grid">
+      ${S2_DATA.map(d => `
+        <div class="s2-card">
+          <div class="card-header">
+            <div class="person-avatar" style="background:${d.person.color}">${d.person.initials}</div>
+            <div>
+              <div class="card-name">${d.person.name}</div>
+              <div class="card-role">${d.person.role}</div>
+            </div>
+          </div>
+          <div class="card-context mono">
+            <div class="ctx-label">Their context (from memory)</div>
+            ${d.context}
+          </div>
+          <div class="card-output">${d.output}</div>
+          <div class="card-tags">
+            ${d.problems.map(p => `<span class="error-tag">${p}</span>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="insight-bar red" style="margin-top:6px;">
+      <strong>Four people. Four different versions of reality.</strong> Details get missed. Tone drifts. Facts conflict. This doesn't scale.
+      ${nextBtn()}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 3: WHAT IS A CONTEXT BLOCK?
+// ═══════════════════════════════════════════════
+function renderScene3() {
+  const el = document.getElementById('scene2');
+  const b = BLOCKS[0];
+  el.innerHTML = `
+    <div class="scene-title">The solution: a document written for computers, not people</div>
+    <div class="s3-layout">
+      <div class="s3-block-demo">
+        <div class="s3-block-card">
+          <div class="block-type">${b.type}</div>
+          <div class="block-name">${b.name}</div>
+          <div class="block-owner"><span class="dot"></span> Owned by ${b.ownerName} (${b.owner})</div>
+          <div class="block-content mono">${b.desc}</div>
+          <div style="font-size:10px;color:var(--slate);">Used by: ${b.users.map(u => PEOPLE[u].name).join(', ')}</div>
+        </div>
+      </div>
+
+      <div class="s3-explanation">
+        <h2>This is a context block.</h2>
+        <div class="s3-bullet">
+          <div class="icon">1</div>
+          <div class="text"><strong>Written for machines, not people.</strong> A structured snippet of text that gives AI the context it needs to respond accurately — like programming it with knowledge.</div>
+        </div>
+        <div class="s3-bullet">
+          <div class="icon">2</div>
+          <div class="text"><strong>Defined once, reused everywhere.</strong> Instead of every person retyping context from memory, they load the same trusted block. One source of truth.</div>
+        </div>
+        <div class="s3-bullet">
+          <div class="icon">3</div>
+          <div class="text"><strong>Owned by a named person.</strong> Someone is responsible for keeping it accurate and up to date. When something changes, they update it once.</div>
+        </div>
+        <div class="s3-bullet">
+          <div class="icon">4</div>
+          <div class="text"><strong>No fine-tuning required.</strong> You're not retraining the AI — you're giving it better input. Works with any model, any platform, any tool.</div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-bar blue" style="margin-top:8px;">
+      <strong>Better answers don't come from smarter AI — they come from better context.</strong> A context block is how you standardise that context across an organisation.
+      ${nextBtn()}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 4: THE LIBRARY
+// ═══════════════════════════════════════════════
+function renderScene4() {
+  const el = document.getElementById('scene3');
+  const detail = s4Selected !== null ? BLOCKS[s4Selected] : null;
+  el.innerHTML = `
+    <div class="scene-title">A library of context blocks — each with a named owner</div>
+    <div class="s4-grid">
+      ${BLOCKS.map((b, i) => `
+        <div class="s4-block${s4Selected === i ? ' selected' : ''}" style="${s4Selected === i ? 'border-color:' + b.color + ';background:' + b.color + '10;' : ''}" onclick="selectS4(${i})">
+          <div class="b-type" style="color:${b.color}">${b.type}</div>
+          <div class="b-name">${b.name}</div>
+          <div class="b-owner"><span class="dot" style="background:${b.color}"></span> ${b.ownerName}</div>
+          <div class="b-desc">${b.desc.substring(0, 70)}...</div>
+          <div class="b-users">
+            ${b.users.map(u => `<div class="pip" style="${s4Selected === i ? 'background:' + PEOPLE[u].color + ';color:var(--gable);border-color:' + PEOPLE[u].color : ''}">${PEOPLE[u].initials}</div>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="s4-detail${detail ? ' visible' : ''}" id="s4Detail">
+      ${detail ? `
+        <div class="detail-content">
+          <div style="font-size:10px;color:${detail.color};font-weight:600;text-transform:uppercase;letter-spacing:1.2px;">${detail.type}</div>
+          <div style="font-size:15px;font-weight:700;margin:4px 0 2px;">${detail.name}</div>
+          <div style="font-size:10.5px;color:var(--slate);margin-bottom:8px;">Owned by ${detail.ownerName} (${detail.owner})</div>
+          <div class="mono" style="color:var(--cloud);background:rgba(0,0,0,0.15);border-radius:6px;padding:8px 10px;">${detail.desc}</div>
+        </div>
+        <div class="detail-users">
+          <div style="font-size:10px;color:var(--slate);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Loaded by</div>
+          ${detail.users.map(u => `
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div class="person-avatar" style="background:${PEOPLE[u].color};width:22px;height:22px;font-size:9px;">${PEOPLE[u].initials}</div>
+              <div style="font-size:11px;font-weight:500;">${PEOPLE[u].name}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+    <div class="insight-bar green" style="margin-top:6px;">
+      ${detail
+        ? `<strong>${detail.name}</strong> is maintained by ${detail.ownerName} and loaded by ${detail.users.length} teams. Click other blocks to explore.`
+        : `<strong>Click any block</strong> to see its full content and who uses it. Each block has a named owner who keeps it current.`
+      }
+      ${nextBtn()}
+    </div>
+  `;
+}
+function selectS4(idx) {
+  s4Selected = s4Selected === idx ? null : idx;
+  renderScene4();
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 5: SHARED CONTEXT → SHARED OUTCOMES
+// ═══════════════════════════════════════════════
+function renderScene5() {
+  const el = document.getElementById('scene4');
+  const active = s5Selected !== null ? BLOCKS[s5Selected] : null;
+
+  el.innerHTML = `
+    <div class="scene-title">Everyone loads the same blocks → consistent, accurate results</div>
+    <div class="s5-layout">
+      <div class="s5-lib">
+        ${BLOCKS.map((b, i) => `
+          <div class="s5-lib-block${s5Selected === i ? ' active' : ''}" style="${s5Selected === i ? 'border-color:' + b.color + ';background:' + b.color + '10;' : ''}" onclick="selectS5(${i})">
+            <div class="lb-type" style="color:${b.color}">${b.type}</div>
+            <div class="lb-name">${b.name}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="s5-arrows">
+        ${[0,1,2,3].map(() => `<div class="arrow-line${active ? ' active' : ''}"></div>`).join('')}
+      </div>
+      <div class="s5-people">
+        ${PEOPLE.map(p => {
+          const myBlocks = BLOCKS.filter(b => b.users.includes(p.id));
+          const isLit = active && active.users.includes(p.id);
+          return `
+            <div class="s5-person${isLit ? ' lit' : ''}">
+              <div class="sp-header">
+                <div class="person-avatar" style="background:${p.color};width:24px;height:24px;font-size:9px;">${p.initials}</div>
+                <div>
+                  <div class="sp-name">${p.name}</div>
+                  <div class="sp-role">${p.role}</div>
+                </div>
+              </div>
+              <div class="sp-blocks">
+                ${myBlocks.map(b => `<span class="tag${active && b.id === active.id ? ' lit' : ''}" style="${active && b.id === active.id ? 'color:' + b.color : ''}">${b.type}</span>`).join('')}
+              </div>
+              <div class="sp-output${isLit ? ' good' : ''} mono" style="font-size:10px;color:var(--slate);">
+                ${isLit
+                  ? `<span style="color:var(--meadow);font-size:8.5px;font-weight:600;">LOADED:</span> ${active.desc.substring(0, 65)}...`
+                  : '<span style="font-size:8.5px;">Click a block to see context flow</span>'
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+    <div class="insight-bar green" style="margin-top:6px;">
+      ${active
+        ? `<strong>${active.name}</strong> flows to <strong>${active.users.length} teams</strong>. Same context in, consistent output out. No more re-explaining the business from memory.`
+        : '<strong>Click a block</strong> on the left to see how it flows to teams on the right. Shared context creates shared outcomes.'
+      }
+      ${nextBtn()}
+    </div>
+  `;
+}
+function selectS5(idx) {
+  s5Selected = s5Selected === idx ? null : idx;
+  renderScene5();
+}
+
+// ═══════════════════════════════════════════════
+//  SCENE 6: THE RUDDER EFFECT
+// ═══════════════════════════════════════════════
+function renderScene6() {
+  propagated = false;
+  const el = document.getElementById('scene5');
+  const b = BLOCKS[rudderBlock];
+
+  el.innerHTML = `
+    <div class="scene-title">One edit to a central block propagates instantly through every team</div>
+    <div class="s6-layout">
+      <div class="rudder-edit">
+        <div class="rudder-block-select">
+          ${BLOCKS.map((bl, i) => `
+            <div class="r-block-btn${rudderBlock === i ? ' active' : ''}" style="${rudderBlock === i ? 'border-color:' + bl.color + ';background:' + bl.color + '10;' : ''}" onclick="selectRudder(${i})">
+              <div class="rb-name" style="${rudderBlock === i ? 'color:' + bl.color : ''}">${bl.name}</div>
+              <div class="rb-owner">${bl.ownerName} · ${bl.users.length} teams</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="rudder-editor">
+          <div class="ed-header">
+            <span style="color:${b.color}">${b.name}</span>
+            <span style="font-weight:400;">${b.ownerName}</span>
+          </div>
+          <div class="ed-box ed-old">${b.desc}</div>
+          <div class="ed-box ed-new">${b.descNew}</div>
+          <button class="propagate-btn" id="propBtn" onclick="propagate()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            Propagate Change
+          </button>
+        </div>
+      </div>
+      <div class="rudder-people" id="rudderPeople">
+        ${b.users.map(uid => {
+          const p = PEOPLE[uid];
+          return `
+            <div class="r-person" id="rp-${uid}">
+              <div class="rp-left">
+                <div class="rp-avatar" style="background:${p.color}">${p.initials}</div>
+                <div class="rp-name">${p.name}</div>
+                <div class="rp-status" id="rpStatus-${uid}">Waiting</div>
+              </div>
+              <div class="rp-output" id="rpOutput-${uid}">
+                <span style="color:var(--slate);font-size:8.5px;font-weight:600;">CURRENT:</span> ${b.desc}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+    <div class="insight-bar green" style="margin-top:6px;" id="s6Insight">
+      <strong>The rudder effect:</strong> One small change to a central block propagates instantly through every team. Like a ship's rudder — a tiny adjustment at the centre changes the whole organisation's direction.
+    </div>
+  `;
+}
+
+function selectRudder(idx) {
+  rudderBlock = idx;
+  renderScene6();
+}
+
+function propagate() {
+  if (propagated) return;
+  propagated = true;
+  const b = BLOCKS[rudderBlock];
+  const btn = document.getElementById('propBtn');
+  btn.classList.add('done');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Propagated!';
+
+  b.users.forEach((uid, i) => {
+    setTimeout(() => {
+      const card = document.getElementById('rp-' + uid);
+      const status = document.getElementById('rpStatus-' + uid);
+      const output = document.getElementById('rpOutput-' + uid);
+      if (card) {
+        card.classList.add('rippled');
+        status.textContent = 'Updated';
+        output.innerHTML = `<span style="color:var(--meadow);font-size:8.5px;font-weight:600;">UPDATED:</span> ${b.descNew}`;
+      }
+    }, 300 + i * 400);
+  });
+
+  setTimeout(() => {
+    document.getElementById('s6Insight').innerHTML = `<strong>Done.</strong> One edit by ${b.ownerName}. <strong>${b.users.length} teams updated instantly.</strong> Every future AI interaction now uses the corrected context. No retraining. No mass email. No hoping people read the memo.`;
+  }, 300 + b.users.length * 400 + 200);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+const renderers = [renderScene1, renderScene2, renderScene3, renderScene4, renderScene5, renderScene6];
+renderNav();
+renderScene1();
+</script>
+</body>
+</html>

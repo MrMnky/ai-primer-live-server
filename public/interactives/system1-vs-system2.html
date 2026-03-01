@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System 1 vs System 2 Thinking — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+  --acc-green: #007A5E;
+  --sys1: #FF6B4A;
+  --sys1-bg: rgba(255,107,74,0.12);
+  --sys2: #7C5CFC;
+  --sys2-bg: rgba(124,92,252,0.12);
+  --malibu: #5BA3E6;
+  --meadow: #34D399;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:24px; }
+.header { text-align:center; margin-bottom:20px; max-width:900px; }
+.header h1 { font-size:1.6rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+.header h1 .s1 { color:var(--sys1); }
+.header h1 .s2 { color:var(--sys2); }
+.header .subtitle { font-size:0.82rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { color:var(--turquoise); font-style:normal; font-weight:600; }
+
+.arena { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; width:100%; max-width:900px; overflow:hidden; flex:1; min-height:0; display:flex; flex-direction:column; }
+
+.challenge-bar { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid rgba(255,255,255,0.08); }
+.challenge-counter { font-size:0.75rem; color:var(--slate); font-weight:400; }
+.challenge-counter strong { color:var(--turquoise); font-weight:600; }
+.score-area { display:flex; gap:20px; font-size:0.75rem; }
+.score-area .sc { display:flex; align-items:center; gap:6px; }
+.score-area .dot { width:8px; height:8px; border-radius:50%; }
+.score-area .dot.s1 { background:var(--sys1); }
+.score-area .dot.s2 { background:var(--sys2); }
+
+.challenge-zone { padding:32px 24px; flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+
+.prompt-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:28px 36px; max-width:600px; margin-bottom:24px; }
+.prompt-card .category { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--slate); margin-bottom:10px; }
+.prompt-card .question { font-size:1.15rem; font-weight:600; line-height:1.5; }
+
+.options { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-bottom:20px; }
+.opt-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:14px 24px; font-family:'Poppins',sans-serif; font-size:0.85rem; color:var(--white); cursor:pointer; transition:all 0.25s; min-width:180px; }
+.opt-btn:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.3); transform:translateY(-1px); }
+.opt-btn.selected { border-width:2px; transform:scale(1.02); }
+.opt-btn.selected.s1 { border-color:var(--sys1); background:var(--sys1-bg); }
+.opt-btn.selected.s2 { border-color:var(--sys2); background:var(--sys2-bg); }
+.opt-btn.correct { border-color:var(--turquoise); background:rgba(0,255,188,0.1); }
+.opt-btn.wrong { border-color:var(--sys1); background:rgba(255,107,74,0.1); opacity:0.6; }
+.opt-btn:disabled { cursor:default; }
+
+.timer-bar { width:100%; max-width:400px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-bottom:20px; overflow:hidden; }
+.timer-fill { height:100%; background:linear-gradient(90deg, var(--turquoise), var(--dodger)); border-radius:2px; transition:width 0.1s linear; width:100%; }
+.timer-bar.urgent .timer-fill { background:linear-gradient(90deg, var(--sys1), #FF4444); }
+
+.explain-card { background:var(--white); border-radius:12px; padding:24px 28px; max-width:600px; color:var(--gable); text-align:left; animation:slideUp 0.4s ease; }
+@keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.explain-card .system-tag { display:inline-block; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; padding:3px 10px; border-radius:4px; margin-bottom:10px; }
+.explain-card .system-tag.s1 { background:var(--sys1-bg); color:var(--sys1); }
+.explain-card .system-tag.s2 { background:var(--sys2-bg); color:var(--sys2); }
+.explain-card .explain-title { font-size:0.95rem; font-weight:700; margin-bottom:8px; }
+.explain-card .explain-text { font-size:0.8rem; color:#4A5568; line-height:1.65; }
+.explain-card .ai-note { margin-top:14px; padding-top:12px; border-top:1px solid #E2E8F0; font-size:0.75rem; color:var(--cerulean); line-height:1.55; font-weight:500; }
+.explain-card .ai-note strong { color:var(--gable); }
+
+.next-btn { margin-top:20px; background:linear-gradient(135deg, var(--dodger), var(--cerulean)); border:none; border-radius:8px; padding:10px 28px; font-family:'Poppins',sans-serif; font-size:0.8rem; font-weight:600; color:var(--white); cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; }
+.next-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,177,255,0.3); }
+
+/* Results screen */
+.results { text-align:center; animation:slideUp 0.5s ease; }
+.results h2 { font-size:1.3rem; font-weight:700; margin-bottom:6px; }
+.results .results-sub { font-size:0.82rem; color:var(--slate); margin-bottom:24px; }
+.brain-compare { display:flex; gap:24px; justify-content:center; margin-bottom:28px; flex-wrap:wrap; }
+.brain-box { background:rgba(255,255,255,0.05); border-radius:12px; padding:20px 28px; min-width:200px; border:1px solid rgba(255,255,255,0.1); }
+.brain-box .brain-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+.brain-box .brain-label.s1 { color:var(--sys1); }
+.brain-box .brain-label.s2 { color:var(--sys2); }
+.brain-box .brain-stat { font-size:2rem; font-weight:700; }
+.brain-box .brain-desc { font-size:0.72rem; color:var(--slate); margin-top:4px; }
+.results .key-insight { background:var(--white); color:var(--gable); border-radius:12px; padding:20px 28px; max-width:540px; margin:0 auto 20px; text-align:left; }
+.results .key-insight h3 { font-size:0.85rem; font-weight:700; margin-bottom:8px; color:var(--cerulean); }
+.results .key-insight p { font-size:0.8rem; line-height:1.65; color:#4A5568; }
+.results .key-insight p strong { color:var(--gable); }
+
+.start-btn { background:linear-gradient(135deg, var(--turquoise), var(--dodger)); border:none; border-radius:10px; padding:14px 36px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:700; color:var(--gable); cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; }
+.start-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,255,188,0.3); }
+
+/* ─── REASONING MODEL VISUAL ─── */
+.reasoning-demo { animation:slideUp 0.5s ease; max-width:820px; margin:0 auto; width:100%; }
+.reasoning-demo h2 { font-size:1.15rem; font-weight:700; text-align:center; margin-bottom:4px; }
+.reasoning-demo .rd-sub { font-size:0.78rem; color:var(--slate); text-align:center; margin-bottom:18px; }
+
+.rd-columns { display:flex; gap:16px; margin-bottom:16px; }
+.rd-col { flex:1; min-width:0; }
+.rd-col-label {
+  font-size:0.6rem; font-weight:600; letter-spacing:1.5px;
+  text-transform:uppercase; margin-bottom:8px; padding-left:4px;
+}
+.rd-col-label.s1c { color:var(--sys1); }
+.rd-col-label.s2c { color:var(--sys2); }
+
+.rd-prompt {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px; padding:12px 14px; margin-bottom:10px;
+  font-size:0.78rem; line-height:1.5; color:var(--slate);
+}
+.rd-prompt strong { color:var(--white); }
+
+/* Standard LLM panel */
+.rd-standard-response {
+  background:rgba(255,107,74,0.06); border:1px solid rgba(255,107,74,0.15);
+  border-radius:10px; padding:12px 14px;
+  font-size:0.76rem; line-height:1.6; color:var(--slate);
+  opacity:0; transition:opacity 0.5s;
+}
+.rd-standard-response.visible { opacity:1; }
+.rd-standard-response .wrong-tag {
+  display:inline-block; font-size:0.6rem; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:var(--sys1); margin-bottom:6px;
+}
+
+/* Reasoning model panel */
+.rd-thinking-box {
+  background:rgba(124,92,252,0.06); border:1px solid rgba(124,92,252,0.2);
+  border-radius:10px; overflow:hidden; margin-bottom:10px;
+}
+.rd-thinking-header {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px;
+  background:rgba(124,92,252,0.08);
+  border-bottom:1px solid rgba(124,92,252,0.15);
+  font-size:0.7rem; font-weight:600; color:var(--sys2);
+  cursor:default;
+}
+.rd-thinking-header .spinner {
+  display:inline-block; width:12px; height:12px;
+  border:2px solid rgba(124,92,252,0.2); border-top-color:var(--sys2);
+  border-radius:50%; animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.rd-thinking-body {
+  padding:10px 14px; max-height:0; overflow:hidden;
+  transition:max-height 0.6s ease;
+}
+.rd-thinking-body.expanded { max-height:300px; overflow-y:auto; }
+.rd-thinking-body::-webkit-scrollbar { width:3px; }
+.rd-thinking-body::-webkit-scrollbar-thumb { background:rgba(124,92,252,0.3); border-radius:2px; }
+
+.rd-thought-step {
+  font-size:0.72rem; line-height:1.55; color:var(--slate);
+  padding:4px 0; opacity:0; transform:translateY(6px);
+  transition:all 0.35s ease; border-left:2px solid transparent;
+  padding-left:10px; margin-bottom:4px;
+}
+.rd-thought-step.visible { opacity:1; transform:translateY(0); border-left-color:rgba(124,92,252,0.3); }
+.rd-thought-step strong { color:var(--white); font-weight:600; }
+.rd-thought-step .step-num { color:var(--sys2); font-weight:600; }
+
+.rd-reasoning-response {
+  background:rgba(0,255,188,0.06); border:1px solid rgba(0,255,188,0.15);
+  border-radius:10px; padding:12px 14px;
+  font-size:0.76rem; line-height:1.6; color:var(--slate);
+  opacity:0; transition:opacity 0.5s;
+}
+.rd-reasoning-response.visible { opacity:1; }
+.rd-reasoning-response .correct-tag {
+  display:inline-block; font-size:0.6rem; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:var(--turquoise); margin-bottom:6px;
+}
+
+/* Context window indicator */
+.rd-context-bar {
+  margin-top:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px; padding:10px 14px;
+}
+.rd-context-label { font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--slate); margin-bottom:6px; font-weight:600; }
+.rd-context-track { height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; display:flex; }
+.rd-ctx-prompt { height:100%; background:var(--malibu); transition:width 0.5s; }
+.rd-ctx-thinking { height:100%; background:var(--sys2); transition:width 0.5s; }
+.rd-ctx-response { height:100%; background:var(--meadow); transition:width 0.5s; }
+.rd-ctx-legend { display:flex; gap:14px; margin-top:6px; font-size:0.62rem; color:var(--slate); }
+.rd-ctx-legend .swatch { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+
+.rd-insight {
+  background:var(--white); color:var(--gable); border-radius:10px;
+  padding:16px 20px; text-align:left; margin-top:14px;
+  opacity:0; transition:opacity 0.5s;
+}
+.rd-insight.visible { opacity:1; }
+.rd-insight h3 { font-size:0.8rem; font-weight:700; color:var(--sys2); margin-bottom:6px; }
+.rd-insight p { font-size:0.76rem; line-height:1.6; color:#4A5568; }
+.rd-insight p strong { color:var(--gable); }
+
+.rd-back-btn { margin-top:14px; }
+
+/* Welcome */
+.welcome { text-align:center; }
+.welcome .brain-icons { font-size:2.5rem; margin-bottom:16px; }
+.welcome h2 { font-size:1.1rem; font-weight:600; margin-bottom:10px; }
+.welcome p { font-size:0.8rem; color:var(--slate); line-height:1.6; max-width:440px; margin:0 auto 24px; }
+.welcome .legend { display:flex; gap:24px; justify-content:center; margin-bottom:24px; }
+.welcome .legend .leg { display:flex; align-items:center; gap:8px; font-size:0.75rem; }
+.welcome .legend .leg .bar { width:28px; height:4px; border-radius:2px; }
+.welcome .legend .leg .bar.s1 { background:var(--sys1); }
+.welcome .legend .leg .bar.s2 { background:var(--sys2); }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="s1">System 1</span> vs <span class="s2">System 2</span> Thinking</h1>
+  <div class="subtitle">Can you tell which type of thinking a task needs? <em>LLMs are System 1 thinking machines.</em></div>
+</div>
+
+<div class="arena">
+  <div class="challenge-bar">
+    <div class="challenge-counter">Challenge <strong id="qNum">—</strong> of <strong id="qTotal">7</strong></div>
+    <div class="score-area">
+      <div class="sc"><div class="dot s1"></div> <span id="s1Score">0</span> fast</div>
+      <div class="sc"><div class="dot s2"></div> <span id="s2Score">0</span> slow</div>
+    </div>
+  </div>
+
+  <div class="challenge-zone" id="zone">
+    <!-- Welcome screen -->
+    <div class="welcome" id="welcomeScreen">
+      <div class="brain-icons">⚡ 🧠</div>
+      <h2>How does your brain actually work?</h2>
+      <p>You'll see 7 real-world tasks. For each one, decide: does it need fast, instinctive thinking (System 1) or slow, deliberate reasoning (System 2)?</p>
+      <div class="legend">
+        <div class="leg"><div class="bar s1"></div> System 1 — fast &amp; automatic</div>
+        <div class="leg"><div class="bar s2"></div> System 2 — slow &amp; deliberate</div>
+      </div>
+      <button class="start-btn" onclick="startGame()">Start the Challenge</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+const CHALLENGES = [
+  {
+    category: "Language",
+    question: "Complete this phrase: \"Break a ___\"",
+    options: ["Instantly know it", "Need to think carefully"],
+    answer: 0,
+    system: 1,
+    title: "Pattern completion — pure System 1",
+    explanation: "Your brain retrieved \"leg\" instantly through pattern matching. You didn't reason through it — the association was automatic. This is exactly how LLMs work: they predict the most likely next token based on patterns seen in training.",
+    aiNote: "LLMs excel here. They're essentially System 1 pattern-matching machines running at industrial scale — billions of parameters tuned to complete patterns just like your brain did."
+  },
+  {
+    category: "Maths",
+    question: "What is 17 × 24?",
+    options: ["Can solve instantly", "Need to work it out"],
+    answer: 1,
+    system: 2,
+    title: "Multi-step arithmetic — System 2 required",
+    explanation: "Unlike 2 + 2 (which you'd answer instantly), this requires you to hold numbers in working memory and execute steps: 17×20=340, 17×4=68, 340+68=408. That's deliberate, sequential processing.",
+    aiNote: "LLMs struggle here because they don't actually compute — they predict what the answer looks like. They can get simple maths right through pattern matching, but complex calculations often produce confident wrong answers. That's why tool use (calculators) is essential."
+  },
+  {
+    category: "Emotion",
+    question: "You see a photo of someone smiling. Is this person happy?",
+    options: ["Know instantly — obvious", "Actually need to analyse it"],
+    answer: 0,
+    system: 1,
+    title: "Facial recognition — automatic System 1",
+    explanation: "Reading basic facial expressions is hardwired. You don't deliberate over whether a smile means happiness — your brain processes it in milliseconds, below conscious awareness.",
+    aiNote: "Multimodal LLMs can recognise emotions in images, but they're doing statistical pattern matching on pixel arrangements — not 'feeling' the emotion. They can be fooled by sarcastic or culturally different expressions."
+  },
+  {
+    category: "Logic",
+    question: "A bat and ball cost £1.10 together. The bat costs £1.00 more than the ball. How much is the ball?",
+    options: ["10p — obvious!", "Wait, let me think..."],
+    answer: 1,
+    system: 2,
+    title: "The classic System 1 trap",
+    explanation: "If you said 10p, your System 1 jumped in with an intuitive (wrong) answer. The real answer is 5p (ball=5p, bat=£1.05, difference=£1.00). This requires System 2 to override your gut instinct and set up the algebra.",
+    aiNote: "This is one of the most famous examples of where LLMs fail — and for the same reason humans do. The System 1 pattern (£1.10 minus £1.00 = 10p) is so strong that even AI gives the wrong answer without chain-of-thought prompting."
+  },
+  {
+    category: "Navigation",
+    question: "You're driving a familiar route home from work.",
+    options: ["Autopilot — don't even think", "Concentrate on every turn"],
+    answer: 0,
+    system: 1,
+    title: "Learned routine — System 1 takes over",
+    explanation: "After enough repetition, complex sequences become automatic. You can drive home while thinking about dinner. The route has been compiled from System 2 learning into System 1 execution.",
+    aiNote: "This mirrors how LLMs are trained. During training (System 2 equivalent), the model learns patterns through massive computation. During inference, it runs on 'autopilot' — executing learned patterns instantly, much like your commute."
+  },
+  {
+    category: "Strategy",
+    question: "You need to plan a project with 5 dependencies, 3 team members, and a fixed deadline.",
+    options: ["Can figure it out intuitively", "Need structured planning"],
+    answer: 1,
+    system: 2,
+    title: "Planning under constraints — System 2 territory",
+    explanation: "Juggling multiple variables, constraints, and dependencies requires working memory, sequential reasoning, and deliberate trade-off analysis. Your intuition can't hold all these factors simultaneously.",
+    aiNote: "This is where standard LLM prompting breaks down. A single prompt produces a plausible-sounding but shallow plan. Agentic AI addresses this — breaking the problem into steps, using tools, checking work, and iterating. It's giving AI a System 2."
+  },
+  {
+    category: "Language",
+    question: "Interpret this: \"Can you give me a hand moving this table?\"",
+    options: ["Immediately understand the meaning", "Need to carefully parse it"],
+    answer: 0,
+    system: 1,
+    title: "Contextual understanding — fast but shallow",
+    explanation: "You instantly understood 'give me a hand' means help, not literally detach a hand. This pragmatic interpretation happens automatically through years of language exposure — you don't even notice the metaphor.",
+    aiNote: "LLMs are remarkably good at this — they've absorbed vast contextual patterns about how language is actually used. But they can still miss subtle sarcasm, cultural context, or deliberate ambiguity that requires genuine understanding."
+  }
+];
+
+let current = -1;
+let s1Score = 0, s2Score = 0;
+let timerInterval = null;
+let answered = false;
+let reasoningTimer = null;
+
+function startGame() {
+  if (reasoningTimer) { clearTimeout(reasoningTimer); reasoningTimer = null; }
+  current = -1;
+  s1Score = 0;
+  s2Score = 0;
+  document.getElementById('s1Score').textContent = '0';
+  document.getElementById('s2Score').textContent = '0';
+  nextChallenge();
+}
+
+function nextChallenge() {
+  current++;
+  answered = false;
+  if (current >= CHALLENGES.length) { showResults(); return; }
+
+  const c = CHALLENGES[current];
+  document.getElementById('qNum').textContent = current + 1;
+
+  const zone = document.getElementById('zone');
+  zone.innerHTML = `
+    <div class="prompt-card">
+      <div class="category">${c.category}</div>
+      <div class="question">${c.question}</div>
+    </div>
+    <div class="timer-bar" id="timerBar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="options" id="optionsArea">
+      <button class="opt-btn" onclick="choose(0)">⚡ ${c.options[0]}</button>
+      <button class="opt-btn" onclick="choose(1)">🔍 ${c.options[1]}</button>
+    </div>
+  `;
+
+  // Start timer
+  let timeLeft = 100;
+  const fill = document.getElementById('timerFill');
+  const bar = document.getElementById('timerBar');
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft -= 1;
+    fill.style.width = timeLeft + '%';
+    if (timeLeft < 30) bar.classList.add('urgent');
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) choose(-1);
+    }
+  }, 60);
+}
+
+function choose(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const c = CHALLENGES[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const correct = idx === c.answer;
+  if (idx >= 0) {
+    btns[idx].classList.add('selected', idx === 0 ? 's1' : 's2');
+  }
+  if (correct) {
+    btns[idx].classList.add('correct');
+    if (c.system === 1) { s1Score++; document.getElementById('s1Score').textContent = s1Score; }
+    else { s2Score++; document.getElementById('s2Score').textContent = s2Score; }
+  } else {
+    if (idx >= 0) btns[idx].classList.add('wrong');
+    btns[c.answer].classList.add('correct');
+  }
+
+  // Show explanation
+  const zone = document.getElementById('zone');
+  const explainHTML = `
+    <div class="explain-card">
+      <span class="system-tag s${c.system}">System ${c.system}</span>
+      <div class="explain-title">${c.title}</div>
+      <div class="explain-text">${c.explanation}</div>
+      <div class="ai-note"><strong>What this means for AI:</strong> ${c.aiNote}</div>
+    </div>
+    <button class="next-btn" onclick="nextChallenge()">${current < CHALLENGES.length - 1 ? 'Next Challenge →' : 'See Results →'}</button>
+  `;
+
+  // Insert after options
+  const optArea = document.getElementById('optionsArea');
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = explainHTML;
+  optArea.parentNode.appendChild(wrapper);
+}
+
+function showResults() {
+  const total = s1Score + s2Score;
+  const pct = CHALLENGES.length > 0 ? Math.round((total / CHALLENGES.length) * 100) : 0;
+
+  const zone = document.getElementById('zone');
+  zone.innerHTML = `
+    <div class="results">
+      <h2>${pct >= 70 ? '🎯 Sharp thinking!' : pct >= 40 ? '🧠 Good instincts' : '⚡ Tricky, right?'}</h2>
+      <div class="results-sub">You correctly identified ${total} of ${CHALLENGES.length} thinking types</div>
+
+      <div class="brain-compare">
+        <div class="brain-box">
+          <div class="brain-label s1">System 1 — Fast</div>
+          <div class="brain-stat">${s1Score}<span style="font-size:0.8rem;color:var(--slate)"> / ${CHALLENGES.filter(c=>c.system===1).length}</span></div>
+          <div class="brain-desc">Pattern matching, intuition, autopilot</div>
+        </div>
+        <div class="brain-box">
+          <div class="brain-label s2">System 2 — Slow</div>
+          <div class="brain-stat">${s2Score}<span style="font-size:0.8rem;color:var(--slate)"> / ${CHALLENGES.filter(c=>c.system===2).length}</span></div>
+          <div class="brain-desc">Reasoning, planning, calculation</div>
+        </div>
+      </div>
+
+      <div class="key-insight">
+        <h3>The Big Takeaway</h3>
+        <p><strong>LLMs are System 1 thinking machines.</strong> They're incredibly powerful pattern matchers — they can complete phrases, interpret context, and generate fluent text instantly. But they struggle with genuine System 2 tasks: multi-step reasoning, accurate calculation, and careful planning.</p>
+        <p style="margin-top:10px">This is why <strong>chain-of-thought prompting</strong> helps (it forces step-by-step reasoning), why <strong>tool use</strong> matters (calculators for maths, search for facts), and why <strong>agentic AI</strong> is the frontier — it gives AI the ability to plan, check, and iterate like System 2.</p>
+      </div>
+
+      <button class="next-btn" onclick="showReasoningDemo()" style="margin-top:16px;margin-right:10px">🧠 See how AI fakes System 2 →</button>
+      <button class="start-btn" onclick="startGame()" style="margin-top:16px;background:rgba(255,255,255,0.08);color:var(--white);font-size:0.8rem;padding:10px 24px">↺ Try Again</button>
+    </div>
+  `;
+  document.getElementById('qNum').textContent = '✓';
+}
+
+/* ═══════════════════════════════════════════
+   REASONING MODEL DEMO
+   ═══════════════════════════════════════════ */
+const THINKING_STEPS = [
+  '<span class="step-num">1.</span> The user asks: what is 17 × 24?',
+  '<span class="step-num">2.</span> I need to break this down. <strong>17 × 24 = 17 × (20 + 4)</strong>',
+  '<span class="step-num">3.</span> First: 17 × 20 = <strong>340</strong>',
+  '<span class="step-num">4.</span> Then: 17 × 4 = <strong>68</strong>',
+  '<span class="step-num">5.</span> Adding them: 340 + 68 = <strong>408</strong>',
+  '<span class="step-num">6.</span> Let me verify: 408 ÷ 17 = 24 ✓ Correct.',
+];
+
+function showReasoningDemo() {
+  if (reasoningTimer) { clearTimeout(reasoningTimer); reasoningTimer = null; }
+
+  const zone = document.getElementById('zone');
+  zone.innerHTML = `
+    <div class="reasoning-demo">
+      <h2>How reasoning models fake System 2</h2>
+      <div class="rd-sub">Same question — "What is 17 × 24?" — two different approaches</div>
+
+      <div class="rd-columns">
+        <div class="rd-col">
+          <div class="rd-col-label s1c">⚡ Standard LLM — System 1</div>
+          <div class="rd-prompt"><strong>User:</strong> What is 17 × 24?</div>
+          <div class="rd-standard-response" id="rdStandard">
+            <div class="wrong-tag">❌ Instant pattern match</div>
+            The answer is <strong>398</strong>.<br>
+            <span style="font-size:0.68rem;opacity:0.5">(Confident, immediate — and wrong. No working shown, no way to check.)</span>
+          </div>
+        </div>
+
+        <div class="rd-col">
+          <div class="rd-col-label s2c">🧠 Reasoning model — System 2</div>
+          <div class="rd-prompt"><strong>User:</strong> What is 17 × 24?</div>
+          <div class="rd-thinking-box" id="rdThinkingBox">
+            <div class="rd-thinking-header">
+              <span class="spinner" id="rdSpinner"></span>
+              <span id="rdThinkingLabel">Thinking…</span>
+            </div>
+            <div class="rd-thinking-body" id="rdThinkingBody">
+              ${THINKING_STEPS.map(s => `<div class="rd-thought-step">${s}</div>`).join('')}
+            </div>
+          </div>
+          <div class="rd-reasoning-response" id="rdResponse">
+            <div class="correct-tag">✅ Step-by-step reasoning</div>
+            17 × 24 = <strong>408</strong><br>
+            <span style="font-size:0.68rem;opacity:0.5">(Worked through it step by step using the context window as a scratchpad.)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rd-context-bar" id="rdContextBar">
+        <div class="rd-context-label">What's happening inside the context window</div>
+        <div class="rd-context-track">
+          <div class="rd-ctx-prompt" id="ctxPrompt" style="width:10%"></div>
+          <div class="rd-ctx-thinking" id="ctxThinking" style="width:0%"></div>
+          <div class="rd-ctx-response" id="ctxResponse" style="width:0%"></div>
+        </div>
+        <div class="rd-ctx-legend">
+          <span><span class="swatch" style="background:var(--malibu)"></span> Prompt</span>
+          <span><span class="swatch" style="background:var(--sys2)"></span> Thinking (generated working)</span>
+          <span><span class="swatch" style="background:var(--meadow)"></span> Final answer</span>
+        </div>
+      </div>
+
+      <div class="rd-insight" id="rdInsight">
+        <h3>The trick: using the context window as a scratchpad</h3>
+        <p>Standard LLMs have <strong>nowhere to do their working</strong> — they produce answers in a single forward pass, like System 1. Reasoning models (like Claude's extended thinking, or OpenAI's o1) solve this by <strong>generating their own chain of thought inside the context window</strong> before answering.</p>
+        <p style="margin-top:8px">This gives the model a place to <strong>break down the problem, check its work, and try different approaches</strong> — just like you'd use a piece of paper for long multiplication. It's not real System 2 thinking, but it's a remarkably effective proxy. The working fills up the context window, which is why reasoning models use more tokens and cost more.</p>
+      </div>
+
+      <button class="start-btn rd-back-btn" onclick="startGame()" style="margin-top:16px">↺ Play Again</button>
+    </div>
+  `;
+
+  // Animate the demo
+  animateReasoningDemo();
+}
+
+function animateReasoningDemo() {
+  const steps = document.querySelectorAll('.rd-thought-step');
+  const thinkingBody = document.getElementById('rdThinkingBody');
+  let stepIdx = 0;
+
+  // Step 1: Show standard LLM response immediately (System 1 = instant)
+  setTimeout(() => {
+    document.getElementById('rdStandard').classList.add('visible');
+  }, 600);
+
+  // Step 2: Expand thinking panel
+  setTimeout(() => {
+    thinkingBody.classList.add('expanded');
+  }, 1200);
+
+  // Step 3: Reveal thinking steps one by one
+  function showStep() {
+    if (stepIdx >= steps.length) {
+      // All steps shown — finish up
+      setTimeout(() => {
+        // Stop spinner
+        const spinner = document.getElementById('rdSpinner');
+        if (spinner) spinner.style.display = 'none';
+        document.getElementById('rdThinkingLabel').textContent = 'Thought for 3.2 seconds';
+
+        // Show response
+        document.getElementById('rdResponse').classList.add('visible');
+
+        // Update context bar
+        document.getElementById('ctxThinking').style.width = '55%';
+        document.getElementById('ctxResponse').style.width = '12%';
+
+        // Show insight
+        setTimeout(() => {
+          document.getElementById('rdInsight').classList.add('visible');
+        }, 600);
+      }, 500);
+      return;
+    }
+
+    steps[stepIdx].classList.add('visible');
+    // Grow context bar thinking section
+    const pct = 10 + ((stepIdx + 1) / steps.length) * 50;
+    document.getElementById('ctxThinking').style.width = pct + '%';
+
+    stepIdx++;
+    reasoningTimer = setTimeout(showStep, 800);
+  }
+
+  reasoningTimer = setTimeout(showStep, 1800);
+}
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.start-btn, .begin, [class*=start]') || document.querySelector('.welcome'),
+    title: 'Start the challenge',
+    desc: 'Test whether each scenario needs fast intuitive thinking (System 1) or slow analytical reasoning (System 2).', pad: 8 },
+  { target: () => document.querySelector('.opt-btn, .option, .answer, [class*=opt]') || document.querySelector('.arena, .challenge'),
+    title: 'Choose your answer',
+    desc: 'Read the scenario and click System 1 or System 2. You\'ll get immediate feedback with an explanation.', pad: 6 },
+  { target: () => document.querySelector('.score, .counter, [class*=score]') || document.querySelector('.header, header'),
+    title: 'Track your score',
+    desc: 'See how well you\'re doing as you work through the challenges. The explanation after each answer is the real learning.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

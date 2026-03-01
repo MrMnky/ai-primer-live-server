@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Tokenisation Works — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C; --gable-light: #243d4e; --gable-lighter: #2d4f64;
+    --turquoise: #00FFBC; --dodger: #00B1FF; --cerulean: #0084B2;
+    --malibu: #5CD5FF; --meadow: #17CE95; --cornflower: #6161FF;
+    --moonraker: #C5B6F1; --seapink: #EFACA8; --chicago: #575756;
+    --greenpea: #226B4D; --bittersweet: #FF5F5F; --white: #FFFFFF;
+    --accessible-accent: #007A5E; --amber: #FFC107;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable); color: var(--white);
+    height: 100vh; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .layout {
+    width: 100vw; height: 100vh;
+    padding: 22px 36px 14px;
+    display: flex; flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 26px; font-weight: 700; line-height: 1.15; }
+  .header h1 span { color: var(--dodger); }
+  .header .sub { font-size: 12px; font-weight: 400; opacity: 0.5; margin-top: 2px; }
+
+  /* ─── EXAMPLE PILLS ─── */
+  .examples {
+    display: flex; gap: 5px; margin-bottom: 10px; flex-shrink: 0; flex-wrap: wrap;
+  }
+  .ex-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--white); font-family: 'Poppins', sans-serif;
+    font-size: 10.5px; font-weight: 400;
+    padding: 5px 13px; border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .ex-btn:hover { background: rgba(255,255,255,0.08); }
+  .ex-btn.active { background: var(--cerulean); border-color: var(--cerulean); font-weight: 600; }
+
+  /* ─── MAIN GRID ─── */
+  .main {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    min-height: 0;
+  }
+
+  /* ─── LEFT COLUMN ─── */
+  .left-col {
+    display: flex; flex-direction: column; gap: 10px;
+    overflow-y: auto; min-height: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+
+  /* Input area */
+  .input-area {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 12px 18px 10px;
+    flex-shrink: 0;
+  }
+  .section-label {
+    font-size: 9px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; opacity: 0.35; margin-bottom: 6px;
+  }
+  .input-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; font-weight: 400;
+    line-height: 1.5; min-height: 26px; color: var(--white);
+  }
+  .input-text .char { display: inline; transition: all 0.15s; }
+  .input-text .cursor {
+    display: inline-block; width: 2px; height: 22px;
+    background: var(--dodger); vertical-align: text-bottom; margin-left: 1px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+  /* Token chips */
+  .token-chips {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    align-content: flex-start; min-height: 40px;
+  }
+  .token-chip {
+    display: flex; flex-direction: column; align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px; padding: 5px 9px 4px;
+    animation: chipIn 0.25s ease; transition: all 0.2s; cursor: default;
+  }
+  @keyframes chipIn {
+    from { opacity: 0; transform: scale(0.85) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .token-chip:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+  .chip-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 500; margin-bottom: 2px;
+    padding: 1px 4px; border-radius: 3px;
+  }
+  .chip-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 400; opacity: 0.35;
+  }
+
+  /* ─── CAPITALISATION COMPARISON ─── */
+  .comparison-grid { display: flex; flex-direction: column; gap: 5px; }
+  .comp-row {
+    display: grid; grid-template-columns: 110px 1fr 70px;
+    gap: 10px; align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 7px; padding: 7px 14px;
+    animation: chipIn 0.3s ease;
+  }
+  .comp-row.head { background: none; border: none; padding: 2px 14px; }
+  .comp-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; font-weight: 500;
+  }
+  .comp-tokens { display: flex; gap: 4px; flex-wrap: wrap; }
+  .comp-tok {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 2px 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .comp-count { font-size: 13px; font-weight: 600; text-align: right; }
+  .comp-note {
+    grid-column: 1 / -1; font-size: 10px; opacity: 0.35;
+    margin-top: -2px; padding-left: 2px;
+  }
+  .comp-label {
+    font-size: 9px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; opacity: 0.25;
+  }
+
+  /* ─── VOCABULARY EXPLORER ─── */
+  .vocab-explorer { display: flex; flex-direction: column; gap: 10px; }
+  .vocab-section-title {
+    font-size: 10px; font-weight: 600; opacity: 0.4;
+    letter-spacing: 0.5px; margin-top: 2px;
+  }
+  .vocab-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 3px;
+  }
+  .vocab-cell {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px; padding: 4px 7px;
+    animation: chipIn 0.15s ease;
+  }
+  .vocab-cell-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; opacity: 0.3; min-width: 22px;
+  }
+  .vocab-cell-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* ─── INSIGHT CALLOUT ─── */
+  .insight-callout {
+    background: rgba(0,177,255,0.06);
+    border: 1px solid rgba(0,177,255,0.15);
+    border-left: 4px solid var(--dodger);
+    border-radius: 0 10px 10px 0;
+    padding: 11px 14px; font-size: 11.5px; line-height: 1.55;
+    color: rgba(255,255,255,0.65); flex-shrink: 0;
+  }
+  .insight-callout strong { color: var(--dodger); font-weight: 600; }
+  .insight-callout em { color: var(--turquoise); font-style: normal; font-weight: 500; }
+
+  /* ─── RIGHT COLUMN ─── */
+  .right-col {
+    display: flex; flex-direction: column; gap: 8px;
+    overflow-y: auto; min-height: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 12px 14px;
+    flex-shrink: 0;
+  }
+  .card h3 {
+    font-size: 9px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 8px; opacity: 0.4;
+  }
+  .card h3.blue { color: var(--dodger); opacity: 1; }
+  .card h3.green { color: var(--meadow); opacity: 1; }
+  .card h3.turq { color: var(--turquoise); opacity: 1; }
+  .card h3.amber { color: var(--amber); opacity: 1; }
+
+  /* Stats */
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 10.5px; opacity: 0.5; }
+  .stat-val { font-size: 18px; font-weight: 700; transition: all 0.3s; }
+  .stat-val.blue { color: var(--dodger); }
+  .stat-val.green { color: var(--meadow); }
+  .stat-val.purple { color: var(--cornflower); }
+
+  .bar-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  .bar-label-sm { font-size: 9px; opacity: 0.4; min-width: 36px; }
+  .bar-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* Context window */
+  .ctx-row {
+    display: flex; align-items: center; gap: 6px; margin: 3px 0;
+  }
+  .ctx-model { font-size: 10px; font-weight: 500; min-width: 74px; opacity: 0.55; }
+  .ctx-bar {
+    flex: 1; height: 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden; position: relative;
+  }
+  .ctx-fill {
+    position: absolute; left: 0; top: 0;
+    height: 100%; border-radius: 4px;
+    min-width: 2px; transition: width 0.6s ease;
+  }
+  .ctx-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; opacity: 0.35; min-width: 46px; text-align: right;
+  }
+
+  /* Cost */
+  .cost-tbl { width: 100%; border-collapse: collapse; }
+  .cost-tbl th {
+    font-size: 8px; font-weight: 600; opacity: 0.3;
+    text-align: left; padding: 1px 0 4px; letter-spacing: 0.5px;
+  }
+  .cost-tbl th:not(:first-child) { text-align: right; }
+  .cost-tbl td {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; padding: 2px 0; opacity: 0.55; text-align: right;
+  }
+  .cost-tbl td:first-child {
+    font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 500; text-align: left; opacity: 0.5;
+  }
+  .cost-tbl td.hl { color: var(--turquoise); font-weight: 500; opacity: 1; }
+
+  /* Model comparison */
+  .mdl-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .mdl-name { font-size: 10px; font-weight: 500; min-width: 68px; opacity: 0.5; }
+  .mdl-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600; min-width: 20px;
+  }
+  .mdl-bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .mdl-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .mdl-diff {
+    font-size: 9px; font-weight: 600; padding: 1px 5px;
+    border-radius: 3px; min-width: 30px; text-align: center;
+  }
+  .mdl-diff.same { background: rgba(23,206,149,0.1); color: var(--meadow); }
+  .mdl-diff.more { background: rgba(255,95,95,0.1); color: var(--bittersweet); }
+
+  /* Why card */
+  .why-card {
+    background: rgba(0,255,188,0.03);
+    border: 1px solid rgba(0,255,188,0.1);
+    border-radius: 10px; padding: 12px 14px; flex-shrink: 0;
+  }
+  .why-point {
+    display: flex; gap: 7px; align-items: flex-start; margin: 5px 0;
+  }
+  .wp-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+  .wp-text {
+    font-size: 10.5px; line-height: 1.5; opacity: 0.55;
+  }
+  .wp-text strong { color: var(--turquoise); opacity: 1; font-weight: 600; }
+
+  /* ─── SCALE VIEW ─── */
+  .scale-view { display: flex; flex-direction: column; gap: 6px; }
+  .scale-row {
+    display: grid; grid-template-columns: 120px 1fr 200px;
+    gap: 10px; align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 9px 14px;
+    animation: chipIn 0.3s ease;
+  }
+  .scale-model { font-size: 11px; font-weight: 600; }
+  .scale-tokens {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; opacity: 0.35; margin-top: 1px;
+  }
+  .scale-bar-wrap { position: relative; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
+  .scale-bar-fill {
+    position: absolute; left: 0; top: 0; height: 100%; border-radius: 6px;
+    min-width: 3px; transition: width 0.8s ease;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
+  }
+  .scale-bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; font-weight: 500; white-space: nowrap; color: rgba(255,255,255,0.7);
+  }
+  .scale-meta { text-align: right; }
+  .scale-metaphor { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .scale-detail { font-size: 9px; opacity: 0.35; margin-top: 1px; }
+
+  .scale-divider {
+    font-size: 9px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; opacity: 0.25; margin: 6px 0 2px;
+  }
+  .conv-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 14px; background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 6px;
+  }
+  .conv-icon { font-size: 16px; flex-shrink: 0; }
+  .conv-text { font-size: 11px; opacity: 0.5; line-height: 1.4; }
+  .conv-text strong { color: var(--dodger); opacity: 1; font-weight: 600; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 4px;
+  }
+  .footer-note { font-size: 10px; opacity: 0.25; }
+  .wm { font-size: 10px; opacity: 0.2; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="header">
+    <div>
+      <h1>How <span>Tokenisation</span> Works</h1>
+      <div class="sub">AI doesn't see words — it sees tokens. Abstract symbols, broken into numbers, that define cost, context, and capability.</div>
+    </div>
+  </div>
+
+  <div class="examples" id="examples"></div>
+
+  <div class="main">
+    <!-- LEFT COLUMN -->
+    <div class="left-col" id="leftCol">
+      <div class="input-area" id="inputArea">
+        <div class="section-label">Input text</div>
+        <div class="input-text" id="inputText"><span class="cursor"></span></div>
+      </div>
+      <div id="tokenDisplay">
+        <div class="section-label">Tokens</div>
+        <div class="token-chips" id="tokenChips"></div>
+      </div>
+      <div class="insight-callout" id="insightBox">
+        Select an example above to see how text gets broken into tokens — and why it matters.
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col" id="rightCol">
+      <!-- Stats card -->
+      <div class="card" id="statsCard">
+        <h3>Breakdown</h3>
+        <div class="stat-row">
+          <span class="stat-label">Characters</span>
+          <span class="stat-val" id="charCount" style="opacity:0.2">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Words</span>
+          <span class="stat-val green" id="wordCount" style="opacity:0.2">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Tokens</span>
+          <span class="stat-val blue" id="tokenCount" style="opacity:0.2">0</span>
+        </div>
+        <div style="margin-top:6px">
+          <div class="bar-row">
+            <span class="bar-label-sm" style="color:var(--meadow)">Words</span>
+            <div class="bar-track"><div class="bar-fill" id="wordBar" style="width:0;background:var(--meadow)"></div></div>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label-sm" style="color:var(--dodger)">Tokens</span>
+            <div class="bar-track"><div class="bar-fill" id="tokenBar" style="width:0;background:var(--dodger)"></div></div>
+          </div>
+        </div>
+        <div class="stat-row" style="margin-top:6px">
+          <span class="stat-label">Token:word ratio</span>
+          <span class="stat-val" id="ratio" style="opacity:0.2;color:var(--malibu);font-size:16px">—</span>
+        </div>
+      </div>
+
+      <!-- Context window card -->
+      <div class="card" id="contextCard">
+        <h3 class="blue">Context window usage</h3>
+        <div style="font-size:10px;opacity:0.4;margin-bottom:8px;line-height:1.4">How much of each model's "working memory" this text uses</div>
+        <div id="contextBars"></div>
+      </div>
+
+      <!-- Cost card -->
+      <div class="card" id="costCard">
+        <h3 class="turq">Cost at scale</h3>
+        <div style="font-size:10px;opacity:0.4;margin-bottom:6px;line-height:1.4">What this text costs per API call — and at 1 million requests</div>
+        <table class="cost-tbl" id="costTable">
+          <thead><tr><th>Model</th><th>Per call</th><th>× 1M calls</th></tr></thead>
+          <tbody id="costBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Model comparison card -->
+      <div class="card" id="modelCard">
+        <h3 class="amber">Different models, different tokens</h3>
+        <div style="font-size:10px;opacity:0.4;margin-bottom:8px;line-height:1.4">Same text — but each model's tokeniser splits it differently</div>
+        <div id="modelBars"></div>
+      </div>
+
+      <!-- Why it matters -->
+      <div class="why-card">
+        <h3 class="turq" style="font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Why tokens matter</h3>
+        <div class="why-point">
+          <span class="wp-icon">📏</span>
+          <span class="wp-text"><strong>Context window</strong> — your AI's working memory is measured in tokens, not words. From 8K (ChatGPT Free) to 1M (Gemini 2.5).</span>
+        </div>
+        <div class="why-point">
+          <span class="wp-icon">💰</span>
+          <span class="wp-text"><strong>Cost</strong> — tokens are the billing unit. More tokens = higher cost. Output tokens cost 3–5× more than input.</span>
+        </div>
+        <div class="why-point">
+          <span class="wp-icon">🧠</span>
+          <span class="wp-text"><strong>Thinking tokens</strong> — newer models spend tokens "reasoning" internally. More thinking tokens = deeper analysis, higher cost, better answers.</span>
+        </div>
+        <div class="why-point">
+          <span class="wp-icon">⚡</span>
+          <span class="wp-text"><strong>Speed</strong> — AI generates one token at a time. Fewer tokens = faster responses. Token efficiency = user experience.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-note">Token IDs are illustrative — real IDs vary by model and tokeniser version</span>
+    <span class="wm">© aiaccelerator.uk</span>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+const COLOURS = ['#00B1FF','#6161FF','#17CE95','#5CD5FF','#C5B6F1','#EFACA8','#0084B2','#FF5F5F','#00FFBC','#FFC107'];
+
+const CONTEXT_WINDOWS = [
+  { name: 'GPT-5.2', tokens: 400000, colour: '#74AA9C' },
+  { name: 'Claude 4.6', tokens: 200000, colour: '#D4A574' },
+  { name: 'Gemini 2.5', tokens: 1000000, colour: '#4285F4' }
+];
+
+const COST_MODELS = [
+  { name: 'Gemini Flash', inputPer1M: 0.30 },
+  { name: 'Claude Haiku', inputPer1M: 1.00 },
+  { name: 'GPT-5.2', inputPer1M: 1.75 },
+  { name: 'Claude Sonnet', inputPer1M: 3.00 },
+  { name: 'Claude Opus', inputPer1M: 5.00 }
+];
+
+const EXAMPLES = [
+  {
+    type: 'standard',
+    name: '💬 Simple sentence',
+    text: 'Hello, how are you today?',
+    tokens: ['Hello', ',', ' how', ' are', ' you', ' today', '?'],
+    ids: [9906, 11, 1268, 527, 498, 3432, 30],
+    models: { 'GPT-5.2': 7, 'Claude 4.6': 7, 'Llama 3': 9 },
+    insight: '<strong>7 tokens for 5 words.</strong> Punctuation gets its own token. Spaces attach to the following word (" how", " are"). The model never sees English — it sees a sequence of number IDs like <em>[9906, 11, 1268, 527, 498, 3432, 30]</em>.'
+  },
+  {
+    type: 'comparison',
+    name: 'Aa Capitalisation',
+    comparisons: [
+      { label: 'hello', tokens: ['hello'], ids: [15339], count: 1, colour: '#17CE95', note: 'Common lowercase — efficient single token' },
+      { label: 'Hello', tokens: ['Hello'], ids: [9906], count: 1, colour: '#00B1FF', note: 'Sentence start — different ID, still 1 token' },
+      { label: 'HELLO', tokens: ['HE', 'LLO'], ids: [13195, 3069], count: 2, colour: '#FFC107', note: 'ALL CAPS is rare in training data — splits into 2' },
+      { label: 'hElLo', tokens: ['h', 'El', 'Lo'], ids: [71, 2759, 2376], count: 3, colour: '#FF5F5F', note: 'Mixed case is very rare — maximum fragmentation' }
+    ],
+    models: { 'GPT-5.2': '1–3', 'Claude 4.6': '1–3', 'Llama 3': '1–4' },
+    insight: '<strong>Same word, 1–3 tokens.</strong> Capitalisation completely changes how AI processes text. "hello" and "Hello" are <em>different symbols</em> to the model — different IDs, different embeddings, different meanings. ALL CAPS costs double. Random casing costs triple. This matters for both cost and quality.'
+  },
+  {
+    type: 'standard',
+    name: '🔬 Long word',
+    text: 'Uncharacteristically',
+    tokens: ['Un', 'character', 'istically'],
+    ids: [1844, 19822, 14927],
+    models: { 'GPT-5.2': 3, 'Claude 4.6': 3, 'Llama 3': 4 },
+    insight: '<strong>1 word = 3 tokens.</strong> The tokeniser splits unfamiliar words into known sub-parts: "Un" + "character" + "istically". This is called <em>sub-word tokenisation</em> — it lets models handle any word, even invented ones. But the model never sees "Uncharacteristically" as a single concept.'
+  },
+  {
+    type: 'standard',
+    name: '💻 Code',
+    text: 'print("Hello World")',
+    tokens: ['print', '("', 'Hello', ' World', '")'],
+    ids: [1726, 446, 9906, 4435, 873],
+    models: { 'GPT-5.2': 5, 'Claude 4.6': 5, 'Llama 3': 7 },
+    insight: '<strong>Code is tokenised too.</strong> The opening <em>("</em> becomes a single token because the model has seen this pattern thousands of times in Python. Common programming patterns get efficient tokens. GPT-4o\'s tokeniser was specifically optimised for code — Llama\'s was not, hence 7 vs 5 tokens.'
+  },
+  {
+    type: 'standard',
+    name: '🔢 Numbers',
+    text: 'The year 2024 costs £1,250.00',
+    tokens: ['The', ' year', ' 202', '4', ' costs', ' £', '1', ',', '250', '.', '00'],
+    ids: [791, 1060, 220, 19, 7194, 7634, 16, 11, 5765, 13, 405],
+    models: { 'GPT-5.2': 11, 'Claude 4.6': 10, 'Llama 3': 14 },
+    insight: '<strong>Numbers are chaotic.</strong> "2024" becomes "202" + "4". "£1,250.00" becomes 6 separate tokens. The model doesn\'t understand "one thousand two hundred and fifty" — it processes <em>fragments of digits</em>. This is why LLMs struggle with arithmetic: they do maths on broken number pieces.'
+  },
+  {
+    type: 'standard',
+    name: '🌍 French',
+    text: 'Bonjour! Comment ça va?',
+    tokens: ['Bon', 'jour', '!', ' Comment', ' ça', ' va', '?'],
+    ids: [43093, 13827, 0, 18855, 9462, 5765, 30],
+    models: { 'GPT-5.2': 7, 'Claude 4.6': 7, 'Llama 3': 10 },
+    insight: '<strong>Non-English = more tokens.</strong> "Bonjour" needs 2 tokens where "Hello" needs 1. Languages like Chinese, Arabic, or Hindi use even more. More tokens means <em>less context window, higher cost, slower responses</em>. English has a built-in efficiency advantage because most models were trained mostly on English.'
+  },
+  {
+    type: 'standard',
+    name: '📧 Email',
+    text: 'mike@aiaccelerator.uk',
+    tokens: ['mike', '@', 'a', 'ia', 'ccel', 'erator', '.', 'uk'],
+    ids: [82655, 31, 64, 3023, 66, 263, 13, 2194],
+    models: { 'GPT-5.2': 8, 'Claude 4.6': 7, 'Llama 3': 11 },
+    insight: '<strong>8 tokens for 1 "word".</strong> The email gets fragmented because "aiaccelerator" isn\'t in the vocabulary. Structured data — emails, URLs, file paths — is surprisingly <em>token-expensive</em>. At scale, this matters: a system processing 1M emails uses significantly more tokens than 1M plain-text messages.'
+  },
+  {
+    type: 'vocabulary',
+    name: '🔑 Token vocabulary',
+    vocabData: {
+      'Single characters (tokens 0–255)': [
+        { id: 0, text: '!' }, { id: 1, text: '"' }, { id: 2, text: '#' },
+        { id: 3, text: '$' }, { id: 4, text: '%' }, { id: 5, text: '&' },
+        { id: 6, text: "'" }, { id: 7, text: '(' }, { id: 8, text: ')' },
+        { id: 9, text: '*' }, { id: 10, text: '+' }, { id: 11, text: ',' },
+        { id: 12, text: '-' }, { id: 13, text: '.' }, { id: 14, text: '/' },
+        { id: 15, text: '0' }, { id: 16, text: '1' }, { id: 17, text: '2' },
+        { id: 18, text: '3' }, { id: 19, text: '4' }, { id: 20, text: '5' },
+        { id: 21, text: '6' }, { id: 22, text: '7' }, { id: 23, text: '8' }
+      ],
+      'Common fragments (tokens 256–2000)': [
+        { id: 262, text: ' of' }, { id: 284, text: ' to' },
+        { id: 290, text: ' and' }, { id: 318, text: ' the' },
+        { id: 468, text: ' is' }, { id: 498, text: ' you' },
+        { id: 527, text: ' are' }, { id: 553, text: ' for' },
+        { id: 588, text: ' that' }, { id: 617, text: ' it' },
+        { id: 791, text: 'The' }, { id: 1060, text: ' year' }
+      ],
+      'Full words (tokens 2000+)': [
+        { id: 1268, text: ' how' }, { id: 1726, text: 'print' },
+        { id: 3432, text: ' today' }, { id: 4435, text: ' World' },
+        { id: 9906, text: 'Hello' }, { id: 15339, text: 'hello' },
+        { id: 19822, text: 'character' }, { id: 43093, text: 'Bon' },
+        { id: 82655, text: 'mike' }
+      ]
+    },
+    models: { 'GPT-5.2': '~200K', 'Claude 4.6': '~150K', 'Llama 3': '~128K' },
+    insight: '<strong>Tokens are abstract symbols — numbers mapped to text fragments.</strong> Every model builds its own vocabulary by analysing its training data. Low IDs = common characters. High IDs = rare or longer sequences. <em>"hello" (ID 15339) and "Hello" (ID 9906) are completely different entries.</em> The vocabulary size defines how efficiently a model can represent text.'
+  },
+  {
+    type: 'scale',
+    name: '📐 Context scale',
+    windows: [
+      { name: 'ChatGPT Free', tokens: 8000, colour: '#74AA9C', icon: '📄',
+        metaphor: 'A long essay', detail: '~6,000 words · 24 pages' },
+      { name: 'ChatGPT Plus', tokens: 32000, colour: '#74AA9C', icon: '📕',
+        metaphor: 'A novella', detail: '~24,000 words · 96 pages' },
+      { name: 'Claude 4.6', tokens: 200000, colour: '#D4A574', icon: '📚',
+        metaphor: 'Two full novels', detail: '~150,000 words · 600 pages' },
+      { name: 'GPT-5.2', tokens: 400000, colour: '#74AA9C', icon: '📖',
+        metaphor: 'Half of War & Peace', detail: '~300,000 words · 1,200 pages' },
+      { name: 'Gemini 2.5 Pro', tokens: 1000000, colour: '#4285F4', icon: '🏛️',
+        metaphor: 'War & Peace + a novel', detail: '~750,000 words · 3,000 pages' }
+    ],
+    conversations: [
+      { icon: '💬', label: '8K window', text: 'Fills up after <strong>~16 exchanges</strong> — like a short meeting' },
+      { icon: '🗂️', label: '200K window', text: 'Holds <strong>~400 exchanges</strong> — a full day of back-and-forth' },
+      { icon: '📦', label: '1M window', text: 'Holds <strong>~2,000 exchanges</strong> — weeks of conversation' }
+    ],
+    books: [
+      { title: 'The Great Gatsby', tokens: 63000 },
+      { title: 'Harry Potter 1', tokens: 103000 },
+      { title: 'Average novel', tokens: 107000 },
+      { title: 'War and Peace', tokens: 750000 },
+      { title: 'Entire Harry Potter series', tokens: 1440000 }
+    ],
+    models: null,
+    insight: '<strong>Context window = the AI\'s working memory.</strong> Everything — your question, the system prompt, the full conversation history, and the response — must fit inside this window. When it fills up, the model starts "forgetting" the oldest messages. <em>A bigger window means the AI can hold more of your conversation in its head at once.</em>'
+  }
+];
+
+let currentExample = -1;
+let typeTimer = null;
+
+function init() {
+  const row = document.getElementById('examples');
+  row.innerHTML = EXAMPLES.map((e, i) =>
+    `<button class="ex-btn" onclick="runExample(${i})">${e.name}</button>`
+  ).join('');
+}
+
+function runExample(idx) {
+  if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+  currentExample = idx;
+  document.querySelectorAll('.ex-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+
+  const ex = EXAMPLES[idx];
+
+  // Clear left column
+  const leftCol = document.getElementById('leftCol');
+
+  if (ex.type === 'comparison') {
+    showCapitalisationComparison(ex);
+  } else if (ex.type === 'vocabulary') {
+    showVocabularyExplorer(ex);
+  } else if (ex.type === 'scale') {
+    showScaleView(ex);
+  } else {
+    showStandardTokeniser(ex);
+  }
+
+  // Update right column
+  updateContextCard(ex);
+  updateCostCard(ex);
+  updateModelCard(ex);
+}
+
+// ─── STANDARD TOKENISER ───
+function showStandardTokeniser(ex) {
+  document.getElementById('inputArea').style.display = '';
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  tokenDisplay.innerHTML = '<div class="section-label">Tokens</div><div class="token-chips" id="tokenChips"></div>';
+  tokenDisplay.style.display = '';
+
+  const inputEl = document.getElementById('inputText');
+  inputEl.innerHTML = '<span class="cursor"></span>';
+  document.getElementById('tokenChips').innerHTML = '';
+  updateStats(0, 0, 0, []);
+
+  // Type out text
+  let charIdx = 0;
+  const typeChar = () => {
+    if (charIdx < ex.text.length) {
+      const cursor = inputEl.querySelector('.cursor');
+      const span = document.createElement('span');
+      span.className = 'char';
+      span.textContent = ex.text[charIdx];
+      inputEl.insertBefore(span, cursor);
+      charIdx++;
+      typeTimer = setTimeout(typeChar, 25 + Math.random() * 15);
+    } else {
+      setTimeout(() => showTokens(ex), 350);
+    }
+  };
+  typeChar();
+}
+
+function showTokens(ex) {
+  const chipsEl = document.getElementById('tokenChips');
+  if (!chipsEl) return;
+  chipsEl.innerHTML = '';
+
+  let delay = 0;
+  ex.tokens.forEach((tok, i) => {
+    setTimeout(() => {
+      const col = COLOURS[i % COLOURS.length];
+      const chip = document.createElement('div');
+      chip.className = 'token-chip';
+      chip.style.borderColor = col + '33';
+      chip.innerHTML = `
+        <span class="chip-text" style="color:${col}">${esc(tok === ' ' ? '⎵' : tok)}</span>
+        <span class="chip-id">${ex.ids[i]}</span>
+      `;
+      chipsEl.appendChild(chip);
+
+      highlightInputChars(ex, i);
+      const wordCount = ex.text.split(/\s+/).filter(w => w).length;
+      updateStats(ex.text.length, wordCount, i + 1, ex.tokens.slice(0, i + 1));
+    }, delay);
+    delay += 120;
+  });
+
+  setTimeout(() => {
+    document.getElementById('insightBox').innerHTML = ex.insight;
+  }, delay + 80);
+}
+
+function highlightInputChars(ex, tokenIdx) {
+  const inputEl = document.getElementById('inputText');
+  if (!inputEl) return;
+  let fullText = ex.text;
+  let html = '';
+  let pos = 0;
+
+  for (let t = 0; t <= tokenIdx && t < ex.tokens.length; t++) {
+    const tok = ex.tokens[t];
+    const idx = fullText.indexOf(tok, pos);
+    if (idx > pos) {
+      for (let c = pos; c < idx; c++) {
+        html += `<span class="char" style="opacity:0.3">${esc(fullText[c])}</span>`;
+      }
+    }
+    const startPos = idx >= 0 ? idx : pos;
+    const col = COLOURS[t % COLOURS.length];
+    for (let c = startPos; c < startPos + tok.length; c++) {
+      html += `<span class="char" style="color:${col};${t === tokenIdx ? 'text-decoration:underline;text-underline-offset:4px' : ''}">${esc(fullText[c])}</span>`;
+    }
+    pos = startPos + tok.length;
+  }
+
+  for (let c = pos; c < fullText.length; c++) {
+    html += `<span class="char" style="opacity:0.3">${esc(fullText[c])}</span>`;
+  }
+  html += '<span class="cursor"></span>';
+  inputEl.innerHTML = html;
+}
+
+// ─── CAPITALISATION COMPARISON ───
+function showCapitalisationComparison(ex) {
+  document.getElementById('inputArea').style.display = 'none';
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  tokenDisplay.style.display = '';
+  tokenDisplay.innerHTML = '<div class="section-label">Capitalisation changes everything</div><div class="comparison-grid" id="compGrid"></div>';
+
+  const grid = document.getElementById('compGrid');
+
+  // Header row
+  grid.innerHTML = `<div class="comp-row head">
+    <span class="comp-label">Input</span>
+    <span class="comp-label">Tokens</span>
+    <span class="comp-label" style="text-align:right">Count</span>
+  </div>`;
+
+  let delay = 0;
+  ex.comparisons.forEach((c, i) => {
+    setTimeout(() => {
+      const row = document.createElement('div');
+      row.className = 'comp-row';
+      row.style.animationDelay = `${i * 0.1}s`;
+
+      const tokensHtml = c.tokens.map((t, j) =>
+        `<span class="comp-tok" style="color:${c.colour};border-color:${c.colour}33">${esc(t)}</span>`
+      ).join('');
+
+      const idsHtml = c.ids.map(id => id).join(', ');
+
+      row.innerHTML = `
+        <span class="comp-input" style="color:${c.colour}">${esc(c.label)}</span>
+        <div>
+          <div class="comp-tokens">${tokensHtml}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;opacity:0.25;margin-top:3px">IDs: ${idsHtml}</div>
+        </div>
+        <span class="comp-count" style="color:${c.colour}">${c.count} token${c.count > 1 ? 's' : ''}</span>
+        <span class="comp-note">${c.note}</span>
+      `;
+      grid.appendChild(row);
+    }, delay);
+    delay += 250;
+  });
+
+  // Update stats for comparison — use numeric for bars, override display text after
+  updateStats(5, 1, 3, []);
+  document.getElementById('tokenCount').textContent = '1–3';
+  document.getElementById('ratio').textContent = '1–3×';
+  document.getElementById('ratio').style.opacity = 1;
+
+  setTimeout(() => {
+    document.getElementById('insightBox').innerHTML = ex.insight;
+  }, delay + 100);
+}
+
+// ─── VOCABULARY EXPLORER ───
+function showVocabularyExplorer(ex) {
+  document.getElementById('inputArea').style.display = 'none';
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  tokenDisplay.style.display = '';
+
+  let html = '<div class="section-label">Inside the tokeniser\'s vocabulary</div><div class="vocab-explorer">';
+
+  for (const [section, entries] of Object.entries(ex.vocabData)) {
+    html += `<div class="vocab-section-title">${section}</div><div class="vocab-grid">`;
+    entries.forEach(e => {
+      const displayText = e.text === ' ' ? '⎵' : e.text.startsWith(' ') ? '⎵' + e.text.slice(1) : e.text;
+      const col = COLOURS[e.id % COLOURS.length];
+      html += `<div class="vocab-cell">
+        <span class="vocab-cell-id">${e.id}</span>
+        <span class="vocab-cell-text" style="color:${col}">${esc(displayText)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  tokenDisplay.innerHTML = html;
+
+  // Stats — zero the bars, then override labels
+  updateStats(0, 0, 0, []);
+  document.getElementById('charCount').textContent = '~200K';
+  document.getElementById('charCount').style.opacity = 0.6;
+  document.getElementById('wordCount').textContent = 'entries';
+  document.getElementById('wordCount').style.opacity = 0.4;
+  document.getElementById('tokenCount').textContent = 'GPT-4o';
+  document.getElementById('tokenCount').style.opacity = 0.4;
+  document.getElementById('ratio').textContent = '—';
+  document.getElementById('ratio').style.opacity = 0.2;
+
+  document.getElementById('insightBox').innerHTML = ex.insight;
+}
+
+// ─── SCALE VIEW ───
+function showScaleView(ex) {
+  document.getElementById('inputArea').style.display = 'none';
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  tokenDisplay.style.display = '';
+
+  const maxTokens = Math.max(...ex.windows.map(w => w.tokens));
+
+  let html = '<div class="section-label">What does a context window actually look like?</div><div class="scale-view">';
+
+  // Context window bars
+  ex.windows.forEach((w, i) => {
+    const pct = (w.tokens / maxTokens) * 100;
+    const tokLabel = w.tokens >= 1000000 ? (w.tokens / 1000000) + 'M' : (w.tokens / 1000) + 'K';
+    html += `<div class="scale-row" style="animation-delay:${i * 0.12}s">
+      <div>
+        <div class="scale-model" style="color:${w.colour}">${w.name}</div>
+        <div class="scale-tokens">${tokLabel} tokens</div>
+      </div>
+      <div class="scale-bar-wrap">
+        <div class="scale-bar-fill" style="width:${pct}%;background:${w.colour}44">
+          ${pct > 12 ? `<span class="scale-bar-label">${tokLabel}</span>` : ''}
+        </div>
+      </div>
+      <div class="scale-meta">
+        <div class="scale-metaphor">${w.icon} ${w.metaphor}</div>
+        <div class="scale-detail">${w.detail}</div>
+      </div>
+    </div>`;
+  });
+
+  // Book reference line
+  html += '<div class="scale-divider" style="margin-top:10px">📚 For reference</div>';
+  const bookBar = ex.books.map(b => {
+    const pct = (b.tokens / maxTokens) * 100;
+    const label = b.tokens >= 1000000 ? (b.tokens/1000000).toFixed(1)+'M' : Math.round(b.tokens/1000)+'K';
+    return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;opacity:0.4;margin-right:12px">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--moonraker);flex-shrink:0"></span>
+      ${esc(b.title)} <span style="font-family:'JetBrains Mono',monospace;font-size:9px;opacity:0.6">${label}</span>
+    </span>`;
+  }).join('');
+  html += `<div style="padding:6px 0;line-height:2">${bookBar}</div>`;
+
+  // Conversation scale
+  html += '<div class="scale-divider" style="margin-top:4px">💬 In conversations</div>';
+  ex.conversations.forEach(c => {
+    html += `<div class="conv-row">
+      <span class="conv-icon">${c.icon}</span>
+      <span class="conv-text">${c.text}</span>
+    </div>`;
+  });
+
+  html += '</div>';
+  tokenDisplay.innerHTML = html;
+
+  // Zero out stats — not relevant for scale view
+  updateStats(0, 0, 0, []);
+  document.getElementById('charCount').textContent = '—';
+  document.getElementById('wordCount').textContent = '—';
+  document.getElementById('tokenCount').textContent = '—';
+  document.getElementById('ratio').textContent = '—';
+
+  // Hide right-column cards — the scale view IS the context visualisation
+  document.getElementById('statsCard').style.display = 'none';
+  document.getElementById('costCard').style.display = 'none';
+  document.getElementById('modelCard').style.display = 'none';
+
+  document.getElementById('insightBox').innerHTML = ex.insight;
+}
+
+// ─── STATS UPDATE ───
+function updateStats(chars, words, tokens, tokenList) {
+  document.getElementById('statsCard').style.display = '';
+  const s = (id, val, show) => {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.style.opacity = show ? 1 : 0.2;
+  };
+
+  s('charCount', chars, chars > 0 && chars !== '—');
+  s('wordCount', words, words > 0 && words !== '—');
+  s('tokenCount', tokens, tokens > 0 && tokens !== '—');
+
+  const maxVal = Math.max(+words || 0, +tokens || 0, 1);
+  document.getElementById('wordBar').style.width = `${((+words || 0) / maxVal) * 100}%`;
+  document.getElementById('tokenBar').style.width = `${((+tokens || 0) / maxVal) * 100}%`;
+
+  if (+words > 0 && +tokens > 0) {
+    const r = (+tokens / +words).toFixed(2);
+    s('ratio', r + '×', true);
+  } else {
+    s('ratio', '—', false);
+  }
+}
+
+// ─── CONTEXT WINDOW CARD ───
+function updateContextCard(ex) {
+  const tokenCount = ex.type === 'standard' ? ex.tokens.length : 0;
+  if (tokenCount === 0) {
+    document.getElementById('contextCard').style.display = 'none';
+    return;
+  }
+  document.getElementById('contextCard').style.display = '';
+  const container = document.getElementById('contextBars');
+
+  container.innerHTML = CONTEXT_WINDOWS.map(cw => {
+    const pct = (tokenCount / cw.tokens) * 100;
+    const displayPct = pct < 0.001 ? '<0.001%' : pct < 0.01 ? pct.toFixed(3) + '%' : pct.toFixed(2) + '%';
+    // Visual: use logarithmic scale for visibility, min 2px
+    const visualWidth = Math.max(0.3, Math.min(100, Math.log10(pct + 1) * 30));
+    return `<div class="ctx-row">
+      <span class="ctx-model">${cw.name}</span>
+      <div class="ctx-bar">
+        <div class="ctx-fill" style="width:${visualWidth}%;background:${cw.colour}"></div>
+      </div>
+      <span class="ctx-label">${cw.tokens >= 1000000 ? (cw.tokens/1000000)+'M' : (cw.tokens/1000).toFixed(0)+'K'}</span>
+    </div>`;
+  }).join('') + `<div style="font-size:9px;opacity:0.3;margin-top:4px;text-align:center">${tokenCount} token${tokenCount !== 1 ? 's' : ''} used</div>`;
+}
+
+// ─── COST CARD ───
+function updateCostCard(ex) {
+  const tokenCount = ex.type === 'standard' ? ex.tokens.length : 0;
+
+  if (tokenCount === 0) {
+    document.getElementById('costCard').style.display = 'none';
+    return;
+  }
+  document.getElementById('costCard').style.display = '';
+
+  const tbody = document.getElementById('costBody');
+  tbody.innerHTML = COST_MODELS.map(m => {
+    const perCall = (tokenCount * m.inputPer1M / 1000000);
+    const per1M = perCall * 1000000;
+    return `<tr>
+      <td>${m.name}</td>
+      <td>$${perCall < 0.0001 ? perCall.toExponential(1) : perCall.toFixed(6)}</td>
+      <td class="hl">$${per1M < 1 ? per1M.toFixed(2) : per1M.toFixed(0)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── MODEL COMPARISON CARD ───
+function updateModelCard(ex) {
+  if (!ex.models) {
+    document.getElementById('modelCard').style.display = 'none';
+    return;
+  }
+  document.getElementById('modelCard').style.display = '';
+
+  const container = document.getElementById('modelBars');
+  const entries = Object.entries(ex.models);
+  const isNumeric = entries.every(([_, v]) => typeof v === 'number');
+  const maxCount = isNumeric ? Math.max(...entries.map(([_, v]) => v)) : 0;
+  const baseCount = isNumeric ? entries[0][1] : 0;
+
+  const modelColours = {
+    'GPT-5.2': '#74AA9C',
+    'Claude 4.6': '#D4A574',
+    'Llama 3': '#7C93FF',
+    'Gemini 2.5': '#4285F4'
+  };
+
+  container.innerHTML = entries.map(([name, count]) => {
+    const col = modelColours[name] || '#888';
+    if (!isNumeric) {
+      const isVocab = String(count).includes('K');
+      return `<div class="mdl-row">
+        <span class="mdl-name">${name}</span>
+        <span class="mdl-count" style="color:${col}">${count}</span>
+        <span style="font-size:10px;opacity:0.3">${isVocab ? 'vocab size' : 'tokens'}</span>
+      </div>`;
+    }
+    const pct = (count / maxCount) * 100;
+    const diff = count - baseCount;
+    const diffHtml = diff === 0
+      ? '<span class="mdl-diff same">same</span>'
+      : `<span class="mdl-diff more">+${diff}</span>`;
+    return `<div class="mdl-row">
+      <span class="mdl-name">${name}</span>
+      <span class="mdl-count" style="color:${col}">${count}</span>
+      <div class="mdl-bar"><div class="mdl-fill" style="width:${pct}%;background:${col}"></div></div>
+      ${diffHtml}
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+init();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.ex-btn, .example-btn, [class*=ex-btn]') || document.querySelector('.examples'),
+    title: 'Choose an example',
+    desc: 'Click a text example to see how it gets broken into tokens. Try different ones to see how tokenisation varies.', pad: 8 },
+  { target: () => document.querySelector('.token-area, .tokens, .token-chip, [class*=token]') || document.querySelector('.input-area'),
+    title: 'Token visualisation',
+    desc: 'Each coloured chip is one token. Hover over them to see how the text gets split up — it\'s not always where you\'d expect.', pad: 6 },
+  { target: () => document.querySelector('.comp-row, .comparison, [class*=comp]') || document.querySelector('.compare'),
+    title: 'Compare variations',
+    desc: 'See how capitalisation, spacing, and language affect the token count for the same content.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

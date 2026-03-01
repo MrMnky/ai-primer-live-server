@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Adoption Curve — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+  --acc-green: #007A5E;
+  --stage1: #FF6B4A;
+  --stage2: #FFC107;
+  --stage3: #00B1FF;
+  --stage4: #7C5CFC;
+  --stage5: #00FFBC;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px; }
+
+.header { text-align:center; margin-bottom:16px; max-width:900px; }
+.header h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+.header .subtitle { font-size:0.8rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { color:var(--turquoise); font-style:normal; font-weight:600; }
+
+.journey { width:100%; max-width:920px; }
+
+/* Curve visualisation */
+.curve-area { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px; margin-bottom:16px; }
+.curve-area svg { width:100%; height:auto; display:block; }
+
+/* Stage detail */
+.stage-detail { display:flex; gap:16px; }
+.stage-main { flex:1; background:var(--white); border-radius:12px; color:var(--gable); overflow:hidden; transition:all 0.3s; }
+.stage-header { padding:16px 20px; border-bottom:1px solid #E2E8F0; }
+.stage-header .sh-tag { font-size:0.55rem; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:4px; }
+.stage-header .sh-name { font-size:1.1rem; font-weight:700; }
+.stage-header .sh-desc { font-size:0.75rem; color:#718096; margin-top:2px; }
+.stage-body { padding:16px 20px; }
+
+.checklist { margin-bottom:16px; }
+.checklist .cl-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--cerulean); font-weight:600; margin-bottom:8px; }
+.check-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; font-size:0.75rem; color:#4A5568; line-height:1.5; cursor:pointer; transition:color 0.2s; }
+.check-item:hover { color:var(--gable); }
+.check-box { width:18px; height:18px; border:2px solid #CBD5E0; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s; font-size:0.6rem; margin-top:1px; }
+.check-item.checked .check-box { background:var(--cerulean); border-color:var(--cerulean); color:var(--white); }
+.check-item.checked { color:#A0AEC0; text-decoration:line-through; }
+
+.stage-insight { background:#F7FAFC; border-radius:8px; padding:12px 14px; font-size:0.75rem; line-height:1.6; color:#4A5568; }
+.stage-insight strong { color:var(--gable); }
+
+/* Side panel */
+.stage-side { width:280px; display:flex; flex-direction:column; gap:12px; }
+.progress-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; }
+.progress-card .pc-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:10px; }
+.progress-ring { width:100px; height:100px; margin:0 auto 10px; position:relative; }
+.progress-ring svg { width:100%; height:100%; }
+.progress-ring .pct { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.3rem; font-weight:700; color:var(--turquoise); }
+.progress-summary { font-size:0.72rem; color:var(--slate); text-align:center; }
+
+.navigate-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; }
+.navigate-card .nav-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:10px; }
+.nav-stages { display:flex; flex-direction:column; gap:6px; }
+.nav-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; font-family:'Poppins',sans-serif; font-size:0.7rem; color:var(--slate); cursor:pointer; transition:all 0.2s; text-align:left; display:flex; align-items:center; gap:8px; }
+.nav-btn:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.nav-btn.active { border-color:var(--dodger); color:var(--white); background:rgba(0,177,255,0.08); }
+.nav-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+.bottom-insight { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; }
+.bottom-insight h3 { font-size:0.7rem; font-weight:700; color:var(--turquoise); margin-bottom:6px; }
+.bottom-insight p { font-size:0.72rem; color:var(--cloud); line-height:1.6; }
+.bottom-insight p strong { color:var(--white); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Where Are You on the AI Adoption Curve?</h1>
+  <div class="subtitle">Most organisations skip stages and wonder why AI doesn't stick. <em>Sustainable adoption is a journey, not a jump.</em></div>
+</div>
+
+<div class="journey">
+  <div class="curve-area">
+    <svg viewBox="0 0 860 160" id="curveSvg">
+      <!-- Curve path -->
+      <defs>
+        <linearGradient id="curveGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#FF6B4A"/>
+          <stop offset="25%" stop-color="#FFC107"/>
+          <stop offset="50%" stop-color="#00B1FF"/>
+          <stop offset="75%" stop-color="#7C5CFC"/>
+          <stop offset="100%" stop-color="#00FFBC"/>
+        </linearGradient>
+      </defs>
+      <!-- Background axis -->
+      <line x1="40" y1="130" x2="830" y2="130" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="40" y="150" fill="#8FA4B3" font-family="Poppins" font-size="8">Low maturity</text>
+      <text x="770" y="150" fill="#8FA4B3" font-family="Poppins" font-size="8">High maturity</text>
+
+      <!-- S-curve -->
+      <path d="M60,120 C120,118 160,115 230,100 C300,85 340,55 430,40 C520,25 560,22 630,20 C700,18 740,18 810,16" fill="none" stroke="url(#curveGrad)" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Stage markers -->
+      <circle cx="100" cy="118" r="14" fill="rgba(255,107,74,0.15)" stroke="#FF6B4A" stroke-width="2" id="dot0" class="stage-dot" onclick="selectStage(0)" style="cursor:pointer"/>
+      <text x="100" y="122" fill="#FF6B4A" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle">1</text>
+
+      <circle cx="270" cy="92" r="14" fill="rgba(255,193,7,0.15)" stroke="#FFC107" stroke-width="2" id="dot1" class="stage-dot" onclick="selectStage(1)" style="cursor:pointer"/>
+      <text x="270" y="96" fill="#FFC107" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle">2</text>
+
+      <circle cx="430" cy="40" r="14" fill="rgba(0,177,255,0.15)" stroke="#00B1FF" stroke-width="2" id="dot2" class="stage-dot" onclick="selectStage(2)" style="cursor:pointer"/>
+      <text x="430" y="44" fill="#00B1FF" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle">3</text>
+
+      <circle cx="590" cy="20" r="14" fill="rgba(124,92,252,0.15)" stroke="#7C5CFC" stroke-width="2" id="dot3" class="stage-dot" onclick="selectStage(3)" style="cursor:pointer"/>
+      <text x="590" y="24" fill="#7C5CFC" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle">4</text>
+
+      <circle cx="750" cy="16" r="14" fill="rgba(0,255,188,0.15)" stroke="#00FFBC" stroke-width="2" id="dot4" class="stage-dot" onclick="selectStage(4)" style="cursor:pointer"/>
+      <text x="750" y="20" fill="#00FFBC" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle">5</text>
+
+      <!-- Labels under dots -->
+      <text x="100" y="108" fill="#8FA4B3" font-family="Poppins" font-size="7" text-anchor="middle" dy="-18">Awareness</text>
+      <text x="270" y="78" fill="#8FA4B3" font-family="Poppins" font-size="7" text-anchor="middle" dy="-18">Experimentation</text>
+      <text x="430" y="22" fill="#8FA4B3" font-family="Poppins" font-size="7" text-anchor="middle" dy="-18">Integration</text>
+      <text x="590" y="6" fill="#8FA4B3" font-family="Poppins" font-size="7" text-anchor="middle" dy="-18">Transformation</text>
+      <text x="750" y="2" fill="#8FA4B3" font-family="Poppins" font-size="7" text-anchor="middle" dy="-18">AI-Native</text>
+
+      <!-- Pointer -->
+      <polygon id="pointer" points="0,-8 6,4 -6,4" fill="var(--white)" opacity="0.9" transform="translate(100,135)">
+        <animateTransform attributeName="transform" type="translate" dur="0.5s" fill="freeze" id="pointerAnim"/>
+      </polygon>
+    </svg>
+  </div>
+
+  <div class="stage-detail">
+    <div class="stage-main" id="stageMain">
+      <div class="stage-header" id="stageHeader">
+        <div class="sh-tag" id="shTag" style="color:#FF6B4A">Stage 1</div>
+        <div class="sh-name" id="shName">Awareness</div>
+        <div class="sh-desc" id="shDesc">"We know AI exists but aren't sure where to start"</div>
+      </div>
+      <div class="stage-body" id="stageBody"></div>
+    </div>
+
+    <div class="stage-side">
+      <div class="progress-card">
+        <div class="pc-label">Self-Assessment</div>
+        <div class="progress-ring">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--turquoise)" stroke-width="6" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251" transform="rotate(-90 50 50)" id="progressArc"/>
+          </svg>
+          <div class="pct" id="pctLabel">0%</div>
+        </div>
+        <div class="progress-summary" id="progressSummary">Check the items that apply to your organisation</div>
+      </div>
+
+      <div class="navigate-card">
+        <div class="nav-label">Stages</div>
+        <div class="nav-stages" id="navStages"></div>
+      </div>
+
+      <div class="bottom-insight" id="bottomInsight">
+        <h3>The Common Mistake</h3>
+        <p>Most organisations try to jump from Stage 1 to Stage 4 — buying enterprise AI platforms before they've built the <strong>data foundations, skills, and culture</strong> needed to use them. The result? Expensive shelfware and AI fatigue.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STAGES = [
+  {
+    num:1, name:"Awareness", color:"#FF6B4A",
+    desc:'"We know AI exists but aren\'t sure where to start"',
+    checks:[
+      "Leadership talks about AI but no clear strategy exists",
+      "Individual team members are experimenting with ChatGPT",
+      "No budget allocated specifically for AI initiatives",
+      "Data exists in silos with no centralised governance",
+      "AI is seen as a future thing, not an immediate priority"
+    ],
+    insight:"<strong>This is where 60% of UK businesses sit today.</strong> The key move isn't buying technology — it's education. Helping leadership understand what AI can actually do (and can't) for their specific business. The biggest risk at this stage isn't falling behind; it's making an expensive uninformed bet.",
+    nextStep:"Run an AI literacy workshop with senior leadership. Map your top 10 time-consuming processes. Identify which ones have clear, structured data."
+  },
+  {
+    num:2, name:"Experimentation", color:"#FFC107",
+    desc:'"We\'re running pilots and testing AI tools in specific areas"',
+    checks:[
+      "1-3 AI pilot projects running or recently completed",
+      "A small 'AI champion' group exploring use cases",
+      "Some budget allocated for AI experimentation",
+      "Starting to think about data quality and access",
+      "Proof-of-concept results exist but ROI is unclear"
+    ],
+    insight:"<strong>The most dangerous stage.</strong> Organisations here often run too many pilots with no clear success criteria, leading to 'pilot purgatory' — constant experimentation that never scales. The fix: pick ONE pilot with clear metrics, get it to measurable ROI, then use that story to fund the next.",
+    nextStep:"Define success criteria for your best pilot. Set a 90-day deadline: either it proves ROI or you kill it. Document everything — this becomes your internal case study."
+  },
+  {
+    num:3, name:"Integration", color:"#00B1FF",
+    desc:'"AI is embedded in specific workflows and delivering measurable value"',
+    checks:[
+      "At least one AI system in daily production use",
+      "Measurable ROI documented (time saved, revenue, cost reduction)",
+      "Data governance policies in place and followed",
+      "AI training or upskilling programme running for staff",
+      "Cross-functional team managing AI initiatives"
+    ],
+    insight:"<strong>This is the inflection point.</strong> You've proven AI works in your context. Now the challenge shifts from 'does this work?' to 'how do we scale responsibly?' This stage requires investment in people (training), process (governance), and platform (data infrastructure).",
+    nextStep:"Build your AI Centre of Excellence — even if it's just 2-3 people. Create an internal AI playbook with your proven use cases, templates, and lessons learned."
+  },
+  {
+    num:4, name:"Transformation", color:"#7C5CFC",
+    desc:'"AI is changing how we design products, serve customers, and make decisions"',
+    checks:[
+      "AI influences product/service design decisions",
+      "Customer-facing AI features live in production",
+      "AI-driven insights inform strategic decision-making",
+      "Dedicated AI/ML team or embedded AI capabilities across teams",
+      "Ethical AI framework and governance board active"
+    ],
+    insight:"<strong>Fewer than 10% of organisations are here.</strong> At this stage, AI isn't a project — it's a capability. The risk now is complacency: the technology evolves so fast that today's competitive advantage becomes tomorrow's baseline. Continuous learning and rapid iteration are essential.",
+    nextStep:"Audit your AI stack for technical debt. Invest in MLOps and monitoring. Start exploring agentic AI and autonomous workflows."
+  },
+  {
+    num:5, name:"AI-Native", color:"#00FFBC",
+    desc:'"Our business model fundamentally depends on AI capabilities"',
+    checks:[
+      "AI is core to the business model, not just an efficiency tool",
+      "Proprietary AI models or data assets as competitive moat",
+      "AI systems autonomously handle complex, multi-step processes",
+      "Real-time AI decision-making at scale across the organisation",
+      "Contributing to AI research, standards, or open-source ecosystem"
+    ],
+    insight:"<strong>This is the frontier — think companies like Google, Anthropic, or Palantir.</strong> For most businesses, Stage 5 isn't the goal. Stages 3-4 deliver transformative value without requiring you to become an AI company. Don't aim for AI-native unless AI IS your product.",
+    nextStep:"If you're genuinely here, you're probably not reading this graphic. But if you're aspiring: focus on building proprietary data assets and embedding AI deeply into your revenue model."
+  }
+];
+
+let activeStage = 0;
+let checks = {};
+
+function init() {
+  // Nav buttons
+  const nav = document.getElementById('navStages');
+  nav.innerHTML = STAGES.map((s,i) =>
+    `<button class="nav-btn ${i===0?'active':''}" onclick="selectStage(${i})">
+      <span class="nav-dot" style="background:${s.color}"></span>
+      ${s.num}. ${s.name}
+    </button>`
+  ).join('');
+
+  // Init checks
+  STAGES.forEach((s,i) => { checks[i] = new Array(s.checks.length).fill(false); });
+
+  selectStage(0);
+}
+
+function selectStage(idx) {
+  activeStage = idx;
+  const s = STAGES[idx];
+
+  // Update nav
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+
+  // Update curve pointer
+  const positions = [[100,135],[270,135],[430,135],[590,135],[750,135]];
+  const pointer = document.getElementById('pointer');
+  pointer.setAttribute('transform', `translate(${positions[idx][0]},${positions[idx][1]})`);
+
+  // Highlight dots
+  document.querySelectorAll('.stage-dot').forEach((d,i) => {
+    d.setAttribute('r', i===idx ? '18' : '14');
+    d.setAttribute('stroke-width', i===idx ? '3' : '2');
+  });
+
+  // Update header
+  document.getElementById('shTag').textContent = `Stage ${s.num}`;
+  document.getElementById('shTag').style.color = s.color;
+  document.getElementById('shName').textContent = s.name;
+  document.getElementById('shDesc').textContent = s.desc;
+
+  // Update body
+  renderBody(idx);
+
+  // Update progress
+  updateProgress();
+}
+
+function renderBody(idx) {
+  const s = STAGES[idx];
+  let html = `<div class="checklist"><div class="cl-label">Does this sound like your organisation?</div>`;
+  s.checks.forEach((c, ci) => {
+    const checked = checks[idx][ci];
+    html += `<div class="check-item ${checked?'checked':''}" onclick="toggleCheck(${idx},${ci})">
+      <div class="check-box">${checked?'✓':''}</div>
+      <span>${c}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div class="stage-insight">${s.insight}</div>`;
+  html += `<div style="margin-top:14px;padding:12px 14px;background:#EDF2F7;border-radius:8px;font-size:0.72rem;line-height:1.6;color:#4A5568;">
+    <strong style="color:var(--cerulean)">Next step:</strong> ${s.nextStep}</div>`;
+
+  document.getElementById('stageBody').innerHTML = html;
+}
+
+function toggleCheck(stageIdx, checkIdx) {
+  checks[stageIdx][checkIdx] = !checks[stageIdx][checkIdx];
+  renderBody(activeStage);
+  updateProgress();
+}
+
+function updateProgress() {
+  // Find which stage has most checks
+  let maxStage = 0, maxCount = 0;
+  let totalChecked = 0, totalItems = 0;
+
+  STAGES.forEach((s, i) => {
+    const count = checks[i].filter(Boolean).length;
+    totalChecked += count;
+    totalItems += s.checks.length;
+    if (count > maxCount) { maxCount = count; maxStage = i; }
+  });
+
+  // Calculate percentage for current stage
+  const currentChecks = checks[activeStage].filter(Boolean).length;
+  const currentTotal = STAGES[activeStage].checks.length;
+  const pct = Math.round((currentChecks / currentTotal) * 100);
+
+  // Update ring
+  const circumference = 2 * Math.PI * 40; // 251.3
+  const offset = circumference * (1 - pct / 100);
+  document.getElementById('progressArc').setAttribute('stroke-dashoffset', offset);
+  document.getElementById('pctLabel').textContent = pct + '%';
+
+  // Summary
+  const summary = pct >= 80 ? `Strong match — you're likely at Stage ${STAGES[activeStage].num}`
+    : pct >= 40 ? `Partial match — transitioning through Stage ${STAGES[activeStage].num}`
+    : 'Few matches — explore other stages';
+  document.getElementById('progressSummary').textContent = summary;
+}
+
+init();
+</script>
+</body>
+</html>

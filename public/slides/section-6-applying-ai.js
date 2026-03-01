@@ -42,6 +42,21 @@ const SECTION_6_APPLYING_AI = [
     notes: `Three approaches that stack on top of each other. Most audiences gravitate toward automation because it's visible and easy to justify. But augmentation is where real advantage lives. "How does AI make your best people better?" That's the strategic question. Pace is steady — let each approach settle before moving to the next.`,
   },
 
+  // ── 6.1b  Agentic AI Interactive ──────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Explore: How Agentic AI Works',
+    subtitle: 'See the Plan → Act → Observe → Reflect loop in action.',
+    graphic: {
+      id: 'agentic-ai',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive exploration of the agentic AI loop. Participants see how agents plan, act, observe results, and reflect — then adjust. Try the example missions to see agents tackling real tasks. Debrief: "This is the third approach — agents. Powerful, but notice how much governance each step needs."`,
+  },
+
   // ── 6.1c Picking Your Pilots ────────────────
   {
     type: 'content',
@@ -107,6 +122,21 @@ const SECTION_6_APPLYING_AI = [
 <p>This is <strong>synthesis, not search</strong>. AI connects dots you don't have time to connect.</p>
 <p><strong>The guardrail:</strong> AI can hallucinate. Reduce hallucinations, not eliminate. Always spot-check your sources. Always.</p>`,
     notes: `Deep research reframes AI from "search engine" to "synthesis engine." The distinction matters. The guardrail note is essential — always spot-check. Keep the hallucination warning brief but unmissable.`,
+  },
+
+  // ── 6.2b  Deep Research Interactive ───────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Explore: How Deep Research Works',
+    subtitle: 'Follow the research pipeline — from question to synthesised answer.',
+    graphic: {
+      id: 'deep-research-v2',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive deep research workflow. Participants follow how an AI research agent breaks down a question, searches multiple sources, synthesises findings, and produces a structured output with citations. Debrief: "This is synthesis, not search. What question would you put through this process first?"`,
   },
 
   {

@@ -102,6 +102,21 @@ const SECTION_1_FOUNDATION = [
     notes: `This is the adoption curve slide. Name the four stages clearly, then reveal the pattern: most organisations jump straight to Implementation. Let that sink in. The stats reinforce the message — you've seen this play out repeatedly across clients. This is hard-won observation, not theory.`,
   },
 
+  // ── 1.3b  AI Adoption Curve Interactive ─────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'FOUNDATION',
+    title: 'Explore: The AI Adoption Curve',
+    subtitle: 'Click through each stage to see what it looks like in practice.',
+    graphic: {
+      id: 'ai-adoption-curve',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive exploration of the adoption curve. Participants click through each stage to understand what it looks like and where most organisations get stuck. Debrief: "Where is your organisation on this curve right now?"`,
+  },
+
   {
     type: 'statement',
     theme: 'gradient',

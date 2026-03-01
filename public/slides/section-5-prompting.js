@@ -56,6 +56,21 @@ const SECTION_5_PROMPTING = [
     notes: `Ten techniques split across two slides. Keep pace steady — one concrete example per technique. Instructions is most underrated. Summarisation is safest. Few-Shot uses pattern over explanation. Priming interrupts the model's eagerness. Meta Prompting turns the AI from vending machine to collaborator.`,
   },
 
+  // ── 5.2b  Prompting Techniques Interactive ────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Explore: Prompting Techniques',
+    subtitle: 'Browse all ten techniques with interactive examples and prompt templates.',
+    graphic: {
+      id: 'prompting-techniques',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive technique explorer. Participants browse all ten techniques with worked examples and can build prompt templates. This is a reference tool — give 3-4 minutes for exploration. Debrief: "Which technique do you think you'd use most in your work? Which one was new to you?"`,
+  },
+
   {
     type: 'content',
     theme: 'dark',
@@ -190,6 +205,21 @@ const SECTION_5_PROMPTING = [
       body: 'Shared context creates shared outcomes. When everyone loads the same product context before responding to customer feedback, you get consistency. Not enforced consistency. Natural consistency.',
     },
     notes: `Five types of context block, each briefly described. The cooking analogy works well here: "One-off prompts are like asking 'what shall I cook?' with no context. Context blocks are like loading the full brief: ingredients, time, allergies, occasion." The shared outcomes callout is the payoff.`,
+  },
+
+  // ── 5.5b  Context Blocks Interactive ──────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Explore: Context Blocks in Action',
+    subtitle: 'See how different context blocks change AI output quality.',
+    graphic: {
+      id: 'context-blocks',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive context block explorer. Participants see how adding different types of context (organisational, product, process, persona, templates) changes AI output quality. Debrief: "Which context block would make the biggest difference in your organisation right now?"`,
   },
 
   {

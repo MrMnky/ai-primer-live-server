@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --gable-light: #243d4e;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --malibu: #5BA3E6;
+  --cornflower: #6161FF;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+  --plan: #7C5CFC;
+  --act: #00B1FF;
+  --observe: #FFC107;
+  --reflect: #FF6B4A;
+  --accessible-accent: #007A5E;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; overflow:hidden; -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; align-items:center; padding:20px 28px 16px; }
+
+.header { text-align:center; margin-bottom:12px; max-width:960px; width:100%; }
+.header h1 { font-size:1.35rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
+.header .subtitle { font-size:0.72rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { color:var(--turquoise); font-style:normal; font-weight:600; }
+
+/* Mode tabs */
+.mode-tabs { display:flex; gap:6px; margin-bottom:12px; max-width:960px; width:100%; justify-content:center; }
+.mode-tab { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:8px; padding:8px 24px; cursor:pointer; transition:all 0.25s; font-family:'Poppins',sans-serif; font-size:0.72rem; font-weight:500; color:var(--slate); }
+.mode-tab:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.mode-tab.active { border-color:var(--dodger); color:var(--white); background:rgba(0,177,255,0.08); border-width:2px; }
+
+/* ═══════ MODE 1: THE LOOP ═══════ */
+.loop-mode { display:flex; gap:16px; width:100%; max-width:960px; flex:1; min-height:0; }
+
+/* Left column: loop diagram + mission buttons */
+.loop-col { width:300px; display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
+
+.loop-ring { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:16px; text-align:center; }
+.loop-label { font-size:0.55rem; text-transform:uppercase; letter-spacing:2px; color:var(--slate); margin-bottom:8px; }
+
+.mission-selector { display:flex; flex-direction:column; gap:6px; }
+.mission-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px 12px; font-family:'Poppins',sans-serif; font-size:0.68rem; color:var(--slate); cursor:pointer; transition:all 0.2s; text-align:left; display:flex; align-items:center; gap:8px; }
+.mission-btn:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.mission-btn.active { border-color:var(--dodger); color:var(--white); background:rgba(0,177,255,0.08); }
+.mission-btn .m-icon { font-size:1rem; }
+.mission-btn .m-text { line-height:1.3; }
+
+/* Right column: goal + log + insight */
+.log-col { flex:1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+
+.goal-bar { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 16px; }
+.goal-bar .goal-label { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:3px; }
+.goal-bar .goal-text { font-size:0.78rem; font-weight:600; }
+.progress-track { height:3px; background:rgba(255,255,255,0.1); border-radius:2px; margin-top:8px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg, var(--plan), var(--act), var(--turquoise)); border-radius:2px; transition:width 0.6s ease; width:0%; }
+
+.log-feed { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+.log-header { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+.log-header .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); }
+.log-header .controls { display:flex; gap:6px; }
+.step-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:4px 12px; font-family:'Poppins',sans-serif; font-size:0.65rem; color:var(--white); cursor:pointer; transition:all 0.2s; }
+.step-btn:hover { background:rgba(0,177,255,0.15); border-color:var(--dodger); }
+.step-btn.auto { background:rgba(0,255,188,0.1); border-color:var(--turquoise); color:var(--turquoise); }
+.step-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+.log-entries { flex:1; padding:10px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+
+/* Full detail entry (first iteration) */
+.log-entry { display:flex; gap:8px; animation:entryIn 0.35s ease; padding:6px 0; }
+@keyframes entryIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+.entry-phase { width:5px; border-radius:3px; flex-shrink:0; }
+.entry-phase.plan { background:var(--plan); }
+.entry-phase.act { background:var(--act); }
+.entry-phase.observe { background:var(--observe); }
+.entry-phase.reflect { background:var(--reflect); }
+.entry-content { flex:1; min-width:0; }
+.entry-type { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-bottom:1px; }
+.entry-type.plan { color:var(--plan); }
+.entry-type.act { color:var(--act); }
+.entry-type.observe { color:var(--observe); }
+.entry-type.reflect { color:var(--reflect); }
+.entry-text { font-size:0.68rem; color:var(--cloud); line-height:1.45; }
+.entry-text code { font-family:'JetBrains Mono',monospace; font-size:0.63rem; background:rgba(255,255,255,0.08); padding:1px 4px; border-radius:3px; }
+.entry-text .tool-call { color:var(--dodger); font-weight:500; }
+.entry-text .result { color:var(--turquoise); }
+.entry-text .issue { color:var(--reflect); }
+
+/* Compact cycle entry (subsequent iterations) */
+.cycle-entry { animation:entryIn 0.35s ease; padding:6px 0; border-top:1px solid rgba(255,255,255,0.06); }
+.cycle-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.cycle-num { font-size:0.55rem; font-weight:700; color:var(--turquoise); text-transform:uppercase; letter-spacing:1.5px; }
+.cycle-dots { display:flex; gap:3px; }
+.cycle-dot { width:8px; height:8px; border-radius:50%; opacity:0.9; }
+.cycle-dot.act { background:var(--act); }
+.cycle-dot.observe { background:var(--observe); }
+.cycle-dot.reflect { background:var(--reflect); }
+.cycle-dot.bright { box-shadow:0 0 6px currentColor; }
+.cycle-row { display:flex; gap:12px; font-size:0.65rem; line-height:1.4; }
+.cycle-act { color:var(--act); flex:1; min-width:0; }
+.cycle-obs { color:var(--observe); flex:1; min-width:0; }
+.cycle-ref { color:var(--reflect); flex:1; min-width:0; }
+.cycle-act .cl, .cycle-obs .cl, .cycle-ref .cl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; opacity:0.7; display:block; margin-bottom:1px; }
+
+.insight-box { background:var(--white); border-radius:10px; padding:12px 16px; color:var(--gable); flex-shrink:0; }
+.insight-box h3 { font-size:0.7rem; font-weight:700; color:var(--cerulean); margin-bottom:4px; }
+.insight-box p { font-size:0.68rem; line-height:1.5; color:#4A5568; }
+.insight-box p strong { color:var(--gable); }
+
+/* ═══════ MODE 2: EXAMPLES ═══════ */
+.examples-mode { display:none; width:100%; max-width:960px; flex:1; min-height:0; flex-direction:column; gap:12px; position:relative; }
+.examples-mode.visible { display:flex; }
+.loop-mode.hidden { display:none; }
+
+.complexity-bar { display:flex; align-items:center; gap:0; height:6px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.06); }
+.complexity-seg { height:100%; transition:all 0.3s; }
+.complexity-labels { display:flex; justify-content:space-between; font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-top:4px; }
+
+.examples-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; flex:1; min-height:0; overflow-y:auto; align-content:start; }
+
+.example-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:12px; padding:14px 16px; cursor:pointer; transition:all 0.25s; display:flex; flex-direction:column; gap:6px; }
+.example-card:hover { border-color:rgba(255,255,255,0.25); transform:translateY(-1px); }
+.example-card.active { border-width:2px; }
+.example-card .ec-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.example-card .ec-icon { font-size:1.3rem; }
+.example-card .ec-complexity { font-size:0.5rem; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; padding:2px 8px; border-radius:10px; }
+.example-card .ec-name { font-size:0.78rem; font-weight:600; }
+.example-card .ec-desc { font-size:0.65rem; color:var(--slate); line-height:1.45; }
+.example-card .ec-prompt { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--cloud); background:rgba(255,255,255,0.05); border-radius:6px; padding:8px 10px; line-height:1.5; display:none; border-left:3px solid; }
+.example-card.active .ec-prompt { display:block; }
+.example-card .ec-steps { display:none; font-size:0.6rem; color:var(--slate); line-height:1.5; }
+.example-card.active .ec-steps { display:block; }
+.example-card .ec-steps .step-item { display:flex; gap:6px; padding:2px 0; }
+.example-card .ec-steps .step-dot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+
+/* Detail panel for selected example — overlays grid bottom */
+.example-detail { display:none; background:rgba(27,47,60,0.97); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:14px 18px; position:absolute; bottom:0; left:0; right:0; max-height:45%; overflow-y:auto; backdrop-filter:blur(10px); z-index:10; }
+.example-detail.visible { display:block; }
+.ed-title { font-size:0.85rem; font-weight:700; margin-bottom:4px; }
+.ed-prompt { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--cloud); background:rgba(255,255,255,0.05); border-radius:8px; padding:10px 14px; line-height:1.6; margin-bottom:10px; border-left:3px solid; }
+.ed-flow { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.ed-step { font-size:0.6rem; padding:4px 10px; border-radius:6px; font-weight:500; }
+.ed-arrow { color:var(--slate); font-size:0.7rem; }
+.ed-insight { margin-top:10px; font-size:0.65rem; color:var(--slate); line-height:1.5; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08); }
+.ed-insight strong { color:var(--cloud); }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Agentic AI: How AI Gets Things Done</h1>
+  <div class="subtitle">An <em>agent</em> doesn't just answer — it plans, acts, checks, and adapts. Watch the reasoning loop in action, then explore what agents can do.</div>
+</div>
+
+<div class="mode-tabs">
+  <div class="mode-tab active" onclick="switchMode('loop')">The Reasoning Loop</div>
+  <div class="mode-tab" onclick="switchMode('examples')">What Agents Can Do</div>
+</div>
+
+<!-- ═══════ MODE 1: THE LOOP ═══════ -->
+<div class="loop-mode" id="loopMode">
+  <div class="loop-col">
+    <div class="loop-ring">
+      <div class="loop-label">Agent Reasoning Loop</div>
+      <svg viewBox="0 0 260 220" id="loopSvg" style="width:260px;height:220px;">
+        <defs>
+          <marker id="arrowA" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#00B1FF"/></marker>
+          <marker id="arrowO" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#FFC107"/></marker>
+          <marker id="arrowR" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#FF6B4A"/></marker>
+          <marker id="arrowPlan" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#7C5CFC"/></marker>
+        </defs>
+
+        <!-- Plan entry arrow (comes from top-left into the cycle) -->
+        <path d="M30,30 C60,30 90,55 115,78" fill="none" stroke="#7C5CFC" stroke-width="2.5" stroke-opacity="0.5" marker-end="url(#arrowPlan)" id="planArrow" stroke-dasharray="6,4"/>
+        <rect x="4" y="16" width="56" height="26" rx="6" fill="rgba(124,92,252,0.15)" stroke="#7C5CFC" stroke-width="1.5" stroke-opacity="0.5" id="planBox"/>
+        <text x="32" y="33" fill="#7C5CFC" font-family="Poppins" font-size="10" font-weight="700" text-anchor="middle" opacity="0.8" id="planLabel">PLAN</text>
+
+        <!-- The cycle: Act → Observe → Reflect (triangle arrangement) -->
+        <!-- Cycle center at 155,130 with radius 65 -->
+        <!-- Act at top (155,65), Observe at bottom-right (211,162), Reflect at bottom-left (99,162) -->
+
+        <!-- Arc: Act → Observe (top to bottom-right) -->
+        <path d="M172,72 A68,68 0 0,1 213,148" fill="none" stroke="#00B1FF" stroke-width="3" stroke-opacity="0.3" marker-end="url(#arrowA)" id="arcAct"/>
+        <!-- Arc: Observe → Reflect (bottom-right to bottom-left) -->
+        <path d="M205,170 A68,68 0 0,1 108,170" fill="none" stroke="#FFC107" stroke-width="3" stroke-opacity="0.3" marker-end="url(#arrowO)" id="arcObserve"/>
+        <!-- Arc: Reflect → Act (bottom-left to top) -->
+        <path d="M100,148 A68,68 0 0,1 140,72" fill="none" stroke="#FF6B4A" stroke-width="3" stroke-opacity="0.3" marker-end="url(#arrowR)" id="arcReflect"/>
+
+        <!-- Phase nodes -->
+        <circle cx="155" cy="65" r="22" fill="rgba(0,177,255,0.12)" stroke="#00B1FF" stroke-width="2" stroke-opacity="0.5" id="nodeAct"/>
+        <text x="155" y="69" fill="#00B1FF" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle" id="labelAct">ACT</text>
+
+        <circle cx="213" cy="160" r="22" fill="rgba(255,193,7,0.12)" stroke="#FFC107" stroke-width="2" stroke-opacity="0.5" id="nodeObs"/>
+        <text x="213" y="164" fill="#FFC107" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle" id="labelObs">OBSERVE</text>
+
+        <circle cx="99" cy="160" r="22" fill="rgba(255,107,74,0.12)" stroke="#FF6B4A" stroke-width="2" stroke-opacity="0.5" id="nodeRef"/>
+        <text x="99" y="164" fill="#FF6B4A" font-family="Poppins" font-size="9" font-weight="700" text-anchor="middle" id="labelRef">REFLECT</text>
+
+        <!-- Center iteration counter -->
+        <circle cx="155" cy="130" r="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <text x="155" y="125" fill="#8FA4B3" font-family="Poppins" font-size="8" text-anchor="middle">Cycle</text>
+        <text x="155" y="143" fill="#00FFBC" font-family="Poppins" font-size="18" font-weight="700" text-anchor="middle" id="iterNum">0</text>
+      </svg>
+    </div>
+
+    <div class="mission-selector" id="missionBar"></div>
+  </div>
+
+  <div class="log-col">
+    <div class="goal-bar">
+      <div class="goal-label">Mission Objective</div>
+      <div class="goal-text" id="goalText">Select a mission to begin</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="log-feed">
+      <div class="log-header">
+        <span class="label">Agent Activity Log</span>
+        <div class="controls">
+          <button class="step-btn" id="stepBtn" onclick="stepOnce()" disabled>Step →</button>
+          <button class="step-btn" id="autoBtn" onclick="toggleAuto()">Auto ▶</button>
+        </div>
+      </div>
+      <div class="log-entries" id="logEntries">
+        <div style="text-align:center;padding:30px 0;color:var(--slate);font-size:0.7rem;">Choose a mission to watch the agent work</div>
+      </div>
+    </div>
+
+    <div class="insight-box" id="insightBox">
+      <h3>What Makes This "Agentic"?</h3>
+      <p>A normal LLM gives you one response. An <strong>agent</strong> can break tasks into steps, use tools, check its own work, and course-correct — just like a human tackling a complex project.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODE 2: EXAMPLES ═══════ -->
+<div class="examples-mode" id="examplesMode">
+  <div>
+    <div class="complexity-bar" id="complexityBar"></div>
+    <div class="complexity-labels">
+      <span>Simple — single action</span>
+      <span style="color:var(--cloud);font-size:0.5rem;letter-spacing:1px;opacity:0.6;">These are just examples — agents can do so much more</span>
+      <span>Complex — multi-step reasoning</span>
+    </div>
+  </div>
+
+  <div class="examples-grid" id="examplesGrid"></div>
+
+  <div class="example-detail" id="exampleDetail"></div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+/* ═══════ MODE SWITCHING ═══════ */
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', (mode==='loop' ? i===0 : i===1)));
+  document.getElementById('loopMode').classList.toggle('hidden', mode!=='loop');
+  document.getElementById('examplesMode').classList.toggle('visible', mode==='examples');
+  if (autoTimer) toggleAuto();
+}
+
+/* ═══════ LOOP MODE DATA ═══════ */
+/* Each mission has: plan (initial), then cycles of [act, observe, reflect] */
+const MISSIONS = [
+  {
+    icon: "📊", name: "Research a competitor",
+    goal: "Analyse Acme Corp's AI strategy and produce a competitive brief",
+    plan: "Breaking this into sub-tasks: (1) find Acme's recent announcements, (2) analyse their product positioning, (3) identify strengths and gaps, (4) write the brief",
+    cycles: [
+      {
+        act: "<span class='tool-call'>→ search_web</span>(\"Acme Corp AI strategy 2025\")",
+        observe: "<span class='result'>12 results found.</span> Acme launched an AI assistant in Q3, partnered with Microsoft, hired a Chief AI Officer.",
+        reflect: "Good starting data, but I need product specifics — the results are mostly press releases. Let me hit their product pages directly."
+      },
+      {
+        act: "<span class='tool-call'>→ browse_url</span>(\"acme.com/products/ai-assistant\")",
+        observe: "<span class='result'>Product page loaded.</span> Features: ticket routing, auto-responses, sentiment analysis. £15/seat/month. No RAG or custom training.",
+        reflect: "Key gap found: no RAG or custom knowledge base. That's our differentiator. Now I need customer sentiment."
+      },
+      {
+        act: "<span class='tool-call'>→ search_web</span>(\"Acme Corp AI reviews G2 Capterra\")",
+        observe: "<span class='result'>G2: 3.8/5 (124 reviews).</span> Complaints: 'limited customisation', 'doesn't understand our terminology'. Strengths: 'easy setup', 'good MS integration'.",
+        reflect: "Reviews confirm the gap — customers want customisation Acme can't offer. I have enough for the brief now."
+      },
+      {
+        act: "<span class='tool-call'>→ write_document</span>(\"Competitive Brief: Acme Corp AI\") — 5 sections, 847 words",
+        observe: "<span class='result'>Brief complete.</span> Key rec: position our RAG capability as the enterprise alternative to Acme's one-size-fits-all.",
+        reflect: "Brief delivered. Recommendation is data-backed with specific evidence from product analysis and customer reviews."
+      }
+    ],
+    insight: { title:"Why Research Needs an Agent", text:"A single prompt can't do competitive research — it requires multiple searches, reading pages, and synthesising findings. The agent's <strong>reflect</strong> step is critical: it evaluates what it found and decides what to search next, just like a human analyst." }
+  },
+  {
+    icon: "🔧", name: "Debug a data pipeline",
+    goal: "Find and fix why the daily sales report shows £0 for London",
+    plan: "Systematic debugging: (1) check the report query, (2) trace the data source, (3) find where London data drops out, (4) fix and verify",
+    cycles: [
+      {
+        act: "<span class='tool-call'>→ read_file</span>(\"reports/daily-sales.sql\")",
+        observe: "<span class='result'>Query reads from <code>sales_summary</code> view</span>, filtered by <code>region_code</code>. London = 'LON'. Logic looks correct.",
+        reflect: "Query is fine. Issue must be upstream — either the view or underlying data. Let me query the view directly."
+      },
+      {
+        act: "<span class='tool-call'>→ run_query</span>(\"SELECT * FROM sales_summary WHERE region_code = 'LON'\")",
+        observe: "<span class='result'>0 rows returned.</span> <span class='issue'>The view itself has no London data.</span>",
+        reflect: "View returns nothing for 'LON'. The view joins transactions with regions — let me check the regions table mapping."
+      },
+      {
+        act: "<span class='tool-call'>→ run_query</span>(\"SELECT DISTINCT region_code FROM regions WHERE city = 'London'\")",
+        observe: "<span class='result'>Result: 'LONDON'</span> <span class='issue'>— regions table uses 'LONDON' not 'LON'!</span> Someone updated the mapping without updating the view.",
+        reflect: "Root cause found: code mismatch ('LON' vs 'LONDON'). I'll update the mapping and add a test to prevent this recurring."
+      },
+      {
+        act: "<span class='tool-call'>→ run_query</span>(\"UPDATE region_mapping...\") + <span class='tool-call'>→ write_file</span>(\"tests/test_region_codes.py\")",
+        observe: "<span class='result'>View refreshed — 342 rows, £127,450 for London.</span> Preventive test added to CI pipeline.",
+        reflect: "Fix confirmed, root cause documented, preventive test in place. Pipeline is healthy."
+      }
+    ],
+    insight: { title:"Why Debugging Needs an Agent", text:"Debugging is inherently iterative — you form a hypothesis, test it, adjust. Notice the agent didn't just fix the bug: it <strong>reflected</strong> on prevention and added a test. That's the difference between a tool that answers questions and an agent that solves problems." }
+  },
+  {
+    icon: "📋", name: "Prepare meeting brief",
+    goal: "Create a pre-meeting brief for tomorrow's call with Vertex Finance",
+    plan: "Gather from 4 sources: (1) client history from Notion, (2) recent emails, (3) relevant documents in Drive, (4) calendar details. Then synthesise into a one-page brief.",
+    cycles: [
+      {
+        act: "<span class='tool-call'>→ search_notion</span>(\"Vertex Finance\")",
+        observe: "<span class='result'>Client page found.</span> £4.2M fintech, 85 employees. 3-month relationship. Evaluating Enterprise AI package. Key contact: Sarah Chen (VP Ops).",
+        reflect: "Good baseline. Now I need recent communications to understand where the conversation is."
+      },
+      {
+        act: "<span class='tool-call'>→ search_gmail</span>(\"vertex finance\", last 30 days)",
+        observe: "<span class='result'>8 emails.</span> Last (3 days ago): Sarah asked about data residency for UK financial data. We sent compliance docs. No reply yet.",
+        reflect: "Compliance is a likely blocker for their internal approval. I should find a relevant case study to address this proactively."
+      },
+      {
+        act: "<span class='tool-call'>→ search_drive</span>(\"fintech compliance case study\") + <span class='tool-call'>→ search_calendar</span>(\"Vertex\", tomorrow)",
+        observe: "<span class='result'>Found: 'Meridian Capital Compliance' case study.</span> Meeting: 2pm, 45min. Attendees include James Liu (CTO) — <span class='issue'>new attendee, not in previous calls.</span>",
+        reflect: "CTO joining = technical validation stage. I should prepare technical talking points and lead with the Meridian case study."
+      },
+      {
+        act: "<span class='tool-call'>→ write_document</span>(\"Meeting Brief: Vertex Finance — 25 Feb\")",
+        observe: "<span class='result'>Brief complete.</span> Key rec: lead with Meridian compliance case study, then technical architecture walkthrough for the CTO.",
+        reflect: "Brief pulls from 4 sources with actionable strategy. The compliance angle and new CTO attendance are flagged as the two key dynamics."
+      }
+    ],
+    insight: { title:"Why Meeting Prep Needs an Agent", text:"The agent pulled from <strong>4 different sources</strong> (Notion, Gmail, Drive, Calendar), noticed a pattern (compliance concern + new CTO), and adjusted strategy accordingly. A single prompt gives a generic brief. The agent gives a brief with actual intelligence." }
+  }
+];
+
+let activeMission = -1;
+let stepIndex = 0;
+let autoMode = false;
+let autoTimer = null;
+
+function initLoop() {
+  const bar = document.getElementById('missionBar');
+  bar.innerHTML = MISSIONS.map((m, i) =>
+    `<button class="mission-btn" onclick="selectMission(${i})">
+      <span class="m-icon">${m.icon}</span>
+      <span class="m-text">${m.name}</span>
+    </button>`
+  ).join('');
+}
+
+function selectMission(idx) {
+  activeMission = idx;
+  stepIndex = 0;
+  autoMode = false;
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+
+  document.querySelectorAll('.mission-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+
+  const m = MISSIONS[idx];
+  document.getElementById('goalText').textContent = m.goal;
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('logEntries').innerHTML = '';
+  document.getElementById('stepBtn').disabled = false;
+  document.getElementById('autoBtn').textContent = 'Auto ▶';
+  document.getElementById('autoBtn').classList.remove('auto');
+  document.getElementById('iterNum').textContent = '0';
+  resetDiagram();
+  updateInsight(idx);
+}
+
+function resetDiagram() {
+  ['arcAct','arcObserve','arcReflect'].forEach(id => {
+    const el = document.getElementById(id);
+    el.setAttribute('stroke-opacity','0.3');
+    el.setAttribute('stroke-width','3');
+  });
+  ['nodeAct','nodeObs','nodeRef'].forEach(id => {
+    document.getElementById(id).setAttribute('stroke-opacity','0.5');
+  });
+  document.getElementById('planArrow').setAttribute('stroke-opacity','0.5');
+  document.getElementById('planBox').setAttribute('stroke-opacity','0.5');
+  document.getElementById('planLabel').setAttribute('opacity','0.8');
+}
+
+function highlightPhase(phase) {
+  resetDiagram();
+  if (phase === 'plan') {
+    document.getElementById('planArrow').setAttribute('stroke-opacity','1');
+    document.getElementById('planBox').setAttribute('stroke-opacity','1');
+    document.getElementById('planLabel').setAttribute('opacity','1');
+  } else if (phase === 'act') {
+    document.getElementById('arcReflect').setAttribute('stroke-opacity','1');
+    document.getElementById('arcReflect').setAttribute('stroke-width','4');
+    document.getElementById('nodeAct').setAttribute('stroke-opacity','1');
+  } else if (phase === 'observe') {
+    document.getElementById('arcAct').setAttribute('stroke-opacity','1');
+    document.getElementById('arcAct').setAttribute('stroke-width','4');
+    document.getElementById('nodeObs').setAttribute('stroke-opacity','1');
+  } else if (phase === 'reflect') {
+    document.getElementById('arcObserve').setAttribute('stroke-opacity','1');
+    document.getElementById('arcObserve').setAttribute('stroke-width','4');
+    document.getElementById('nodeRef').setAttribute('stroke-opacity','1');
+  }
+}
+
+/* Step logic:
+   step 0 = plan (full detail entry)
+   step 1 = cycle 0 - act (full detail)
+   step 2 = cycle 0 - observe (full detail)
+   step 3 = cycle 0 - reflect (full detail)
+   step 4 = cycle 1 (compact — all three in one entry)
+   step 5 = cycle 2 (compact)
+   step 6 = cycle 3 (compact)
+*/
+function stepOnce() {
+  if (activeMission < 0) return;
+  const m = MISSIONS[activeMission];
+  const totalSteps = 4 + (m.cycles.length - 1); // plan + 3 detail steps + (n-1) compact cycles
+
+  if (stepIndex >= totalSteps) {
+    finishMission();
+    return;
+  }
+
+  const entries = document.getElementById('logEntries');
+
+  if (stepIndex === 0) {
+    // Plan entry (the entry arrow)
+    highlightPhase('plan');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <div class="entry-phase plan"></div>
+      <div class="entry-content">
+        <div class="entry-type plan">PLAN</div>
+        <div class="entry-text">${m.plan}</div>
+      </div>`;
+    entries.appendChild(entry);
+  } else if (stepIndex <= 3) {
+    // First cycle — show full detail for each phase
+    const cycle = m.cycles[0];
+    const phases = ['act','observe','reflect'];
+    const phase = phases[stepIndex - 1];
+    highlightPhase(phase);
+
+    if (phase === 'reflect') {
+      document.getElementById('iterNum').textContent = '1';
+    }
+
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <div class="entry-phase ${phase}"></div>
+      <div class="entry-content">
+        <div class="entry-type ${phase}">${phase}</div>
+        <div class="entry-text">${cycle[phase]}</div>
+      </div>`;
+    entries.appendChild(entry);
+  } else {
+    // Subsequent cycles — compact format
+    const cycleIdx = stepIndex - 3; // cycles 1, 2, 3...
+    const cycle = m.cycles[cycleIdx];
+    document.getElementById('iterNum').textContent = cycleIdx + 1;
+
+    // Animate through the three phases quickly
+    highlightPhase('act');
+    setTimeout(() => highlightPhase('observe'), 400);
+    setTimeout(() => highlightPhase('reflect'), 800);
+
+    const entry = document.createElement('div');
+    entry.className = 'cycle-entry';
+    entry.innerHTML = `
+      <div class="cycle-header">
+        <span class="cycle-num">Cycle ${cycleIdx + 1}</span>
+        <div class="cycle-dots">
+          <div class="cycle-dot act"></div>
+          <div class="cycle-dot observe"></div>
+          <div class="cycle-dot reflect"></div>
+        </div>
+      </div>
+      <div class="cycle-row">
+        <div class="cycle-act"><span class="cl">Act</span>${cycle.act}</div>
+        <div class="cycle-obs"><span class="cl">Observe</span>${cycle.observe}</div>
+        <div class="cycle-ref"><span class="cl">Reflect</span>${cycle.reflect}</div>
+      </div>`;
+    entries.appendChild(entry);
+  }
+
+  entries.scrollTop = entries.scrollHeight;
+  stepIndex++;
+
+  // Update progress
+  const pct = (stepIndex / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  if (stepIndex >= totalSteps) {
+    finishMission();
+  }
+}
+
+function finishMission() {
+  document.getElementById('stepBtn').disabled = true;
+  if (autoMode) toggleAuto();
+}
+
+function toggleAuto() {
+  autoMode = !autoMode;
+  const btn = document.getElementById('autoBtn');
+  if (autoMode) {
+    btn.textContent = 'Pause ⏸';
+    btn.classList.add('auto');
+    autoTimer = setInterval(() => stepOnce(), 2200);
+  } else {
+    btn.textContent = 'Auto ▶';
+    btn.classList.remove('auto');
+    clearInterval(autoTimer);
+    autoTimer = null;
+  }
+}
+
+function updateInsight(idx) {
+  const ins = MISSIONS[idx].insight;
+  document.getElementById('insightBox').innerHTML = `<h3>${ins.title}</h3><p>${ins.text}</p>`;
+}
+
+/* ═══════ EXAMPLES MODE DATA ═══════ */
+const EXAMPLES = [
+  {
+    icon: "⏰", name: "Timed Reminder",
+    complexity: 1, color: "var(--malibu)",
+    compLabel: "Simple",
+    desc: "Set a reminder for a specific time — the most basic agentic action.",
+    prompt: "Remind me to call the accountant at 3pm tomorrow.",
+    steps: [
+      { phase:"act", text:"Create calendar reminder for 3pm tomorrow" },
+      { phase:"observe", text:"Reminder set. Done." }
+    ],
+    insight: "Even this simple task requires an agent: the AI must <strong>understand time</strong>, create an event in an external system, and confirm. A chat-only LLM can't actually set reminders."
+  },
+  {
+    icon: "📝", name: "Summarise & File",
+    complexity: 2, color: "var(--malibu)",
+    compLabel: "Simple",
+    desc: "Read a document, extract key points, and save the summary.",
+    prompt: "Summarise the board pack PDF in my downloads and save the key points to Notion.",
+    steps: [
+      { phase:"act", text:"Read board-pack.pdf (42 pages)" },
+      { phase:"observe", text:"Extract 8 key decisions, 3 risks, 5 action items" },
+      { phase:"act", text:"Create Notion page with structured summary" }
+    ],
+    insight: "Two tools chained together: file reading + writing to an external system. The agent decides <strong>what to extract</strong> based on understanding the document type."
+  },
+  {
+    icon: "🔍", name: "Deep Research",
+    complexity: 3, color: "var(--dodger)",
+    compLabel: "Medium",
+    desc: "Multi-source research with synthesis — the agent decides what to search next based on what it finds.",
+    prompt: "Research the UK AI safety regulatory landscape and how it affects financial services. Include recent developments.",
+    steps: [
+      { phase:"act", text:"Search gov.uk, FCA, Bank of England sources" },
+      { phase:"observe", text:"Find DSIT framework, FCA guidance, PRA expectations" },
+      { phase:"reflect", text:"Need industry response — check Big Four reports" },
+      { phase:"act", text:"Search Deloitte, PwC, McKinsey AI regulation papers" },
+      { phase:"act", text:"Synthesise into structured brief with citations" }
+    ],
+    insight: "The reflect step is key: the agent <strong>evaluates what's missing</strong> from its initial search and goes looking for it. A single prompt can't do this iterative deepening."
+  },
+  {
+    icon: "📊", name: "Competitor Analysis",
+    complexity: 3, color: "var(--dodger)",
+    compLabel: "Medium",
+    desc: "Profile a competitor by gathering data from multiple sources and synthesising a strategic view.",
+    prompt: "Build me a competitive profile on TechCo's AI consulting practice — what they offer, who they serve, and where we beat them.",
+    steps: [
+      { phase:"act", text:"Scrape TechCo website, LinkedIn, press releases" },
+      { phase:"observe", text:"Map their service offerings and case studies" },
+      { phase:"reflect", text:"Need pricing and client sentiment data" },
+      { phase:"act", text:"Check G2 reviews, job postings for capability clues" },
+      { phase:"act", text:"Write competitive brief with SWOT and differentiators" }
+    ],
+    insight: "The agent builds a picture <strong>across multiple sources</strong>, using each finding to decide what to investigate next. Job postings reveal capabilities they're building but haven't announced."
+  },
+  {
+    icon: "🔧", name: "Debug & Fix",
+    complexity: 4, color: "var(--cornflower)",
+    compLabel: "Medium-High",
+    desc: "Trace a bug through a system, find root cause, fix it, and add preventive measures.",
+    prompt: "The London sales numbers are showing as £0 in the daily report. Find out why and fix it.",
+    steps: [
+      { phase:"act", text:"Read the report query, trace data flow" },
+      { phase:"observe", text:"Query logic is correct — issue is upstream" },
+      { phase:"act", text:"Query the database directly to isolate the break" },
+      { phase:"observe", text:"Region code mismatch: 'LON' vs 'LONDON'" },
+      { phase:"act", text:"Fix mapping + add automated test to prevent recurrence" }
+    ],
+    insight: "Debugging requires <strong>hypothesis-driven reasoning</strong>: form theory, test it, adjust. The agent went beyond the fix to add a preventive test — solving the class of problem, not just the instance."
+  },
+  {
+    icon: "📋", name: "Meeting Preparation",
+    complexity: 4, color: "var(--cornflower)",
+    compLabel: "Medium-High",
+    desc: "Pull context from 4+ sources, spot patterns, and produce a strategic brief.",
+    prompt: "Prep me for tomorrow's call with Vertex Finance. I want to walk in sharp.",
+    steps: [
+      { phase:"act", text:"Check Notion (client file), Gmail (recent emails)" },
+      { phase:"observe", text:"Open compliance question, no reply in 3 days" },
+      { phase:"act", text:"Search Drive for relevant case study, check Calendar" },
+      { phase:"observe", text:"New CTO attendee — signals technical validation stage" },
+      { phase:"act", text:"Write brief with compliance strategy + tech deep-dive" }
+    ],
+    insight: "The agent <strong>notices what humans might miss</strong>: a new attendee combined with an unanswered compliance question tells a story about where the deal is. That's intelligence, not just information."
+  },
+  {
+    icon: "🔄", name: "Scheduled Monitor",
+    complexity: 3, color: "var(--dodger)",
+    compLabel: "Medium",
+    desc: "A background agent that runs on a schedule — checking, alerting, and taking action when conditions are met.",
+    prompt: "Every morning at 8am, check if any client proposals are more than 5 days old without a response. If so, draft a follow-up email for each and flag them in Slack.",
+    steps: [
+      { phase:"act", text:"Query proposal tracker for stale items (>5 days, no response)" },
+      { phase:"observe", text:"2 proposals stale: Vertex Finance (7 days), BluePeak (6 days)" },
+      { phase:"act", text:"Draft personalised follow-up emails for each" },
+      { phase:"act", text:"Post alert to #sales Slack channel with summary" }
+    ],
+    insight: "Scheduled agents are <strong>always-on assistants</strong>. They don't wait to be asked — they proactively surface issues and take action. This runs every morning without anyone remembering to check."
+  },
+  {
+    icon: "🏗️", name: "Data Pipeline Build",
+    complexity: 5, color: "var(--cornflower)",
+    compLabel: "Complex",
+    desc: "Design and build a multi-step data pipeline with validation, error handling, and scheduling.",
+    prompt: "Build a pipeline that pulls our Stripe revenue data daily, enriches it with client data from Notion, and produces a weekly revenue-by-client dashboard.",
+    steps: [
+      { phase:"plan", text:"Design pipeline: Stripe API → transform → Notion join → dashboard" },
+      { phase:"act", text:"Write Stripe data extraction with error handling" },
+      { phase:"act", text:"Build Notion client lookup and data join logic" },
+      { phase:"observe", text:"3 clients have mismatched IDs between systems" },
+      { phase:"reflect", text:"Need fuzzy matching or manual mapping table" },
+      { phase:"act", text:"Create mapping table, build dashboard, add scheduler" }
+    ],
+    insight: "Building systems requires <strong>planning, execution, and adaptation</strong>. The agent discovered a data quality issue mid-build and adapted its approach — exactly what a senior developer would do."
+  },
+  {
+    icon: "🎯", name: "Outreach Campaign",
+    complexity: 6, color: "var(--reflect)",
+    compLabel: "Complex",
+    desc: "Identify targets, personalise outreach, send emails, and adapt based on responses — a multi-step reasoning loop over days.",
+    prompt: "Find 10 UK fintechs with 50–200 employees that don't have an AI strategy yet. Send each a personalised intro email referencing something specific about their business. Track responses and draft follow-ups.",
+    steps: [
+      { phase:"plan", text:"Define search criteria, email template framework, tracking system" },
+      { phase:"act", text:"Search Companies House, LinkedIn, and tech press for targets" },
+      { phase:"observe", text:"15 candidates found, filtered to 10 with no public AI initiatives" },
+      { phase:"act", text:"Research each company's recent news and challenges" },
+      { phase:"act", text:"Draft 10 personalised emails with specific business references" },
+      { phase:"observe", text:"3 replies (2 interested, 1 not now). 7 no response after 3 days." },
+      { phase:"reflect", text:"Interested replies mentioned compliance — lead with that angle in follow-ups" },
+      { phase:"act", text:"Draft follow-up emails adapting messaging based on response patterns" }
+    ],
+    insight: "This is a <strong>multi-day reasoning loop</strong>: the agent adapts its strategy based on real-world feedback. It noticed that compliance resonated and shifted the messaging. That's strategic reasoning, not just task execution."
+  }
+];
+
+let activeExample = -1;
+
+function initExamples() {
+  // Complexity bar segments
+  const maxC = 6;
+  const bar = document.getElementById('complexityBar');
+  bar.innerHTML = EXAMPLES.map(e => {
+    const w = (1 / EXAMPLES.length) * 100;
+    return `<div class="complexity-seg" style="width:${w}%;background:${e.color};opacity:${0.3 + (e.complexity/maxC)*0.7}"></div>`;
+  }).join('');
+
+  // Example cards
+  const grid = document.getElementById('examplesGrid');
+  grid.innerHTML = EXAMPLES.map((e, i) => `
+    <div class="example-card" onclick="selectExample(${i})" id="exCard${i}">
+      <div class="ec-top">
+        <span class="ec-icon">${e.icon}</span>
+        <span class="ec-complexity" style="color:${e.color};background:${e.color}15;border:1px solid ${e.color}40">${e.compLabel}</span>
+      </div>
+      <div class="ec-name">${e.name}</div>
+      <div class="ec-desc">${e.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectExample(idx) {
+  activeExample = (activeExample === idx) ? -1 : idx;
+  document.querySelectorAll('.example-card').forEach((c,i) => c.classList.toggle('active', i===activeExample));
+
+  const detail = document.getElementById('exampleDetail');
+  if (activeExample < 0) {
+    detail.classList.remove('visible');
+    return;
+  }
+
+  const e = EXAMPLES[activeExample];
+  detail.classList.add('visible');
+  detail.style.borderColor = e.color;
+
+  const phaseColors = { plan:'var(--plan)', act:'var(--act)', observe:'var(--observe)', reflect:'var(--reflect)' };
+  const phaseBgs = { plan:'rgba(124,92,252,0.12)', act:'rgba(0,177,255,0.12)', observe:'rgba(255,193,7,0.12)', reflect:'rgba(255,107,74,0.12)' };
+
+  const flowHTML = e.steps.map((s, i) => {
+    const arrow = i < e.steps.length - 1 ? '<span class="ed-arrow">→</span>' : '';
+    return `<span class="ed-step" style="color:${phaseColors[s.phase]};background:${phaseBgs[s.phase]}">${s.phase}: ${s.text}</span>${arrow}`;
+  }).join('');
+
+  detail.innerHTML = `
+    <div class="ed-title">${e.icon} ${e.name}</div>
+    <div class="ed-prompt" style="border-left-color:${e.color}">"${e.prompt}"</div>
+    <div class="ed-flow">${flowHTML}</div>
+    <div class="ed-insight">${e.insight}</div>
+  `;
+}
+
+/* ═══════ INIT ═══════ */
+initLoop();
+initExamples();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.mode-tab, .mode-btn, [class*=mode]') || document.querySelector('.tabs'),
+    title: 'Explore the loop or see examples',
+    desc: 'Switch between the interactive reasoning loop and real-world agentic AI examples.', pad: 8 },
+  { target: () => document.querySelector('.mission-btn, .mission, [class*=mission]') || document.querySelector('.missions'),
+    title: 'Pick a mission',
+    desc: 'Choose a task for the agent to solve. Each mission shows a different reasoning pattern.', pad: 8 },
+  { target: () => document.querySelector('.step-btn:not(.auto), [class*=step]') || document.querySelector('.controls'),
+    title: 'Step through the loop',
+    desc: 'Click Step to execute one iteration of Think → Act → Observe. Or hit Auto to watch it play out.', pad: 8 },
+  { target: () => document.querySelector('.log-entry, .feed, .log, [class*=log]') || document.querySelector('.feed-area'),
+    title: 'Agent\'s reasoning log',
+    desc: 'Each step appears here showing the agent\'s thinking, the action it took, and what it observed.', pad: 6 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

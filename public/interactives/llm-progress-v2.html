@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The AI Model Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gable-green: #1B2F3C;
+            --bright-turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet-red: #FF5F5F;
+            --cornflower: #6161FF;
+            --moonraker: #C5B6F1;
+            --seapink: #EFACA8;
+            --white: #FFFFFF;
+            --cloud: #D4DFE6;
+            --slate: #8FA4B3;
+            --card-width: clamp(280px, 90vw, 360px);
+            --card-height: clamp(380px, 125vw, 500px);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--gable-green);
+            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            color: var(--cloud);
+            font-weight: 300;
+        }
+
+        /* Main content area */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0;
+        }
+
+        /* Browse mode */
+        .browse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            perspective: 1200px;
+            position: relative;
+        }
+
+        .card-stack {
+            position: relative;
+            width: var(--card-width);
+            height: var(--card-height);
+            perspective: 1200px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 2px solid;
+            display: flex;
+            flex-direction: column;
+            padding: clamp(1.2rem, 3vw, 1.8rem);
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease-out;
+            transform: translateX(0) rotateY(0deg) scale(1);
+            opacity: 1;
+            background: linear-gradient(135deg, rgba(27, 47, 60, 0.95) 0%, rgba(27, 47, 60, 0.85) 100%);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        /* Card positioning in stack */
+        .card.active {
+            transform: translateX(0) rotateY(0deg) scale(1);
+            z-index: 10;
+            opacity: 1;
+        }
+
+        .card.prev {
+            transform: translateX(-120%) rotateY(25deg) scale(0.7);
+            z-index: 5;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .card.next {
+            transform: translateX(120%) rotateY(-25deg) scale(0.7);
+            z-index: 5;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Brand-specific border colours */
+        .card.openai { border-color: var(--dodger-blue); box-shadow: 0 0 20px rgba(0, 177, 255, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+        .card.anthropic { border-color: var(--cornflower); box-shadow: 0 0 20px rgba(97, 97, 255, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+        .card.google { border-color: var(--meadow-green); box-shadow: 0 0 20px rgba(23, 206, 149, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+        .card.meta { border-color: var(--bittersweet-red); box-shadow: 0 0 20px rgba(255, 95, 95, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+        .card.other { border-color: var(--moonraker); box-shadow: 0 0 20px rgba(197, 182, 241, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+
+        /* Legendary shimmer */
+        .card.legendary {
+            animation: legendary-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes legendary-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 200, 0, 0.2), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+            50% { box-shadow: 0 0 40px rgba(255, 200, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+        }
+
+        /* Card header */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: clamp(0.8rem, 2vw, 1.2rem);
+            gap: 0.5rem;
+        }
+
+        .rarity-badge {
+            font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid;
+        }
+
+        .rarity-common { border-color: var(--slate); color: var(--slate); }
+        .rarity-rare { border-color: var(--bright-turquoise); color: var(--bright-turquoise); }
+        .rarity-epic { border-color: var(--meadow-green); color: var(--meadow-green); }
+        .rarity-legendary { border-color: #FFD700; color: #FFD700; animation: shimmer 2s ease-in-out infinite; }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .card-year {
+            font-size: clamp(0.7rem, 1.8vw, 0.85rem);
+            color: var(--slate);
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Card icon and title */
+        .card-icon {
+            font-size: clamp(3rem, 8vw, 4.5rem);
+            text-align: center;
+            margin: clamp(0.6rem, 2vw, 1rem) 0;
+            line-height: 1;
+        }
+
+        .card-title {
+            font-size: clamp(1.3rem, 4vw, 1.8rem);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .card-creator {
+            font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+            color: var(--slate);
+            text-align: center;
+            margin-bottom: clamp(0.8rem, 2vw, 1.2rem);
+            font-weight: 400;
+        }
+
+        /* Divider */
+        .card-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: clamp(0.6rem, 2vw, 0.8rem) 0;
+        }
+
+        /* Stats section */
+        .card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(0.8rem, 2vw, 1.2rem);
+            margin-bottom: clamp(0.8rem, 2vw, 1.2rem);
+            font-size: clamp(0.65rem, 1.5vw, 0.8rem);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .stat-label {
+            color: var(--slate);
+            text-transform: uppercase;
+            font-size: clamp(0.6rem, 1.2vw, 0.7rem);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            color: var(--bright-turquoise);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+        }
+
+        .stat-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--dodger-blue), var(--bright-turquoise));
+            border-radius: 3px;
+            width: 0%;
+            animation: fill-bar 0.8s ease-out 0.2s forwards;
+        }
+
+        @keyframes fill-bar {
+            to { width: 100%; }
+        }
+
+        /* Achievement section */
+        .card-achievement {
+            margin-bottom: clamp(0.6rem, 1.5vw, 0.8rem);
+        }
+
+        .achievement-label {
+            color: var(--slate);
+            text-transform: uppercase;
+            font-size: clamp(0.55rem, 1.2vw, 0.65rem);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.3rem;
+        }
+
+        .achievement-text {
+            font-size: clamp(0.7rem, 1.6vw, 0.85rem);
+            color: var(--cloud);
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        /* Capability badges */
+        .card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(0.3rem, 1vw, 0.5rem);
+        }
+
+        .badge {
+            font-size: clamp(0.55rem, 1.2vw, 0.65rem);
+            padding: clamp(0.25rem, 0.5vw, 0.35rem) clamp(0.5rem, 1vw, 0.75rem);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--cloud);
+            font-weight: 500;
+            white-space: nowrap;
+            text-transform: capitalize;
+        }
+
+        /* Navigation */
+        .navigation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(1.5rem, 3vw, 2.5rem);
+            margin-top: clamp(1rem, 2vw, 1.5rem);
+            flex-wrap: wrap;
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-dot.active {
+            background: var(--bright-turquoise);
+            width: 24px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 188, 0.5);
+        }
+
+        .nav-arrow {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--cloud);
+            transition: all 0.3s ease;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--bright-turquoise);
+            border-color: var(--bright-turquoise);
+            box-shadow: 0 0 10px rgba(0, 255, 188, 0.3);
+        }
+
+        .nav-arrow:active {
+            transform: scale(0.95);
+        }
+
+        /* Mode selector */
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: clamp(0.5rem, 1vw, 0.75rem) clamp(1rem, 2vw, 1.5rem);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: var(--slate);
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .mode-btn.active {
+            background: var(--dodger-blue);
+            color: var(--gable-green);
+            border-color: var(--dodger-blue);
+            box-shadow: 0 0 15px rgba(0, 177, 255, 0.4);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: rgba(0, 177, 255, 0.1);
+            border-color: var(--dodger-blue);
+            color: var(--cloud);
+        }
+
+        /* Compare mode */
+        .compare-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .compare-container.active {
+            display: flex;
+        }
+
+        .compare-cards {
+            display: flex;
+            gap: clamp(1rem, 3vw, 2rem);
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            height: auto;
+        }
+
+        .compare-card {
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+        }
+
+        .compare-vs {
+            font-size: 1.5rem;
+            color: var(--slate);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .compare-selector {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .compare-thumb {
+            width: 60px;
+            height: 85px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .compare-thumb:hover {
+            border-color: var(--dodger-blue);
+            box-shadow: 0 0 10px rgba(0, 177, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .compare-thumb.selected {
+            border-color: var(--bright-turquoise);
+            box-shadow: 0 0 15px rgba(0, 255, 188, 0.5);
+        }
+
+        .compare-thumb-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 0.3rem;
+            background: linear-gradient(135deg, rgba(27, 47, 60, 0.9) 0%, rgba(27, 47, 60, 0.8) 100%);
+        }
+
+        .compare-thumb-name {
+            font-size: 0.5rem;
+            color: var(--slate);
+            margin-top: 0.2rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Timeline mode */
+        .timeline-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline-container.active {
+            display: flex;
+        }
+
+        .timeline-viewport {
+            width: 100%;
+            height: 60%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-track {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            min-width: min-content;
+            height: 100%;
+            align-items: center;
+        }
+
+        .timeline-card-thumb {
+            width: 80px;
+            height: 120px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(27, 47, 60, 0.9) 0%, rgba(27, 47, 60, 0.8) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            gap: 0.3rem;
+        }
+
+        .timeline-card-thumb:hover {
+            transform: scale(1.1);
+            border-color: var(--dodger-blue);
+            box-shadow: 0 0 15px rgba(0, 177, 255, 0.4);
+        }
+
+        .timeline-card-icon {
+            font-size: 2rem;
+        }
+
+        .timeline-card-year {
+            font-size: 0.6rem;
+            color: var(--slate);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .timeline-bar {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(90deg, transparent, rgba(0, 177, 255, 0.1), transparent);
+            border-top: 2px dashed rgba(255, 255, 255, 0.1);
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            gap: 2rem;
+            overflow-x: auto;
+        }
+
+        .timeline-year-mark {
+            font-size: 0.8rem;
+            color: var(--slate);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .timeline-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .timeline-overlay.active {
+            display: flex;
+        }
+
+        .timeline-overlay-card {
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+            color: var(--slate);
+            margin-top: 1.5rem;
+        }
+
+        .footer-logo {
+            font-weight: 700;
+            color: var(--bright-turquoise);
+            display: inline-block;
+            margin-right: 0.3rem;
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header {
+                margin-bottom: 1rem;
+            }
+
+            .header h1 {
+                margin-bottom: 0.2rem;
+            }
+
+            .compare-cards {
+                gap: 1rem;
+            }
+
+            .nav-arrow {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .mode-selector {
+                gap: 0.3rem;
+            }
+
+            .mode-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>The AI Model Collection</h1>
+        <p>Swipe through the models that changed everything</p>
+    </div>
+
+    <div class="content">
+        <!-- Browse Mode -->
+        <div class="browse-container active" id="browseMode">
+            <div class="card-stack" id="cardStack"></div>
+        </div>
+
+        <!-- Compare Mode -->
+        <div class="compare-container" id="compareMode">
+            <div class="compare-cards" id="compareCards"></div>
+            <div class="compare-selector" id="compareSelector"></div>
+        </div>
+
+        <!-- Timeline Mode -->
+        <div class="timeline-container" id="timelineMode">
+            <div class="timeline-viewport">
+                <div class="timeline-track" id="timelineTrack"></div>
+            </div>
+            <div class="timeline-bar" id="timelineBar"></div>
+        </div>
+
+        <!-- Timeline Overlay -->
+        <div class="timeline-overlay" id="timelineOverlay">
+            <div class="timeline-overlay-card" id="timelineOverlayCard"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-arrow" id="prevBtn" title="Previous card">‹</button>
+            <div class="nav-dots" id="navDots"></div>
+            <button class="nav-arrow" id="nextBtn" title="Next card">›</button>
+        </div>
+    </div>
+
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="browse">Browse</button>
+        <button class="mode-btn" data-mode="compare">Compare</button>
+        <button class="mode-btn" data-mode="timeline">Timeline</button>
+    </div>
+
+    <div class="footer">
+        <span class="footer-logo">AIA</span> Model Collection • Learn the AI Evolution
+    </div>
+
+    <script>
+        // Model Data
+        const models = [
+            {
+                id: 1,
+                name: "GPT-3",
+                creator: "OpenAI",
+                year: 2020,
+                icon: "🧠",
+                parameters: "175B",
+                context: "4K",
+                speed: 3,
+                cost: 1,
+                achievement: "First model to show emergent abilities at scale",
+                capabilities: ["Text Generation", "Few-shot", "Reasoning"],
+                rarity: "rare",
+                brand: "openai"
+            },
+            {
+                id: 2,
+                name: "PaLM",
+                creator: "Google",
+                year: 2022,
+                icon: "🌴",
+                parameters: "540B",
+                context: "8K",
+                speed: 2,
+                cost: 1,
+                achievement: "Demonstrated chain-of-thought reasoning",
+                capabilities: ["Reasoning", "Multi-task", "Hallucination"],
+                rarity: "rare",
+                brand: "google"
+            },
+            {
+                id: 3,
+                name: "ChatGPT (GPT-3.5)",
+                creator: "OpenAI",
+                year: 2022,
+                icon: "💬",
+                parameters: "~175B",
+                context: "4K",
+                speed: 4,
+                cost: 3,
+                achievement: "Made AI conversational for everyone",
+                capabilities: ["Chat", "Code", "RLHF"],
+                rarity: "epic",
+                brand: "openai"
+            },
+            {
+                id: 4,
+                name: "GPT-4",
+                creator: "OpenAI",
+                year: 2023,
+                icon: "👁️",
+                parameters: "~1.7T",
+                context: "32K",
+                speed: 2,
+                cost: 1,
+                achievement: "Multimodal — first to see images and text",
+                capabilities: ["Vision", "Analysis", "Multimodal"],
+                rarity: "legendary",
+                brand: "openai"
+            },
+            {
+                id: 5,
+                name: "Claude 2",
+                creator: "Anthropic",
+                year: 2023,
+                icon: "📚",
+                parameters: "Undisclosed",
+                context: "100K",
+                speed: 3,
+                cost: 2,
+                achievement: "First truly long-context model (100K tokens)",
+                capabilities: ["Long Context", "Safety", "Analysis"],
+                rarity: "rare",
+                brand: "anthropic"
+            },
+            {
+                id: 6,
+                name: "LLaMA 2",
+                creator: "Meta",
+                year: 2023,
+                icon: "🦙",
+                parameters: "7B–70B",
+                context: "4K",
+                speed: 4,
+                cost: 5,
+                achievement: "Open-source revolution — free models for everyone",
+                capabilities: ["Open Source", "Fine-tuning", "Accessible"],
+                rarity: "epic",
+                brand: "meta"
+            },
+            {
+                id: 7,
+                name: "Gemini 1.0",
+                creator: "Google",
+                year: 2023,
+                icon: "✨",
+                parameters: "Undisclosed",
+                context: "32K",
+                speed: 3,
+                cost: 2,
+                achievement: "Natively multimodal from the ground up",
+                capabilities: ["Multimodal", "Vision", "Audio"],
+                rarity: "rare",
+                brand: "google"
+            },
+            {
+                id: 8,
+                name: "Claude 3 Opus",
+                creator: "Anthropic",
+                year: 2024,
+                icon: "🎼",
+                parameters: "Undisclosed",
+                context: "200K",
+                speed: 2,
+                cost: 1,
+                achievement: "Near-human reasoning on complex tasks",
+                capabilities: ["Reasoning", "Long Context", "Accuracy"],
+                rarity: "epic",
+                brand: "anthropic"
+            },
+            {
+                id: 9,
+                name: "GPT-4o",
+                creator: "OpenAI",
+                year: 2024,
+                icon: "🌐",
+                parameters: "Undisclosed",
+                context: "128K",
+                speed: 5,
+                cost: 3,
+                achievement: "Omni-model: voice, vision, and text unified",
+                capabilities: ["Voice", "Vision", "Text", "Speed"],
+                rarity: "legendary",
+                brand: "openai"
+            },
+            {
+                id: 10,
+                name: "Gemini 1.5 Pro",
+                creator: "Google",
+                year: 2024,
+                icon: "🎯",
+                parameters: "Undisclosed",
+                context: "1M",
+                speed: 3,
+                cost: 2,
+                achievement: "One million token context — read entire codebases",
+                capabilities: ["Million Context", "Code", "Video"],
+                rarity: "legendary",
+                brand: "google"
+            },
+            {
+                id: 11,
+                name: "LLaMA 3.1",
+                creator: "Meta",
+                year: 2024,
+                icon: "⚡",
+                parameters: "8B–405B",
+                context: "128K",
+                speed: 4,
+                cost: 5,
+                achievement: "Open-source catches up to closed-source",
+                capabilities: ["Open Source", "Competitive", "Scalable"],
+                rarity: "epic",
+                brand: "meta"
+            },
+            {
+                id: 12,
+                name: "Claude 3.5 Sonnet",
+                creator: "Anthropic",
+                year: 2024,
+                icon: "🎵",
+                parameters: "Undisclosed",
+                context: "200K",
+                speed: 5,
+                cost: 3,
+                achievement: "Best code generation, fastest frontier model",
+                capabilities: ["Code", "Speed", "Accuracy"],
+                rarity: "legendary",
+                brand: "anthropic"
+            },
+            {
+                id: 13,
+                name: "o1",
+                creator: "OpenAI",
+                year: 2024,
+                icon: "🤔",
+                parameters: "Undisclosed",
+                context: "128K",
+                speed: 1,
+                cost: 1,
+                achievement: "Reasoning model — thinks before answering",
+                capabilities: ["Reasoning", "Math", "Logic"],
+                rarity: "legendary",
+                brand: "openai"
+            },
+            {
+                id: 14,
+                name: "DeepSeek R1",
+                creator: "DeepSeek",
+                year: 2025,
+                icon: "🔍",
+                parameters: "671B MoE",
+                context: "128K",
+                speed: 2,
+                cost: 4,
+                achievement: "Open-source reasoning model rivalling o1",
+                capabilities: ["Reasoning", "Open", "Efficient"],
+                rarity: "epic",
+                brand: "other"
+            },
+            {
+                id: 15,
+                name: "Claude 3.7 Sonnet",
+                creator: "Anthropic",
+                year: 2025,
+                icon: "🧬",
+                parameters: "Undisclosed",
+                context: "200K",
+                speed: 4,
+                cost: 3,
+                achievement: "Extended thinking — visible chain of thought",
+                capabilities: ["Thinking", "Reasoning", "Transparency"],
+                rarity: "legendary",
+                brand: "anthropic"
+            }
+        ];
+
+        // State
+        let currentIndex = 0;
+        let currentMode = 'browse';
+        let compareIndices = [0, 1];
+
+        // DOM Elements
+        const cardStack = document.getElementById('cardStack');
+        const navDots = document.getElementById('navDots');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const browseMode = document.getElementById('browseMode');
+        const compareMode = document.getElementById('compareMode');
+        const timelineMode = document.getElementById('timelineMode');
+        const timelineOverlay = document.getElementById('timelineOverlay');
+        const compareCards = document.getElementById('compareCards');
+        const compareSelector = document.getElementById('compareSelector');
+        const timelineTrack = document.getElementById('timelineTrack');
+        const timelineBar = document.getElementById('timelineBar');
+
+        // Initialize
+        function init() {
+            renderCards();
+            renderNavDots();
+            renderCompareThumbnails();
+            renderTimeline();
+            setupEventListeners();
+        }
+
+        // Render Browse Cards
+        function renderCards() {
+            cardStack.innerHTML = '';
+            models.forEach((model, index) => {
+                const card = createCard(model, index);
+                cardStack.appendChild(card);
+            });
+            updateCardPositions();
+        }
+
+        // Create Card Element
+        function createCard(model, index) {
+            const card = document.createElement('div');
+            card.className = `card ${model.brand}`;
+            if (model.rarity === 'legendary') {
+                card.classList.add('legendary');
+            }
+
+            const statBarSpeed = Math.round((model.speed / 5) * 100);
+            const statBarCost = Math.round((model.cost / 5) * 100);
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="rarity-badge rarity-${model.rarity}">${model.rarity}</span>
+                    <span class="card-year">${model.year}</span>
+                </div>
+                <div class="card-icon">${model.icon}</div>
+                <div class="card-title">${model.name}</div>
+                <div class="card-creator">${model.creator}</div>
+                <div class="card-divider"></div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-label">Parameters</div>
+                        <div class="stat-value">${model.parameters}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Context</div>
+                        <div class="stat-value">${model.context}</div>
+                    </div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-label">Speed</div>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" style="width: 0%; animation-delay: 0.3s; --target-width: ${statBarSpeed}%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Cost</div>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" style="width: 0%; animation-delay: 0.4s; --target-width: ${statBarCost}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-divider"></div>
+                <div class="card-achievement">
+                    <div class="achievement-label">Key Achievement</div>
+                    <div class="achievement-text">${model.achievement}</div>
+                </div>
+                <div class="card-badges">
+                    ${model.capabilities.map(cap => `<span class="badge">${cap}</span>`).join('')}
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                if (currentMode === 'browse') {
+                    if (index > currentIndex) nextCard();
+                    else if (index < currentIndex) prevCard();
+                }
+            });
+
+            return card;
+        }
+
+        // Update card positions in stack
+        function updateCardPositions() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.classList.remove('active', 'prev', 'next');
+                if (index === currentIndex) {
+                    card.classList.add('active');
+                } else if (index === (currentIndex - 1 + models.length) % models.length) {
+                    card.classList.add('prev');
+                } else if (index === (currentIndex + 1) % models.length) {
+                    card.classList.add('next');
+                }
+            });
+            updateNavDots();
+        }
+
+        // Navigation
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % models.length;
+            updateCardPositions();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + models.length) % models.length;
+            updateCardPositions();
+        }
+
+        // Render Navigation Dots
+        function renderNavDots() {
+            navDots.innerHTML = '';
+            models.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = `nav-dot ${index === currentIndex ? 'active' : ''}`;
+                dot.addEventListener('click', () => {
+                    currentIndex = index;
+                    updateCardPositions();
+                });
+                navDots.appendChild(dot);
+            });
+        }
+
+        function updateNavDots() {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        // Compare Mode
+        function renderCompareThumbnails() {
+            compareSelector.innerHTML = '';
+            models.forEach((model, index) => {
+                const thumb = document.createElement('button');
+                thumb.className = `compare-thumb ${compareIndices.includes(index) ? 'selected' : ''}`;
+                thumb.innerHTML = `
+                    <div class="compare-thumb-content">
+                        <div>${model.icon}</div>
+                        <div class="compare-thumb-name">${model.name.split(' ')[0]}</div>
+                    </div>
+                `;
+                thumb.addEventListener('click', () => {
+                    selectCompareModel(index);
+                });
+                compareSelector.appendChild(thumb);
+            });
+        }
+
+        function selectCompareModel(index) {
+            if (compareIndices[0] === index) {
+                compareIndices[0] = compareIndices[1];
+                compareIndices[1] = index;
+            } else if (compareIndices[1] === index) {
+                compareIndices[0] = compareIndices[1];
+                compareIndices[1] = index;
+            } else {
+                compareIndices[1] = index;
+            }
+            renderCompare();
+            renderCompareThumbnails();
+        }
+
+        function renderCompare() {
+            compareCards.innerHTML = '';
+            const model1 = models[compareIndices[0]];
+            const model2 = models[compareIndices[1]];
+
+            const card1 = createCard(model1, compareIndices[0]);
+            compareCards.appendChild(card1);
+
+            const vs = document.createElement('div');
+            vs.className = 'compare-vs';
+            vs.textContent = 'VS';
+            compareCards.appendChild(vs);
+
+            const card2 = createCard(model2, compareIndices[1]);
+            compareCards.appendChild(card2);
+        }
+
+        // Timeline Mode
+        function renderTimeline() {
+            timelineTrack.innerHTML = '';
+            timelineBar.innerHTML = '';
+
+            // Group models by year
+            const years = [...new Set(models.map(m => m.year))].sort((a, b) => a - b);
+
+            // Render cards in timeline
+            models.forEach((model, index) => {
+                const thumb = document.createElement('button');
+                thumb.className = 'timeline-card-thumb';
+                thumb.innerHTML = `
+                    <div class="timeline-card-icon">${model.icon}</div>
+                    <div class="timeline-card-year">${model.year}</div>
+                `;
+                thumb.addEventListener('click', () => {
+                    showTimelineOverlay(index);
+                });
+                timelineTrack.appendChild(thumb);
+            });
+
+            // Render year marks
+            years.forEach(year => {
+                const mark = document.createElement('div');
+                mark.className = 'timeline-year-mark';
+                mark.textContent = year;
+                timelineBar.appendChild(mark);
+            });
+        }
+
+        function showTimelineOverlay(index) {
+            const overlayCard = document.getElementById('timelineOverlayCard');
+            overlayCard.innerHTML = '';
+            const card = createCard(models[index], index);
+            overlayCard.appendChild(card);
+            timelineOverlay.classList.add('active');
+        }
+
+        function hideTimelineOverlay() {
+            timelineOverlay.classList.remove('active');
+        }
+
+        // Mode Switching
+        function switchMode(mode) {
+            currentMode = mode;
+            browseMode.classList.toggle('active', mode === 'browse');
+            compareMode.classList.toggle('active', mode === 'compare');
+            timelineMode.classList.toggle('active', mode === 'timeline');
+
+            modeBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            if (mode === 'compare') {
+                renderCompare();
+                renderCompareThumbnails();
+            }
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            prevBtn.addEventListener('click', prevCard);
+            nextBtn.addEventListener('click', nextCard);
+
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchMode(btn.dataset.mode);
+                });
+            });
+
+            timelineOverlay.addEventListener('click', (e) => {
+                if (e.target === timelineOverlay) {
+                    hideTimelineOverlay();
+                }
+            });
+
+            // Touch/Swipe
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                if (currentMode !== 'browse') return;
+                touchStartX = e.changedTouches[0].screenX;
+            });
+
+            document.addEventListener('touchend', (e) => {
+                if (currentMode !== 'browse') return;
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+
+            function handleSwipe() {
+                if (touchStartX - touchEndX > 50) {
+                    nextCard();
+                } else if (touchEndX - touchStartX > 50) {
+                    prevCard();
+                }
+            }
+
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                if (currentMode === 'browse') {
+                    if (e.key === 'ArrowLeft') prevCard();
+                    if (e.key === 'ArrowRight') nextCard();
+                }
+            });
+        }
+
+        // Fix stat bars animation
+        const style = document.createElement('style');
+        style.textContent = `
+            .stat-bar {
+                animation: fill-bar 0.8s ease-out 0.2s forwards;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Research: Growing Tree</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gable-green: #1B2F3C;
+            --turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet: #FF5F5F;
+            --cornflower: #6161FF;
+            --moonraker: #C5B6F1;
+            --white: #FFFFFF;
+            --cloud: #D4DFE6;
+            --slate: #8FA4B3;
+
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--gable-green);
+            color: var(--white);
+            font-family: var(--font-primary);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 2rem 2rem 1rem;
+            background: linear-gradient(180deg, rgba(27,47,60,1) 0%, rgba(27,47,60,0.8) 100%);
+            border-bottom: 1px solid rgba(0,255,188,0.1);
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            color: var(--slate);
+            font-weight: 300;
+        }
+
+        .header-branding {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--slate);
+            font-family: var(--font-mono);
+        }
+
+        /* MAIN CONTAINER */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        /* LEFT PANEL */
+        .left-panel {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            padding-right: 1rem;
+            border-right: 1px solid rgba(0,255,188,0.1);
+        }
+
+        .left-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .left-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb {
+            background: var(--slate);
+            border-radius: 3px;
+        }
+
+        .panel-section {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,255,188,0.15);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .panel-section h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--turquoise);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .panel-section p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--cloud);
+            margin-bottom: 0.5rem;
+        }
+
+        .question-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--dodger-blue);
+            border-radius: 8px;
+            color: var(--white);
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .question-input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.1);
+            border-color: var(--turquoise);
+        }
+
+        .question-input::placeholder {
+            color: var(--slate);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.65rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-primary {
+            background: var(--turquoise);
+            color: var(--gable-green);
+            flex: 1;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,255,188,0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--turquoise);
+            border: 1px solid var(--turquoise);
+            flex: 1;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(0,255,188,0.1);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(0,255,188,0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid var(--turquoise);
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--turquoise);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--gable-green);
+            border-radius: 10px;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        .list-item {
+            background: rgba(0,0,0,0.3);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid var(--dodger-blue);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .list-item:hover {
+            background: rgba(0,0,0,0.5);
+            transform: translateX(4px);
+        }
+
+        .list-item-label {
+            color: var(--slate);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.25rem;
+        }
+
+        .list-item-text {
+            color: var(--cloud);
+        }
+
+        .stage-indicator {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 1rem 0;
+        }
+
+        .stage-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(0,255,188,0.3);
+            border: 1px solid var(--turquoise);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stage-dot.active {
+            background: var(--turquoise);
+            width: 28px;
+            border-radius: 5px;
+        }
+
+        /* CANVAS AREA */
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.3) 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0,255,188,0.1);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* FOOTER */
+        .footer {
+            padding: 1rem 2rem;
+            border-top: 1px solid rgba(0,255,188,0.1);
+            font-size: 0.75rem;
+            color: var(--slate);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .footer-left {
+            font-family: var(--font-mono);
+        }
+
+        .footer-right {
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* ANNOTATION */
+        .annotation {
+            position: absolute;
+            background: rgba(0,255,188,0.1);
+            border: 1px solid var(--turquoise);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            color: var(--turquoise);
+            max-width: 200px;
+            pointer-events: none;
+            animation: fadeInUp 0.6s ease-out;
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* TOOLTIP */
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: var(--turquoise);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 200px;
+            word-wrap: break-word;
+            border: 1px solid var(--turquoise);
+            display: none;
+        }
+
+        .tooltip.visible {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .left-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(0,255,188,0.1);
+                max-height: 35vh;
+                padding-right: 0;
+                padding-bottom: 1rem;
+            }
+
+            .canvas-container {
+                flex: 1;
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.85rem;
+            }
+
+            .footer {
+                padding: 0.75rem 1.5rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+
+            .footer-right {
+                gap: 1rem;
+            }
+        }
+
+        /* ANIMATIONS */
+        @keyframes sway {
+            0%, 100% {
+                transform: translateX(0px);
+            }
+            50% {
+                transform: translateX(2px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 4px rgba(0,255,188,0.4));
+            }
+            50% {
+                filter: drop-shadow(0 0 12px rgba(0,255,188,0.8));
+            }
+        }
+    
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>Deep Research</h1>
+                <p>Watch a question grow into understanding</p>
+            </div>
+            <div class="header-branding">
+                <div>AIA OS</div>
+                <div style="font-size: 0.65rem;">Growing Tree v2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <!-- Question Input -->
+            <div class="panel-section" id="question-section">
+                <h3>Research Question</h3>
+                <input
+                    type="text"
+                    class="question-input"
+                    id="question-input"
+                    placeholder="What is your research question?"
+                    value="How is AI changing employee turnover in the UK tech sector?"
+                >
+                <div class="button-group" style="margin-top: 1rem;">
+                    <button class="btn-primary" id="plant-btn">Plant Seed</button>
+                </div>
+            </div>
+
+            <!-- Stage Info -->
+            <div class="panel-section" id="info-section">
+                <h3>Current Stage</h3>
+                <p id="info-text">Enter a research question and plant the seed to begin.</p>
+            </div>
+
+            <!-- Sub-Questions (Stage 2+) -->
+            <div class="panel-section" id="branches-section" style="display: none;">
+                <h3>Sub-Questions</h3>
+                <div id="branches-list"></div>
+            </div>
+
+            <!-- Findings (Stage 3+) -->
+            <div class="panel-section" id="findings-section" style="display: none;">
+                <h3>Findings</h3>
+                <div id="findings-list"></div>
+            </div>
+
+            <!-- Conclusions (Stage 4+) -->
+            <div class="panel-section" id="conclusions-section" style="display: none;">
+                <h3>Conclusions</h3>
+                <div id="conclusions-list"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="panel-section">
+                <h3>Controls</h3>
+                <div class="button-group">
+                    <button class="btn-primary" id="next-btn" disabled>Next Stage</button>
+                    <button class="btn-secondary btn-sm" id="reset-btn">Reset</button>
+                </div>
+                <div class="toggle-group" style="margin-top: 1rem;">
+                    <div class="toggle-switch" id="auto-toggle"></div>
+                    <label for="auto-toggle" style="font-size: 0.85rem; cursor: pointer;">Auto-grow</label>
+                </div>
+            </div>
+
+            <!-- Stage Indicator -->
+            <div class="stage-indicator" id="stage-indicator">
+                <div class="stage-dot active" data-stage="0"></div>
+                <div class="stage-dot" data-stage="1"></div>
+                <div class="stage-dot" data-stage="2"></div>
+                <div class="stage-dot" data-stage="3"></div>
+                <div class="stage-dot" data-stage="4"></div>
+            </div>
+        </div>
+
+        <!-- CANVAS AREA -->
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-left">AI Accelerator Limited</div>
+        <div class="footer-right">
+            <span>2 Appleby Yard, London SE10 0BJ</span>
+            <span>hello@aiaccelerator.uk</span>
+        </div>
+    </div>
+
+    <!-- TOOLTIP -->
+    <div class="tooltip" id="tooltip"></div>
+
+    
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            colors: {
+                turquoise: '#00FFBC',
+                dodgerBlue: '#00B1FF',
+                meadowGreen: '#17CE95',
+                bittersweet: '#FF5F5F',
+                cornflower: '#6161FF',
+                moonraker: '#C5B6F1',
+                white: '#FFFFFF',
+                cloud: '#D4DFE6',
+                slate: '#8FA4B3',
+                dark: '#1B2F3C',
+            },
+            branches: [
+                {
+                    id: 'b1',
+                    question: 'What are current UK tech turnover rates?',
+                    color: '#FF5F5F',
+                    angle: 2.8,
+                    findings: [
+                        { text: 'UK tech turnover avg. 13.2% annually (2024)', source: 'Heidrick & Struggles' },
+                        { text: 'Senior roles: 8.5%, Junior roles: 21.3%', source: 'TechUK Survey' },
+                    ]
+                },
+                {
+                    id: 'b2',
+                    question: 'Which AI tools are being used in HR?',
+                    color: '#6161FF',
+                    angle: 0.6,
+                    findings: [
+                        { text: 'ATS systems, chatbots, predictive analytics', source: 'Gartner' },
+                        { text: '67% of UK firms use some form of HR AI', source: 'CIPD Report 2025' },
+                        { text: 'Most tools focus on screening and scheduling', source: 'Internal analysis' },
+                    ]
+                },
+                {
+                    id: 'b3',
+                    question: 'What do employees say about AI at work?',
+                    color: '#17CE95',
+                    angle: 3.6,
+                    findings: [
+                        { text: '43% concerned about job displacement', source: 'Employee Survey' },
+                        { text: '28% see AI improving efficiency', source: 'Workplace Pulse' },
+                        { text: 'Lack of transparency breeds anxiety', source: 'Qualitative interviews' },
+                    ]
+                },
+                {
+                    id: 'b4',
+                    question: 'How are companies measuring AI\'s impact on retention?',
+                    color: '#C5B6F1',
+                    angle: 0.2,
+                    findings: [
+                        { text: '52% do not formally measure AI impact', source: 'HR Leaders Survey' },
+                        { text: 'Most use turnover rate as sole metric', source: 'Industry interview' },
+                    ]
+                },
+                {
+                    id: 'b5',
+                    question: 'What are the risks of AI in people management?',
+                    color: '#00B1FF',
+                    angle: 1.57,
+                    findings: [
+                        { text: 'Bias in algorithmic screening documented', source: 'Harvard Business Review' },
+                        { text: 'Legal/compliance challenges emerging', source: 'Employment Law Review' },
+                    ]
+                }
+            ],
+            conclusions: [
+                {
+                    text: 'AI adoption in UK tech is reshaping retention dynamics, but measurement lags implementation.',
+                    color: '#00FFBC'
+                },
+                {
+                    text: 'Employee perception and trust are critical — transparency is the missing link.',
+                    color: '#17CE95'
+                },
+                {
+                    text: 'Risks (bias, legal) exist but are under-monitored; organisations must invest in governance.',
+                    color: '#6161FF'
+                },
+                {
+                    text: 'Sector average turnover is 13.2%, but AI tools are still too new to show impact on this metric.',
+                    color: '#FF5F5F'
+                }
+            ],
+            annotations: [
+                'The AI doesn\'t just search — it plans',
+                'Complex questions need multiple angles',
+                'Not every source agrees — that\'s valuable data',
+                'Synthesis = more than summarisation'
+            ]
+        };
+
+        // ===== STATE =====
+        let state = {
+            stage: 0,
+            question: 'How is AI changing employee turnover in the UK tech sector?',
+            isAutoGrowing: false,
+            animationInProgress: false,
+            branches: [],
+            hoveredNode: null,
+        };
+
+        // ===== DOM ELEMENTS =====
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const questionInput = document.getElementById('question-input');
+        const plantBtn = document.getElementById('plant-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const autoToggle = document.getElementById('auto-toggle');
+        const infoText = document.getElementById('info-text');
+        const tooltip = document.getElementById('tooltip');
+        const stageDots = document.querySelectorAll('.stage-dot');
+
+        // ===== CANVAS SETUP =====
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            redraw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ===== TREE DRAWING =====
+        class TreeNode {
+            constructor(x, y, type = 'seed') {
+                this.x = x;
+                this.y = y;
+                this.type = type; // seed, trunk, branch, leaf, fruit
+                this.color = '#FFFFFF';
+                this.radius = 8;
+                this.growthFactor = 0; // 0 to 1
+                this.children = [];
+                this.branchData = null;
+            }
+
+            draw(ctx, currentGrowth = 1) {
+                const displayRadius = this.radius * currentGrowth;
+
+                if (this.type === 'seed') {
+                    ctx.fillStyle = CONFIG.colors.turquoise;
+                    ctx.shadowColor = 'rgba(0,255,188,0.6)';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, displayRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowColor = 'transparent';
+                } else if (this.type === 'leaf' || this.type === 'fruit') {
+                    ctx.fillStyle = this.color;
+                    if (this.type === 'fruit') {
+                        ctx.shadowColor = this.color;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, displayRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowColor = 'transparent';
+                }
+            }
+        }
+
+        function drawBranch(ctx, fromX, fromY, toX, toY, color, growth = 1) {
+            const actualToX = fromX + (toX - fromX) * growth;
+            const actualToY = fromY + (toY - fromY) * growth;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+
+            // Add slight curvature
+            const midX = (fromX + actualToX) / 2 + (Math.random() - 0.5) * 15;
+            const midY = (fromY + actualToY) / 2 - Math.abs(actualToY - fromY) * 0.2;
+
+            ctx.quadraticCurveTo(midX, midY, actualToX, actualToY);
+            ctx.stroke();
+        }
+
+        function drawTrunk(ctx, growth = 1) {
+            const startX = canvas.width / 2;
+            const startY = canvas.height * 0.8;
+            const endX = canvas.width / 2;
+            const endY = canvas.height * 0.35;
+
+            const actualEndY = startY - (startY - endY) * growth;
+
+            const gradient = ctx.createLinearGradient(startX, startY, endX, actualEndY);
+            gradient.addColorStop(0, CONFIG.colors.slate);
+            gradient.addColorStop(1, CONFIG.colors.cloud);
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            // Wavy trunk
+            const points = 20;
+            for (let i = 0; i <= points; i++) {
+                const t = i / points;
+                const waveAmount = Math.sin(t * Math.PI * 2) * 3;
+                const x = startX + waveAmount;
+                const y = startY - (startY - endY) * t * growth;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function calculateBranchEndpoint(startX, startY, angle, length, growth = 1) {
+            const actualLength = length * growth;
+            return {
+                x: startX + Math.cos(angle) * actualLength,
+                y: startY - Math.sin(angle) * actualLength
+            };
+        }
+
+        function drawTree(growth = 1) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Soil texture (very subtle)
+            const soilGradient = ctx.createLinearGradient(0, canvas.height * 0.85, 0, canvas.height);
+            soilGradient.addColorStop(0, 'transparent');
+            soilGradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+            ctx.fillStyle = soilGradient;
+            ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.15);
+
+            const seedNode = new TreeNode(canvas.width / 2, canvas.height * 0.8, 'seed');
+
+            if (state.stage >= 0) {
+                seedNode.draw(ctx, state.stage === 0 ? growth : 1);
+            }
+
+            if (state.stage >= 1) {
+                drawTrunk(ctx, state.stage === 1 ? growth : 1);
+            }
+
+            if (state.stage >= 2) {
+                const branchGrowth = state.stage === 2 ? growth : 1;
+                const trunkEndX = canvas.width / 2;
+                const trunkEndY = canvas.height * 0.35;
+
+                CONFIG.branches.forEach((branchConfig, idx) => {
+                    const endpoint = calculateBranchEndpoint(
+                        trunkEndX,
+                        trunkEndY,
+                        branchConfig.angle,
+                        120,
+                        branchGrowth
+                    );
+
+                    drawBranch(ctx, trunkEndX, trunkEndY, endpoint.x, endpoint.y, branchConfig.color, branchGrowth);
+
+                    // Store branch data for interaction
+                    if (!state.branches[idx]) {
+                        state.branches[idx] = {
+                            startX: trunkEndX,
+                            startY: trunkEndY,
+                            endX: endpoint.x,
+                            endY: endpoint.y,
+                            color: branchConfig.color,
+                            data: branchConfig
+                        };
+                    } else {
+                        state.branches[idx].endX = endpoint.x;
+                        state.branches[idx].endY = endpoint.y;
+                    }
+                });
+            }
+
+            if (state.stage >= 3) {
+                const leafGrowth = state.stage === 3 ? growth : 1;
+
+                CONFIG.branches.forEach((branchConfig, idx) => {
+                    if (!state.branches[idx]) return;
+
+                    const branch = state.branches[idx];
+                    const leafCount = branchConfig.findings.length;
+
+                    branchConfig.findings.forEach((finding, findingIdx) => {
+                        const t = (findingIdx + 1) / (leafCount + 1);
+                        const leafX = branch.startX + (branch.endX - branch.startX) * t;
+                        const leafY = branch.startY + (branch.endY - branch.startY) * t;
+
+                        const leafNode = new TreeNode(leafX, leafY, 'leaf');
+                        leafNode.color = branch.color;
+                        leafNode.radius = 4;
+
+                        ctx.globalAlpha = leafGrowth;
+                        leafNode.draw(ctx, 1);
+                        ctx.globalAlpha = 1;
+                    });
+                });
+            }
+
+            if (state.stage >= 4) {
+                const fruitGrowth = state.stage === 4 ? growth : 1;
+
+                CONFIG.branches.forEach((branchConfig, idx) => {
+                    if (!state.branches[idx]) return;
+
+                    const branch = state.branches[idx];
+                    const fruitNode = new TreeNode(branch.endX, branch.endY, 'fruit');
+                    fruitNode.color = CONFIG.colors.turquoise;
+                    fruitNode.radius = 7;
+
+                    ctx.globalAlpha = fruitGrowth;
+                    fruitNode.draw(ctx, 1);
+                    ctx.globalAlpha = 1;
+                });
+            }
+        }
+
+        function redraw() {
+            drawTree(1);
+        }
+
+        // ===== ANIMATION =====
+        function animateStageGrowth() {
+            if (state.animationInProgress) return;
+            state.animationInProgress = true;
+
+            const startTime = performance.now();
+            const duration = 1200; // ms
+
+            function frame(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawTree(progress);
+
+                if (progress < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    state.animationInProgress = false;
+                    redraw();
+                }
+            }
+
+            requestAnimationFrame(frame);
+        }
+
+        // ===== STAGE TRANSITIONS =====
+        function updateStage(newStage) {
+            if (newStage < 0 || newStage > 4 || state.animationInProgress) return;
+
+            state.stage = newStage;
+            updateUI();
+            animateStageGrowth();
+
+            // Show annotation
+            if (CONFIG.annotations[newStage]) {
+                showAnnotation(CONFIG.annotations[newStage], newStage);
+            }
+        }
+
+        function nextStage() {
+            if (state.stage < 4) {
+                updateStage(state.stage + 1);
+                if (state.isAutoGrowing && state.stage < 4) {
+                    setTimeout(nextStage, 2000);
+                }
+            }
+        }
+
+        function resetTree() {
+            state.stage = 0;
+            state.branches = [];
+            updateUI();
+            redraw();
+            hideTooltip();
+        }
+
+        // ===== UI UPDATES =====
+        function updateUI() {
+            const stageTexts = [
+                'Enter a research question and plant the seed to begin.',
+                'The seed grows into a trunk — your structured research plan.',
+                'The trunk branches into sub-questions. Each branch explores a different angle.',
+                'Leaves grow from each branch — these are your findings from different sources.',
+                'Fruit appears at the branch tips — these are your synthesised conclusions.'
+            ];
+
+            infoText.textContent = stageTexts[state.stage] || '';
+
+            nextBtn.disabled = state.stage >= 4;
+            plantBtn.disabled = state.stage > 0;
+
+            // Update stage dots
+            stageDots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx <= state.stage);
+            });
+
+            // Show/hide panels
+            document.getElementById('branches-section').style.display = state.stage >= 2 ? 'block' : 'none';
+            document.getElementById('findings-section').style.display = state.stage >= 3 ? 'block' : 'none';
+            document.getElementById('conclusions-section').style.display = state.stage >= 4 ? 'block' : 'none';
+
+            // Populate branches list
+            if (state.stage >= 2) {
+                const branchesListEl = document.getElementById('branches-list');
+                branchesListEl.innerHTML = '';
+                CONFIG.branches.forEach(branch => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `<div class="list-item-label" style="color: ${branch.color};">Branch</div><div class="list-item-text">${branch.question}</div>`;
+                    item.addEventListener('click', () => highlightBranch(branch.id));
+                    branchesListEl.appendChild(item);
+                });
+            }
+
+            // Populate findings list
+            if (state.stage >= 3) {
+                const findingsListEl = document.getElementById('findings-list');
+                findingsListEl.innerHTML = '';
+                CONFIG.branches.forEach(branch => {
+                    branch.findings.forEach(finding => {
+                        const item = document.createElement('div');
+                        item.className = 'list-item';
+                        item.style.borderLeftColor = branch.color;
+                        item.innerHTML = `<div class="list-item-label">${finding.source}</div><div class="list-item-text">${finding.text}</div>`;
+                        findingsListEl.appendChild(item);
+                    });
+                });
+            }
+
+            // Populate conclusions list
+            if (state.stage >= 4) {
+                const conclusionsListEl = document.getElementById('conclusions-list');
+                conclusionsListEl.innerHTML = '';
+                CONFIG.conclusions.forEach(conclusion => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.style.borderLeftColor = conclusion.color;
+                    item.innerHTML = `<div class="list-item-text">${conclusion.text}</div>`;
+                    conclusionsListEl.appendChild(item);
+                });
+            }
+        }
+
+        function highlightBranch(branchId) {
+            // Find branch and flash it
+            const branch = CONFIG.branches.find(b => b.id === branchId);
+            if (!branch) return;
+
+            // Simple visual feedback
+            redraw();
+        }
+
+        function showAnnotation(text, stage) {
+            const annotation = document.createElement('div');
+            annotation.className = 'annotation';
+            annotation.textContent = text;
+            annotation.style.left = '2rem';
+            annotation.style.top = (100 + stage * 80) + 'px';
+            document.body.appendChild(annotation);
+
+            setTimeout(() => {
+                annotation.style.opacity = '0';
+                annotation.style.transition = 'opacity 0.6s ease';
+                setTimeout(() => annotation.remove(), 600);
+            }, 3000);
+        }
+
+        function showTooltip(x, y, text) {
+            tooltip.textContent = text;
+            tooltip.classList.add('visible');
+            tooltip.style.left = (x + 10) + 'px';
+            tooltip.style.top = (y + 10) + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+        }
+
+        // ===== EVENT LISTENERS =====
+        plantBtn.addEventListener('click', () => {
+            state.question = questionInput.value || CONFIG.branches[0].question;
+            updateStage(1);
+        });
+
+        nextBtn.addEventListener('click', nextStage);
+        resetBtn.addEventListener('click', resetTree);
+
+        autoToggle.addEventListener('click', () => {
+            state.isAutoGrowing = !state.isAutoGrowing;
+            autoToggle.classList.toggle('active');
+            if (state.isAutoGrowing && state.stage < 4) {
+                setTimeout(nextStage, 1500);
+            }
+        });
+
+        stageDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const stage = parseInt(dot.dataset.stage);
+                updateStage(stage);
+            });
+        });
+
+        // Canvas interaction
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            hideTooltip();
+
+            if (state.stage >= 3) {
+                // Check for leaf/fruit hover
+                CONFIG.branches.forEach((branchConfig, idx) => {
+                    if (!state.branches[idx]) return;
+
+                    const branch = state.branches[idx];
+
+                    // Check fruits
+                    const fruitDist = Math.hypot(branch.endX - x, branch.endY - y);
+                    if (fruitDist < 15) {
+                        const conclusion = CONFIG.conclusions[idx];
+                        if (conclusion) {
+                            showTooltip(x, y, conclusion.text);
+                        }
+                        canvas.style.cursor = 'pointer';
+                        return;
+                    }
+
+                    // Check leaves
+                    branchConfig.findings.forEach((finding, findingIdx) => {
+                        const t = (findingIdx + 1) / (branchConfig.findings.length + 1);
+                        const leafX = branch.startX + (branch.endX - branch.startX) * t;
+                        const leafY = branch.startY + (branch.endY - branch.startY) * t;
+                        const leafDist = Math.hypot(leafX - x, leafY - y);
+
+                        if (leafDist < 10) {
+                            showTooltip(x, y, `${finding.text} (${finding.source})`);
+                            canvas.style.cursor = 'pointer';
+                        }
+                    });
+                });
+            }
+
+            if (state.stage >= 2) {
+                // Check branch hover
+                state.branches.forEach(branch => {
+                    const distToStart = Math.hypot(branch.startX - x, branch.startY - y);
+                    const distToEnd = Math.hypot(branch.endX - x, branch.endY - y);
+                    const minDist = Math.min(distToStart, distToEnd);
+
+                    if (minDist < 25) {
+                        canvas.style.cursor = 'pointer';
+                    }
+                });
+            }
+
+            if (!canvas.style.cursor) {
+                canvas.style.cursor = 'default';
+            }
+        });
+
+        canvas.addEventListener('mouseleave', hideTooltip);
+
+        // Initialize
+        updateUI();
+        redraw();
+    
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.question-input, input, [class*=question]') || document.querySelector('.input-area'),
+    title: 'Ask a research question',
+    desc: 'Type or select a question to kick off the deep research process.', pad: 8 },
+  { target: () => document.querySelector('.btn-primary, .research-btn, [class*=primary]') || document.querySelector('.actions'),
+    title: 'Start researching',
+    desc: 'Click to begin. The AI will search, read, synthesise, and build an answer from multiple sources.', pad: 8 },
+  { target: () => document.querySelector('canvas, .tree, .viz, [class*=tree]') || document.querySelector('.main-area'),
+    title: 'Watch the research tree grow',
+    desc: 'Each node represents a source or sub-question. The tree expands as the AI digs deeper into the topic.', pad: 6 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

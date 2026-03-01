@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hallucinations — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --gable-lighter: #2d4f64;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --seapink: #EFACA8;
+    --chicago: #575756;
+    --greenpea: #226B4D;
+    --bittersweet: #FF5F5F;
+    --white: #FFFFFF;
+    --accessible-accent: #007A5E;
+    --amber: #FFC107;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    width: 100vw; height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    padding: 28px 40px 20px;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 28px; font-weight: 700; line-height: 1.15;
+  }
+  .header h1 span { color: var(--bittersweet); }
+  .header .sub {
+    font-size: 13px; font-weight: 400; color: var(--white); opacity: 0.5; margin-top: 2px;
+  }
+  .mode-pills {
+    display: flex; gap: 6px;
+  }
+  .mode-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px; font-weight: 400;
+    padding: 6px 16px; border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .mode-pill:hover { background: rgba(255,255,255,0.08); }
+  .mode-pill.active {
+    background: var(--bittersweet);
+    border-color: var(--bittersweet);
+    font-weight: 600;
+  }
+
+  /* ─── CHAT PANEL ─── */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-right: 24px;
+  }
+  .chat-titlebar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .chat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .chat-titlebar-text {
+    font-size: 12px; font-weight: 500; opacity: 0.5;
+  }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .msg {
+    max-width: 85%;
+    animation: msgIn 0.3s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--cerulean);
+    border-radius: 14px 14px 4px 14px;
+    padding: 12px 18px;
+  }
+  .msg.user p {
+    font-size: 13px; font-weight: 400; line-height: 1.5;
+  }
+  .msg.ai {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px 14px 14px 4px;
+    padding: 14px 18px;
+  }
+  .msg.ai p {
+    font-size: 13px; font-weight: 400; line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* ─── CLAIMS — interactive underlines ─── */
+  .msg.ai .claim {
+    display: inline;
+    border-bottom: 2px dashed rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: all 0.25s;
+    padding: 1px 0;
+    position: relative;
+  }
+  .msg.ai .claim:hover {
+    border-bottom-color: var(--dodger);
+    color: var(--white);
+  }
+  /* Pulsing hint before any claim is clicked */
+  .msg.ai .claim.hint-pulse {
+    animation: claimPulse 2s infinite;
+  }
+  @keyframes claimPulse {
+    0%, 100% { border-bottom-color: rgba(255,255,255,0.25); background: transparent; }
+    50% { border-bottom-color: var(--dodger); background: rgba(0,177,255,0.06); }
+  }
+  .msg.ai .claim.checked {
+    border-bottom-style: solid;
+    animation: none;
+  }
+  .msg.ai .claim.checked.true {
+    border-bottom-color: var(--meadow);
+    background: rgba(23,206,149,0.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+  .msg.ai .claim.checked.false {
+    border-bottom-color: var(--bittersweet);
+    background: rgba(255,95,95,0.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,95,95,0.4);
+  }
+  .claim-icon {
+    display: none;
+    font-size: 11px;
+    margin-left: 4px;
+  }
+  .claim.checked .claim-icon { display: inline; }
+
+  /* Click-me tooltip on first claim */
+  .click-hint {
+    position: absolute;
+    top: -32px; left: 50%; transform: translateX(-50%);
+    background: var(--dodger);
+    color: var(--white);
+    font-size: 10px; font-weight: 600;
+    padding: 4px 10px; border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: hintBob 1.5s ease-in-out infinite;
+    z-index: 5;
+  }
+  .click-hint::after {
+    content: '';
+    position: absolute;
+    bottom: -5px; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--dodger);
+  }
+  @keyframes hintBob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-3px); }
+  }
+
+  .typing-indicator {
+    display: flex; gap: 4px; padding: 4px 0;
+  }
+  .typing-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    animation: typingBounce 1.4s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+    30% { transform: translateY(-6px); opacity: 0.8; }
+  }
+
+  .chat-input {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.03);
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .chat-input-hint {
+    font-size: 12px; opacity: 0.3; font-weight: 400;
+    flex: 1;
+  }
+
+  /* ─── INSIGHT PANEL (right side) ─── */
+  .insight-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+
+  .insight-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 18px;
+    transition: all 0.3s;
+  }
+  .insight-card.highlight {
+    border-color: rgba(255,95,95,0.3);
+    background: rgba(255,95,95,0.04);
+  }
+  .insight-card h3 {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.45;
+  }
+  .insight-card h3.red { color: var(--bittersweet); opacity: 1; }
+  .insight-card h3.green { color: var(--meadow); opacity: 1; }
+  .insight-card h3.blue { color: var(--dodger); opacity: 1; }
+  .insight-card h3.amber { color: var(--amber); opacity: 1; }
+  .insight-card h3.turq { color: var(--turquoise); opacity: 1; }
+
+  /* Score ring */
+  .score-ring {
+    display: flex; align-items: center; gap: 18px;
+    margin-bottom: 4px;
+  }
+  .ring-svg { width: 72px; height: 72px; flex-shrink: 0; }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 6; }
+  .ring-val { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+  .ring-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    fill: var(--white);
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .score-label {
+    font-size: 12px; font-weight: 400; opacity: 0.55; line-height: 1.5;
+  }
+  .score-label strong { color: var(--bittersweet); opacity: 1; font-weight: 600; }
+  .score-label .good { color: var(--meadow); }
+
+  /* Fact check result */
+  .fact-result {
+    display: none;
+    margin-top: 8px;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 12px; line-height: 1.55;
+    animation: fadeSlide 0.3s ease;
+  }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fact-result.visible { display: block; }
+  .fact-result.true {
+    background: rgba(23,206,149,0.08);
+    border: 1px solid rgba(23,206,149,0.2);
+  }
+  .fact-result.true .verdict { color: var(--meadow); font-weight: 600; }
+  .fact-result.false {
+    background: rgba(255,95,95,0.08);
+    border: 1px solid rgba(255,95,95,0.2);
+  }
+  .fact-result.false .verdict { color: var(--bittersweet); font-weight: 600; }
+
+  /* Key insight */
+  .key-insight {
+    background: rgba(255,95,95,0.06);
+    border: 1px solid rgba(255,95,95,0.15);
+    border-left: 4px solid var(--bittersweet);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 16px;
+    font-size: 13px; line-height: 1.6;
+    color: rgba(255,255,255,0.75);
+  }
+  .key-insight strong {
+    color: var(--bittersweet); font-weight: 600;
+  }
+  .key-insight em {
+    color: var(--white); font-style: normal; font-weight: 500;
+  }
+
+  /* ─── MITIGATION TECHNIQUES ─── */
+  .mitigation-card {
+    background: rgba(0,255,188,0.03);
+    border: 1px solid rgba(0,255,188,0.12);
+    border-radius: 12px;
+    padding: 18px;
+    animation: fadeSlide 0.4s ease;
+  }
+  .mit-techniques {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 8px;
+  }
+  .mit-tech {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .mit-tech:hover {
+    border-color: rgba(0,255,188,0.3);
+    background: rgba(0,255,188,0.04);
+  }
+  .mit-tech.expanded {
+    border-color: rgba(0,177,255,0.3);
+    background: rgba(0,177,255,0.05);
+  }
+  .mit-icon {
+    font-size: 16px; flex-shrink: 0; margin-top: 1px;
+  }
+  .mit-body { flex: 1; }
+  .mit-name {
+    font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px;
+  }
+  .mit-short {
+    font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.4;
+  }
+  .mit-detail {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.65);
+  }
+  .mit-tech.expanded .mit-detail { display: block; }
+  .mit-detail .prompt-example {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: var(--turquoise);
+    white-space: pre-wrap;
+  }
+  .mit-detail .effectiveness {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .effectiveness.high { background: rgba(23,206,149,0.12); color: var(--meadow); }
+  .effectiveness.medium { background: rgba(255,193,7,0.12); color: var(--amber); }
+  .effectiveness.very-high { background: rgba(0,255,188,0.12); color: var(--turquoise); }
+
+  /* Phase 2 banner in chat */
+  .phase-banner {
+    align-self: center;
+    background: linear-gradient(135deg, rgba(0,177,255,0.1), rgba(0,255,188,0.08));
+    border: 1px solid rgba(0,177,255,0.2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+    max-width: 90%;
+    animation: msgIn 0.4s ease;
+  }
+  .phase-banner .pb-title {
+    font-size: 13px; font-weight: 600; color: var(--dodger); margin-bottom: 4px;
+  }
+  .phase-banner .pb-sub {
+    font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5;
+  }
+
+  /* Improved prompt in chat */
+  .msg.improved {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--cerulean), var(--accessible-accent));
+    border-radius: 14px 14px 4px 14px;
+    padding: 12px 18px;
+    position: relative;
+  }
+  .msg.improved .improved-tag {
+    position: absolute; top: -8px; right: 12px;
+    background: var(--turquoise);
+    color: var(--gable);
+    font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .msg.improved p {
+    font-size: 13px; font-weight: 400; line-height: 1.5;
+  }
+
+  /* Better AI response */
+  .msg.ai-better {
+    align-self: flex-start;
+    background: rgba(0,255,188,0.04);
+    border: 1px solid rgba(0,255,188,0.15);
+    border-radius: 14px 14px 14px 4px;
+    padding: 14px 18px;
+  }
+  .msg.ai-better p {
+    font-size: 13px; font-weight: 400; line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+  }
+  .msg.ai-better .source-ref {
+    color: var(--meadow); font-weight: 500;
+  }
+  .msg.ai-better .honest-flag {
+    color: var(--amber); font-style: italic;
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer-left {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .footer-btn {
+    background: var(--cerulean);
+    border: none; color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; font-weight: 600;
+    padding: 8px 22px; border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .footer-btn:hover:not(:disabled) { background: var(--dodger); }
+  .footer-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .footer-btn.secondary {
+    background: rgba(255,255,255,0.06);
+    font-weight: 400; font-size: 11px;
+    padding: 7px 16px;
+  }
+  .footer-btn.secondary:hover { background: rgba(255,255,255,0.12); }
+  .footer-btn.green {
+    background: var(--accessible-accent);
+  }
+  .footer-btn.green:hover { background: var(--meadow); }
+  .footer-hint {
+    font-size: 11px; opacity: 0.3;
+  }
+  .wm { font-size: 10px; opacity: 0.2; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>AI <span>Hallucinations</span></h1>
+      <div class="sub">Everything is a hallucination. Some of them just happen to be correct.</div>
+    </div>
+    <div class="mode-pills" id="modePills"></div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-titlebar">
+      <div class="chat-dot" style="background:var(--bittersweet)"></div>
+      <div class="chat-dot" style="background:var(--seapink)"></div>
+      <div class="chat-dot" style="background:var(--meadow)"></div>
+      <span class="chat-titlebar-text">AI Assistant — <strong style="opacity:1;color:var(--dodger)">click underlined claims</strong> to fact-check</span>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <span class="chat-input-hint" id="chatInputHint">Select a scenario above to start a conversation</span>
+    </div>
+  </div>
+
+  <!-- INSIGHT PANEL -->
+  <div class="insight-panel" id="insightPanel">
+    <div class="key-insight">
+      <strong>Key insight:</strong> LLMs don't retrieve facts — they <em>predict text</em>. Every response is generated word by word based on probability, not looked up from a database. That means <strong>every output is technically a hallucination</strong> — the model is always generating, never remembering.
+    </div>
+    <div class="insight-card" id="scoreCard">
+      <h3>Accuracy tracker</h3>
+      <div class="score-ring">
+        <svg class="ring-svg" viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="34"/>
+          <circle class="ring-val" id="ringVal" cx="40" cy="40" r="34"
+            stroke-dasharray="213.6" stroke-dashoffset="213.6"
+            transform="rotate(-90 40 40)"
+            stroke="var(--bittersweet)"/>
+          <text class="ring-text" x="40" y="40" id="ringText">—</text>
+        </svg>
+        <div class="score-label" id="scoreLabel">
+          Click on <strong style="color:var(--dodger)">underlined claims</strong> in the AI response to fact-check them. How many will turn out to be <strong>fabricated</strong>?
+        </div>
+      </div>
+    </div>
+    <div class="insight-card" id="factCard">
+      <h3 id="factTitle">Fact check result</h3>
+      <div class="fact-result" id="factResult"></div>
+    </div>
+    <div class="insight-card" id="whyCard" style="display:none">
+      <h3 class="blue">Why this happens</h3>
+      <div id="whyContent" style="font-size:12px;line-height:1.6;opacity:0.65;"></div>
+    </div>
+    <!-- Mitigation card — appears after all claims checked -->
+    <div class="mitigation-card" id="mitigationCard" style="display:none">
+      <h3 class="turq" style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">How to reduce hallucinations</h3>
+      <div style="font-size:11px;opacity:0.5;line-height:1.4;margin-bottom:10px;">Click each technique to see how it works and an example prompt</div>
+      <div class="mit-techniques" id="mitTechniques"></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      <button class="footer-btn" id="sendBtn" onclick="startScenario()">Send Prompt</button>
+      <button class="footer-btn green" id="improveBtn" onclick="showImproved()" style="display:none">See Improved Prompt →</button>
+      <button class="footer-btn secondary" id="resetBtn" onclick="resetChat()" style="display:none">Reset</button>
+      <span class="footer-hint" id="footerHint">Choose a scenario, then click Send</span>
+    </div>
+    <div class="wm">© aiaccelerator.uk</div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+const SCENARIOS = [
+  {
+    name: 'Fake citations',
+    icon: '📚',
+    userMsg: 'Can you cite three academic papers on AI in healthcare published after 2023?',
+    aiParts: [
+      { text: 'Here are three recent papers on AI in healthcare:\n\n' },
+      { text: '1. ', claim: false, claimText: 'Smith, J. & Patel, R. (2024) "Deep Learning Diagnostics in Oncology: A Systematic Review." Nature Medicine, 30(4), pp. 412–428.', explanation: 'This paper does not exist. The model invented a plausible author combination, a realistic title, and formatted it like a real Nature Medicine citation. It predicted what a citation should look like — it didn\'t search a database.' },
+      { text: '\n\n2. ', claim: false, claimText: 'Chen, L. et al. (2024) "AI-Assisted Surgical Planning: Outcomes from 12 NHS Trusts." The Lancet Digital Health, 6(2), e89–e97.', explanation: 'Also fabricated. Adding "NHS Trusts" makes it feel localised and real. The page numbers, volume, and issue number all follow real Lancet formatting. Every detail is statistically plausible but entirely invented.' },
+      { text: '\n\n3. ', claim: false, claimText: 'Williams, K. & Okonjo, A. (2023) "Neural Networks for Automated Drug Interaction Detection." JAMA AI Review, 1(3), pp. 201–215.', explanation: 'Fabricated — and "JAMA AI Review" doesn\'t even exist as a journal. The model generated a journal name that sounds like it should exist, based on patterns of real JAMA sub-publications.' },
+      { text: '\n\nThese papers represent significant advances in applying AI to clinical settings.' }
+    ],
+    why: 'The model has seen thousands of academic citations during training. It knows the pattern: Author (Year) "Title." Journal, Volume(Issue), Pages. So when asked for citations, it generates text that follows this pattern perfectly — but it has no mechanism to check whether any of it is real.',
+    trueCount: 0, totalClaims: 3,
+    improvedPrompt: 'Find three real academic papers on AI in healthcare published after 2023. Use web search to find them. For each paper, provide the full citation AND a direct URL link so I can verify it exists. If you cannot find three verified papers, tell me how many you found and be honest about what you couldn\'t verify.',
+    improvedResponse: 'I searched for recent AI in healthcare papers. Here are three verified results:\n\n1. <span class="source-ref">[Google Scholar — verified]</span> Topol, E.J. (2024) "Artificial Intelligence in Clinical Medicine." NEJM, 390(13), pp. 1211-1221. <span class="source-ref">→ doi.org/10.1056/NEJMra2302038</span>\n\n2. <span class="source-ref">[PubMed — verified]</span> Rajpurkar, P. et al. (2024) "Foundation Models for Generalist Medical AI." Nature, 625, pp. 390-401. <span class="source-ref">→ doi.org/10.1038/s41586-023-06291-2</span>\n\n3. <span class="source-ref">[Semantic Scholar — verified]</span> Singhal, K. et al. (2023) "Large Language Models Encode Clinical Knowledge." Nature, 620, pp. 172-180. <span class="source-ref">→ doi.org/10.1038/s41586-023-06291-2</span>\n\n<span class="honest-flag">Note: I used web search to verify each paper exists. All links were accessible at time of search. I recommend clicking the DOI links to confirm, as my verification has limits.</span>',
+    improvedWhy: 'Three techniques at work: (1) <strong>Web search/RAG</strong> grounds the response in real sources, (2) <strong>requesting URLs/citations</strong> forces verifiable output, (3) the <strong>honesty instruction</strong> ("tell me what you couldn\'t verify") changes the model\'s behaviour from confident fabrication to calibrated transparency.'
+  },
+  {
+    name: 'Confident maths',
+    icon: '🧮',
+    userMsg: 'How many r\'s are in the word "strawberry"?',
+    aiParts: [
+      { text: 'The word "strawberry" contains ' },
+      { claim: false, claimText: '2 letter r\'s', explanation: 'Wrong — "strawberry" has 3 r\'s (st-r-awbe-r-r-y). The model doesn\'t see individual characters. It processes tokens, not letters. It predicted what the answer should look like based on pattern matching, not by actually counting.' },
+      { text: '.\n\nLet me verify: s-t-' },
+      { claim: true, claimText: 'r', explanation: 'Correct — the first r. When the model "shows its working," it\'s still just generating text that looks like counting. But in this case, the generated text happens to be right.' },
+      { text: '-a-w-b-e-' },
+      { claim: true, claimText: 'r-r', explanation: 'Correct — the double r in "berry". Notice the model self-corrected during its "breakdown" — but this isn\'t real counting. It\'s generating text that follows the pattern of how letter-by-letter breakdowns look.' },
+      { text: '-y\n\nActually, I count ' },
+      { claim: true, claimText: '3 r\'s', explanation: 'The model corrected itself. But it wasn\'t "recounting" — it generated a correction because that pattern is common in training data. The right answer emerged from pattern matching, not reasoning.' },
+      { text: '. My apologies for the initial error.' }
+    ],
+    why: 'LLMs process tokens, not individual characters. "Strawberry" might be 1-2 tokens — the model never sees s-t-r-a-w-b-e-r-r-y as separate letters. When it "counts," it\'s predicting what counting text looks like. This is why AI struggles with character-level tasks, anagrams, and spelling.',
+    trueCount: 3, totalClaims: 4,
+    improvedPrompt: 'How many r\'s are in the word "strawberry"?\n\nThink step by step. Write out each letter of the word individually, numbered. Then count only the letters that are "r". Use this as your working — don\'t guess the answer first.',
+    improvedResponse: 'Let me work through this step by step:\n\n1. s\n2. t\n3. <span class="source-ref">r ← r #1</span>\n4. a\n5. w\n6. b\n7. e\n8. <span class="source-ref">r ← r #2</span>\n9. <span class="source-ref">r ← r #3</span>\n10. y\n\nCount of r\'s found: <strong>3</strong>\n\nThe word "strawberry" contains <strong>3 letter r\'s</strong> — at positions 3, 8, and 9.\n\n<span class="honest-flag">Note: I\'m a language model and I process tokens, not individual characters. For tasks like this, using a code interpreter tool would give you a guaranteed-correct answer.</span>',
+    improvedWhy: 'Two techniques: (1) <strong>Chain-of-thought prompting</strong> ("think step by step, write out each letter") forces the model to generate intermediate reasoning rather than jumping to an answer. (2) The instruction to <strong>not guess first</strong> prevents the System 1 pattern match. The model\'s honesty note about using tools is the gold standard — it\'s telling you when to trust it and when not to.'
+  },
+  {
+    name: 'Plausible history',
+    icon: '🏛️',
+    userMsg: 'Tell me about the Great Fire of Manchester in 1698.',
+    aiParts: [
+      { text: 'The Great Fire of Manchester (1698) was one of the most significant urban fires in northern England. ' },
+      { claim: false, claimText: 'The fire began on the evening of 14 September 1698 in a bakery on Deansgate', explanation: 'This event never happened. But "Deansgate" is a real, historic Manchester street — and the Great Fire of London (1666) started in a bakery. The model recombined real elements into a plausible fiction.' },
+      { text: ', which was then one of the city\'s main commercial thoroughfares.\n\n' },
+      { claim: false, claimText: 'Fanned by strong westerly winds, the fire spread rapidly through the timber-framed buildings, destroying over 400 structures across three parishes within 48 hours', explanation: 'Entirely fabricated. "400 structures across three parishes" sounds historically specific. "Timber-framed" and "strong winds" follow the pattern of how real historical fire narratives are written. Every detail is invented but feels authoritative.' },
+      { text: '.\n\nThe aftermath led to ' },
+      { claim: false, claimText: 'the Manchester Rebuilding Act of 1699, which required stone or brick facades on all new commercial buildings in the city centre', explanation: 'No such Act exists. But the Great Fire of London led to building regulations, so the model predicted Manchester would follow the same pattern. It\'s applying historical templates to a fictional scenario.' },
+      { text: '. This marked a turning point in Manchester\'s urban development.' }
+    ],
+    why: 'This is the most dangerous type of hallucination: detailed, confident, and entirely false. The model drew on patterns from the Great Fire of London, real Manchester geography, and standard historical narrative structures. A reader without specialist knowledge would have no reason to doubt any of it.',
+    trueCount: 0, totalClaims: 3,
+    improvedPrompt: 'Tell me about the Great Fire of Manchester in 1698.\n\nImportant: Before answering, search the web to verify whether this event actually happened. If you cannot find reliable sources confirming it, say so clearly. Do not generate an answer based on assumptions — only respond with information you can verify or cite.',
+    improvedResponse: '<span class="honest-flag">I searched for "Great Fire of Manchester 1698" and could not find any reliable historical sources confirming this event occurred.</span>\n\nThere is no documented "Great Fire of Manchester" in 1698. You may be thinking of:\n\n• <span class="source-ref">The Great Fire of London (1666)</span> — the most famous urban fire in English history\n• <span class="source-ref">The Manchester Blitz (1940)</span> — extensive bombing during WWII that destroyed large parts of the city centre\n• <span class="source-ref">Various warehouse fires</span> in industrial-era Manchester (19th century)\n\nIf you\'re researching a specific historical event, I\'d recommend checking the <span class="source-ref">Manchester Archives</span> or the <span class="source-ref">John Rylands Library</span> collections for primary sources.\n\n<span class="honest-flag">I\'m flagging this because without web search, I might have generated a plausible-sounding but entirely fictional account. Always verify historical claims with primary sources.</span>',
+    improvedWhy: 'The most powerful technique here: <strong>"verify before answering"</strong> combined with <strong>web search</strong>. The instruction to say "I cannot find reliable sources" rather than generate an answer completely changes the model\'s behaviour. Instead of confidently fabricating a narrative, it honestly reports what it found (nothing), suggests what you might actually be looking for, and even warns you what would have happened without the safeguard.'
+  }
+];
+
+const MITIGATION_TECHNIQUES = [
+  {
+    icon: '🔍',
+    name: 'Ask for Sources & Citations',
+    short: 'Make the AI show its working by requesting verifiable references',
+    detail: 'When you ask for citations, URLs, or "show me where you found this," the model is forced to produce output you can actually check. Without this, it generates plausible-looking references with no mechanism to verify them.',
+    prompt: '"Provide your sources with direct URLs.\nIf you can\'t provide a verifiable\nsource, say so explicitly."',
+    effectiveness: 'high',
+    effectivenessLabel: 'High impact'
+  },
+  {
+    icon: '🌐',
+    name: 'Enable Web Search / RAG',
+    short: 'Ground responses in real, retrieved information rather than training data',
+    detail: 'Retrieval-Augmented Generation (RAG) connects the model to external knowledge — web search, your documents, or databases. Instead of generating from memory, it retrieves real information first and then summarises it. This is the single most effective technique for factual accuracy. 95% of enterprise AI projects use RAG for exactly this reason.',
+    prompt: '"Use web search to find this information.\nOnly include facts you can verify\nthrough retrieved sources."',
+    effectiveness: 'very-high',
+    effectivenessLabel: 'Very high impact'
+  },
+  {
+    icon: '🔗',
+    name: 'Chain-of-Thought Verification',
+    short: 'Force step-by-step reasoning instead of jumping to answers',
+    detail: 'Asking the model to "think step by step" or "show your reasoning before answering" activates more careful processing. It\'s like forcing System 2 thinking — the model generates intermediate reasoning steps, which reduces errors because each step can be checked against the previous one.',
+    prompt: '"Think step by step.\nShow your working before giving\na final answer.\nDo not guess — reason through it."',
+    effectiveness: 'high',
+    effectivenessLabel: 'High impact'
+  },
+  {
+    icon: '🚧',
+    name: 'Set Boundaries & Constraints',
+    short: '"Only use information from X" — limit what the model can draw on',
+    detail: 'Constraining the model\'s scope dramatically reduces hallucination. Tell it: "only use information from the document I provided," "only answer based on the search results," or "if the answer isn\'t in the provided context, say you don\'t know." This prevents the model from filling gaps with fabricated content.',
+    prompt: '"Only answer using information from\nthe document above. If the answer is\nnot in the document, say: \'This is not\ncovered in the provided material.\'"',
+    effectiveness: 'very-high',
+    effectivenessLabel: 'Very high impact'
+  },
+  {
+    icon: '🌡️',
+    name: 'Lower the Temperature',
+    short: 'Reduce randomness for more deterministic, focused responses',
+    detail: 'Temperature controls how "creative" the model is. Lower temperature (0.1–0.4) makes it stick closer to the most probable output — less creative but more factual. Higher temperature (0.7–1.0) increases variety but also increases the chance of fabrication. For factual tasks, always use low temperature.',
+    prompt: 'Set temperature to 0.1–0.3 via the\nAPI or model settings.\n(In ChatGPT/Claude, this isn\'t\nuser-adjustable — but the other\ntechniques compensate.)',
+    effectiveness: 'medium',
+    effectivenessLabel: 'Medium impact'
+  },
+  {
+    icon: '🤝',
+    name: 'Instruct Honesty & Uncertainty',
+    short: '"Say I don\'t know" — give the model permission to be uncertain',
+    detail: 'By default, models are trained to be helpful, which means they\'d rather give a wrong answer than no answer. Explicitly telling the model "it\'s okay to say you don\'t know" or "express uncertainty when you\'re not confident" fundamentally changes its behaviour. It shifts from confident fabrication to calibrated transparency.',
+    prompt: '"If you\'re not sure, say so. It\'s better\nto say \'I\'m not confident about this\'\nthan to guess. Rate your confidence\non each claim: High / Medium / Low."',
+    effectiveness: 'high',
+    effectivenessLabel: 'High impact'
+  }
+];
+
+let currentScenario = 0;
+let claimsChecked = 0;
+let claimsTrue = 0;
+let claimsFalse = 0;
+let totalClaims = 0;
+let chatPhase = 'ready'; // ready, typing, responded, allChecked, improved
+let claimElements = [];
+let hintTimeout = null;
+
+function init() {
+  const pills = document.getElementById('modePills');
+  pills.innerHTML = SCENARIOS.map((s, i) =>
+    `<button class="mode-pill${i === 0 ? ' active' : ''}" onclick="selectScenario(${i})">${s.icon} ${s.name}</button>`
+  ).join('');
+  selectScenario(0);
+}
+
+function selectScenario(idx) {
+  currentScenario = idx;
+  document.querySelectorAll('.mode-pill').forEach((p, i) => {
+    p.classList.toggle('active', i === idx);
+  });
+  resetChat();
+}
+
+function resetChat() {
+  chatPhase = 'ready';
+  claimsChecked = 0; claimsTrue = 0; claimsFalse = 0;
+  claimElements = [];
+  clearTimeout(hintTimeout);
+  const chat = document.getElementById('chatMessages');
+  chat.innerHTML = '';
+  document.getElementById('sendBtn').style.display = '';
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('improveBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('footerHint').textContent = 'Choose a scenario, then click Send';
+  document.getElementById('chatInputHint').textContent = 'Select a scenario above to start a conversation';
+  document.getElementById('factResult').className = 'fact-result';
+  document.getElementById('factResult').innerHTML = '';
+  document.getElementById('factTitle').textContent = 'Fact check result';
+  document.getElementById('factTitle').className = '';
+  document.getElementById('whyCard').style.display = 'none';
+  document.getElementById('mitigationCard').style.display = 'none';
+  document.getElementById('scoreCard').classList.remove('highlight');
+  updateScore();
+}
+
+function startScenario() {
+  if (chatPhase !== 'ready') return;
+  chatPhase = 'typing';
+  const sc = SCENARIOS[currentScenario];
+  totalClaims = sc.totalClaims;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('footerHint').textContent = '';
+  document.getElementById('chatInputHint').textContent = '';
+
+  const chat = document.getElementById('chatMessages');
+  const userDiv = document.createElement('div');
+  userDiv.className = 'msg user';
+  userDiv.innerHTML = `<p>${esc(sc.userMsg)}</p>`;
+  chat.appendChild(userDiv);
+
+  // Typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'msg ai';
+  typingDiv.id = 'typingMsg';
+  typingDiv.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  chat.appendChild(typingDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  setTimeout(() => {
+    typingDiv.remove();
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'msg ai';
+    const p = document.createElement('p');
+
+    let claimIdx = 0;
+    sc.aiParts.forEach(part => {
+      if (part.claim !== undefined) {
+        const span = document.createElement('span');
+        span.className = 'claim hint-pulse';
+        span.dataset.isTrue = part.claim;
+        span.dataset.explanation = part.explanation;
+        span.dataset.idx = claimIdx;
+        span.innerHTML = `${esc(part.claimText)}<span class="claim-icon"></span>`;
+        span.onclick = () => checkClaim(span);
+
+        // Add click-me tooltip to the first claim
+        if (claimIdx === 0) {
+          const hint = document.createElement('span');
+          hint.className = 'click-hint';
+          hint.textContent = '👆 Click to fact-check';
+          hint.id = 'clickHint';
+          span.style.position = 'relative';
+          span.appendChild(hint);
+        }
+
+        p.appendChild(span);
+        claimElements.push(span);
+        claimIdx++;
+      } else {
+        const textNode = document.createElement('span');
+        textNode.innerHTML = esc(part.text).replace(/\n/g, '<br>');
+        p.appendChild(textNode);
+      }
+    });
+
+    aiDiv.appendChild(p);
+    chat.appendChild(aiDiv);
+    chat.scrollTop = chat.scrollHeight;
+    chatPhase = 'responded';
+    document.getElementById('sendBtn').style.display = 'none';
+    document.getElementById('resetBtn').style.display = '';
+    document.getElementById('footerHint').textContent = '👆 Click on the dashed underlined claims to fact-check them';
+    document.getElementById('chatInputHint').textContent = '👆 Click underlined text in the response above';
+    updateScore();
+  }, 1800);
+}
+
+function checkClaim(el) {
+  if (el.classList.contains('checked')) return;
+  el.classList.add('checked');
+  el.classList.remove('hint-pulse');
+
+  // Remove click-hint tooltip if it exists
+  const hint = document.getElementById('clickHint');
+  if (hint) hint.remove();
+
+  const isTrue = el.dataset.isTrue === 'true';
+  el.classList.add(isTrue ? 'true' : 'false');
+  el.querySelector('.claim-icon').textContent = isTrue ? ' ✓' : ' ✗';
+
+  claimsChecked++;
+  if (isTrue) claimsTrue++; else claimsFalse++;
+
+  const resultDiv = document.getElementById('factResult');
+  resultDiv.className = `fact-result visible ${isTrue ? 'true' : 'false'}`;
+  resultDiv.innerHTML = `<span class="verdict">${isTrue ? '✓ Happens to be correct' : '✗ Fabricated'}</span><br><br>${el.dataset.explanation}`;
+
+  const titleEl = document.getElementById('factTitle');
+  titleEl.className = isTrue ? 'green' : 'red';
+  titleEl.textContent = isTrue ? 'Correct — but still generated' : 'Hallucination detected';
+
+  updateScore();
+
+  if (claimsChecked === claimElements.length) {
+    showWhy();
+    showMitigations();
+    chatPhase = 'allChecked';
+    document.getElementById('improveBtn').style.display = '';
+    document.getElementById('footerHint').textContent = 'Read the techniques on the right, then click "See Improved Prompt"';
+    document.getElementById('chatInputHint').textContent = 'See how better prompting avoids these hallucinations →';
+  }
+}
+
+function updateScore() {
+  const ring = document.getElementById('ringVal');
+  const text = document.getElementById('ringText');
+  const label = document.getElementById('scoreLabel');
+  const circ = 2 * Math.PI * 34;
+
+  if (claimsChecked === 0) {
+    ring.style.strokeDashoffset = circ;
+    text.textContent = '—';
+    label.innerHTML = `Click on <strong style="color:var(--dodger)">underlined claims</strong> in the AI response to fact-check them. How many will turn out to be <strong>fabricated</strong>?`;
+    ring.setAttribute('stroke', 'var(--bittersweet)');
+    return;
+  }
+
+  const pct = claimsFalse / claimsChecked;
+  const offset = circ - (circ * (claimsChecked / claimElements.length));
+  ring.style.strokeDashoffset = offset;
+  text.textContent = `${claimsFalse}/${claimsChecked}`;
+
+  if (claimsChecked === claimElements.length) {
+    ring.setAttribute('stroke', pct > 0.5 ? 'var(--bittersweet)' : 'var(--meadow)');
+    label.innerHTML = `<strong>${claimsFalse}</strong> of ${claimsChecked} claims were fabricated. ${claimsTrue > 0 ? `<span class="good">${claimsTrue}</span> happened to be correct — but were still generated by probability, not retrieved.` : 'Every single claim was invented with zero factual basis.'}`;
+  } else {
+    label.innerHTML = `Checked <strong>${claimsChecked}</strong> of ${claimElements.length} claims. <strong>${claimsFalse} fabricated</strong>${claimsTrue > 0 ? `, <span class="good">${claimsTrue} correct</span>` : ''}.`;
+  }
+}
+
+function showWhy() {
+  const sc = SCENARIOS[currentScenario];
+  document.getElementById('whyCard').style.display = '';
+  document.getElementById('whyContent').textContent = sc.why;
+  document.getElementById('scoreCard').classList.add('highlight');
+}
+
+function showMitigations() {
+  const card = document.getElementById('mitigationCard');
+  card.style.display = '';
+  const container = document.getElementById('mitTechniques');
+  container.innerHTML = MITIGATION_TECHNIQUES.map((t, i) => `
+    <div class="mit-tech" onclick="toggleTech(this)" data-idx="${i}">
+      <span class="mit-icon">${t.icon}</span>
+      <div class="mit-body">
+        <div class="mit-name">${t.name}</div>
+        <div class="mit-short">${t.short}</div>
+        <div class="mit-detail">
+          ${t.detail}
+          <div class="prompt-example">${t.prompt}</div>
+          <span class="effectiveness ${t.effectiveness}">${t.effectivenessLabel}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Scroll the insight panel to show mitigations
+  setTimeout(() => {
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 300);
+}
+
+function toggleTech(el) {
+  el.classList.toggle('expanded');
+}
+
+function showImproved() {
+  const sc = SCENARIOS[currentScenario];
+  const chat = document.getElementById('chatMessages');
+
+  // Phase 2 banner
+  const banner = document.createElement('div');
+  banner.className = 'phase-banner';
+  banner.innerHTML = `<div class="pb-title">✨ Now let's see the difference</div><div class="pb-sub">Same question — but with techniques applied to reduce hallucination</div>`;
+  chat.appendChild(banner);
+
+  // Improved user prompt
+  setTimeout(() => {
+    const improved = document.createElement('div');
+    improved.className = 'msg improved';
+    improved.innerHTML = `<span class="improved-tag">Improved</span><p>${esc(sc.improvedPrompt)}</p>`;
+    chat.appendChild(improved);
+    chat.scrollTop = chat.scrollHeight;
+
+    // Typing indicator
+    setTimeout(() => {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'msg ai-better';
+      typingDiv.id = 'typingMsg2';
+      typingDiv.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+      chat.appendChild(typingDiv);
+      chat.scrollTop = chat.scrollHeight;
+
+      setTimeout(() => {
+        typingDiv.remove();
+        const betterDiv = document.createElement('div');
+        betterDiv.className = 'msg ai-better';
+        betterDiv.innerHTML = `<p>${sc.improvedResponse}</p>`;
+        chat.appendChild(betterDiv);
+        chat.scrollTop = chat.scrollHeight;
+
+        // Update insight panel
+        document.getElementById('factResult').className = 'fact-result visible true';
+        document.getElementById('factResult').innerHTML = sc.improvedWhy;
+        document.getElementById('factTitle').className = 'turq';
+        document.getElementById('factTitle').textContent = 'Why the improved prompt works';
+
+        document.getElementById('improveBtn').style.display = 'none';
+        document.getElementById('footerHint').textContent = 'Compare the two responses — same question, dramatically different quality';
+        document.getElementById('chatInputHint').textContent = 'Scroll up to compare the original and improved responses';
+        chatPhase = 'improved';
+      }, 2000);
+    }, 600);
+  }, 400);
+}
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+init();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.mode-pill, .modes, .mode-btn, [class*=mode]') || document.querySelector('header') || document.querySelector('.header'),
+    title: 'Switch between modes',
+    desc: 'Explore the topic, test yourself spotting hallucinations, or understand why they happen.', pad: 8 },
+  { target: () => document.querySelector('.chat-area, .chat, .messages, [class*=chat]') || document.querySelector('main'),
+    title: 'Interactive AI conversation',
+    desc: 'Read through the AI\'s response. Some claims are underlined — click them to check if they\'re real or hallucinated.', pad: 6 },
+  { target: () => document.querySelector('.insight, .detail, .sidebar, .right-panel, [class*=insight]') || document.querySelector('aside'),
+    title: 'Insight panel',
+    desc: 'When you click a claim, this panel shows the verification — whether it\'s accurate, misleading, or fabricated.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

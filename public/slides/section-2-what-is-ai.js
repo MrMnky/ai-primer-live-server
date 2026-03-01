@@ -64,6 +64,21 @@ const SECTION_2_WHAT_IS_AI = [
     notes: `The baking analogy works well here. Training = learning to bake (slow, developmental). Inference = actually baking a cake (fast, applying what you know). Emphasise that inference doesn't involve any learning. This sets up the misconception debunk on the next slide.`,
   },
 
+  // ── 2.2b  Training vs Inference Interactive ──
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Explore: Training vs Inference',
+    subtitle: 'See the two phases side by side — what happens during each one.',
+    graphic: {
+      id: 'training-vs-inference',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive deep-dive into the two phases. Participants explore what happens during training (data ingestion, pattern learning, parameter tuning) versus inference (prompt processing, token generation, response). Debrief: "Why does it matter that inference doesn't involve learning?"`,
+  },
+
   {
     type: 'content',
     theme: 'dark',
@@ -219,6 +234,21 @@ const SECTION_2_WHAT_IS_AI = [
       body: 'Reasoning + tool access is different. A model that can break down a complex problem, plan an approach, use tools to gather information, and adjust based on what it finds. That\'s not a smarter chatbot. That\'s a different category.',
     },
     notes: `Walk through the progression clearly — word predictors, chat, tools, multimodal, agents, reasoning. Then hit the compounding insight: these capabilities don't just add up, they multiply. Reasoning plus tool access isn't "reasoning + tools" — it's something qualitatively new. The combination effect is the real story.`,
+  },
+
+  // ── 2.6b  LLM Progress Interactive ──────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Explore: The Evolution of AI Models',
+    subtitle: 'Navigate the timeline of LLM capabilities — from word predictors to reasoning agents.',
+    graphic: {
+      id: 'llm-progress-v2',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive timeline of AI model evolution. Participants explore eras and see how capabilities built on each other. Debrief: "Which capability jump surprised you most? Which combination do you think matters most for your work?"`,
   },
 
   {

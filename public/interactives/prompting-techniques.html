@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompting Techniques — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+  --acc-green: #007A5E;
+  --l1: #FF6B4A;
+  --l2: #5BA3E6;
+  --l3: #7C5CFC;
+  --l4: #00FFBC;
+  --l1-bg: rgba(255,107,74,0.10);
+  --l2-bg: rgba(91,163,230,0.10);
+  --l3-bg: rgba(124,92,252,0.10);
+  --l4-bg: rgba(0,255,188,0.10);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:20px 24px; }
+
+.header { text-align:center; margin-bottom:14px; max-width:980px; }
+.header h1 { font-size:1.4rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
+.header .subtitle { font-size:0.75rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { font-style:normal; font-weight:600; }
+
+/* Level tabs */
+.level-tabs { display:flex; gap:6px; margin-bottom:12px; max-width:980px; width:100%; }
+.level-tab { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:10px 10px 8px; cursor:pointer; transition:all 0.25s; text-align:center; }
+.level-tab:hover { border-color:rgba(255,255,255,0.25); }
+.level-tab .lt-num { font-size:0.55rem; text-transform:uppercase; letter-spacing:2px; color:var(--slate); margin-bottom:2px; font-weight:600; }
+.level-tab .lt-name { font-size:0.72rem; font-weight:600; color:var(--cloud); transition:color 0.25s; }
+.level-tab.active { border-width:2px; }
+
+/* Technique cards */
+.tech-row { display:flex; gap:8px; margin-bottom:12px; max-width:980px; width:100%; }
+.tech-card { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:12px 14px; cursor:pointer; transition:all 0.25s; }
+.tech-card:hover { border-color:rgba(255,255,255,0.25); }
+.tech-card .tc-icon { font-size:1.3rem; margin-bottom:4px; }
+.tech-card .tc-name { font-size:0.78rem; font-weight:600; margin-bottom:2px; }
+.tech-card .tc-desc { font-size:0.65rem; color:var(--slate); line-height:1.4; }
+.tech-card.active { border-width:2px; }
+
+/* Principle strip */
+.principle { max-width:980px; width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; }
+.principle .pr-icon { font-size:1.3rem; }
+.principle .pr-text { font-size:0.72rem; color:var(--slate); line-height:1.5; }
+.principle .pr-text strong { font-weight:600; }
+
+/* Builder area */
+.builder { width:100%; max-width:980px; display:flex; gap:14px; flex:1; min-height:0; }
+
+/* Left: prompt editor */
+.editor-col { flex:1; display:flex; flex-direction:column; gap:0; min-width:0; }
+.prompt-editor { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:12px; flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.editor-header { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+.editor-header .label { font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); }
+.quality-badge { font-size:0.6rem; font-weight:600; padding:3px 10px; border-radius:12px; transition:all 0.4s; }
+
+.prompt-display { flex:1; padding:14px; overflow-y:auto; }
+.prompt-text { font-family:'JetBrains Mono',monospace; font-size:0.73rem; line-height:1.7; color:var(--cloud); white-space:pre-wrap; }
+.prompt-text .added { border-left:2px solid; padding-left:8px; margin-left:-8px; display:inline-block; animation:fadeAdd 0.5s ease; }
+@keyframes fadeAdd { from { opacity:0; } to { opacity:1; } }
+.prompt-text .label-tag { font-weight:600; }
+.prompt-text .original { color:var(--slate); }
+.prompt-text .dim { color:rgba(255,255,255,0.3); font-size:0.65rem; }
+
+.layer-bar { padding:10px 14px; border-top:1px solid rgba(255,255,255,0.08); }
+.layer-bar .bar-label { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:6px; }
+.layers { display:flex; gap:6px; flex-wrap:wrap; }
+.layer-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:5px 12px; font-family:'Poppins',sans-serif; font-size:0.65rem; color:var(--slate); cursor:pointer; transition:all 0.2s; }
+.layer-btn:hover:not(.applied):not(.locked) { border-color:var(--dodger); color:var(--white); }
+.layer-btn.applied { border-color:var(--turquoise); color:var(--turquoise); background:rgba(0,255,188,0.08); cursor:default; }
+.layer-btn.next { border-color:var(--dodger); color:var(--dodger); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow:none; } 50% { box-shadow:0 0 0 3px rgba(0,177,255,0.15); } }
+.layer-btn.locked { opacity:0.3; cursor:not-allowed; }
+.reset-btn { background:none; border:1px solid rgba(255,255,255,0.10); border-radius:6px; padding:5px 10px; font-family:'Poppins',sans-serif; font-size:0.6rem; color:var(--slate); cursor:pointer; margin-left:auto; }
+.reset-btn:hover { color:var(--white); border-color:rgba(255,255,255,0.25); }
+
+/* Right: output + insight */
+.output-col { flex:1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.output-card { background:var(--white); border-radius:12px; color:var(--gable); flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.output-header { padding:10px 14px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; }
+.output-header .label { font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.output-header .version { font-size:0.55rem; color:#94A3B8; }
+.output-body { flex:1; padding:14px; overflow-y:auto; }
+.output-text { font-size:0.73rem; line-height:1.7; color:#4A5568; transition:opacity 0.3s; }
+.output-text .hl { background:rgba(0,132,178,0.1); padding:1px 4px; border-radius:3px; font-weight:600; }
+.output-text table { width:100%; border-collapse:collapse; margin:8px 0; font-size:0.68rem; }
+.output-text th { background:#F1F5F9; font-weight:600; text-align:left; padding:5px 8px; border:1px solid #E2E8F0; color:var(--gable); }
+.output-text td { padding:5px 8px; border:1px solid #E2E8F0; }
+
+.insight-strip { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px; }
+.insight-strip .ins-label { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:6px; }
+.insight-strip .ins-text { font-size:0.7rem; color:var(--cloud); line-height:1.55; }
+.insight-strip .ins-text strong { font-weight:600; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Prompt Toolkit</h1>
+  <div class="subtitle">Four levels of prompting mastery. Pick a level, choose a technique, and click to see it in action.</div>
+</div>
+
+<div class="level-tabs" id="levelTabs"></div>
+<div class="principle" id="principle"><span class="pr-icon"></span><span class="pr-text"></span></div>
+<div class="tech-row" id="techRow"></div>
+
+<div class="builder">
+  <div class="editor-col">
+    <div class="prompt-editor">
+      <div class="editor-header">
+        <span class="label">Your Prompt</span>
+        <span class="quality-badge" id="qBadge">Basic</span>
+      </div>
+      <div class="prompt-display">
+        <div class="prompt-text" id="promptText"></div>
+      </div>
+      <div class="layer-bar">
+        <div class="bar-label">Add a Layer ↓</div>
+        <div class="layers" id="layerBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="output-col">
+    <div class="output-card">
+      <div class="output-header">
+        <span class="label" id="outLabel">AI Output</span>
+        <span class="version" id="verLabel">Base prompt</span>
+      </div>
+      <div class="output-body">
+        <div class="output-text" id="outputText"></div>
+      </div>
+    </div>
+    <div class="insight-strip">
+      <div class="ins-label">Why This Matters</div>
+      <div class="ins-text" id="insightText">Choose a technique above to see the prompt evolve.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+/* ──────────────────── DATA ──────────────────── */
+const LEVELS = [
+  {
+    name:"Steering the Output", icon:"🎯",
+    tagline:"Tell the AI <em>exactly</em> what you want — constraints narrow the solution space",
+    color:"var(--l1)", bg:"var(--l1-bg)",
+    techniques:[
+      {
+        name:"Instruct", icon:"📋", desc:"Tell the AI clearly what to produce",
+        base:"Write about AI in business.",
+        baseOut:"Artificial intelligence is transforming the business landscape. Companies across all industries are adopting AI to improve efficiency and drive innovation. From chatbots to predictive analytics, the possibilities are endless. AI can help businesses automate tasks, improve decision-making, and enhance customer experiences. It's important to have a strategy in place and consider the ethical implications.",
+        layers:[
+          {
+            name:"Clear task",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Task:</span> Write a 150-word executive briefing on AI adoption in UK financial services, suitable for a board audience.</span>",
+            out:"<span class='hl'>AI in UK Financial Services — Executive Briefing</span>\n\nUK financial services firms are leading AI adoption, with 72% of major banks now deploying machine learning in at least one business function.\n\nThe primary use cases are fraud detection (saving an estimated £1.2B annually across the sector), algorithmic trading, and customer service automation. Challenger banks like Monzo and Starling have built AI-native operations from day one, putting pressure on incumbents to accelerate.\n\nRegulatory readiness is the key differentiator. The FCA's AI and machine learning discussion paper (DP5/22) signals incoming requirements around model explainability and bias testing. Firms that invest in governance frameworks now will be better positioned.\n\n<span class='hl'>Board consideration:</span> AI is no longer a technology decision — it's an operational and regulatory one. The question isn't whether to adopt, but how fast.",
+            insight:"<strong>A clear instruction</strong> eliminates ambiguity. Instead of an essay about 'AI in business', the AI now produces a focused briefing with specific data, a UK lens, and a board-appropriate register. Same AI — radically different output.",
+            quality:2, ver:"With clear task"
+          },
+          {
+            name:"Constraints",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Constraints:</span> Every paragraph must contain a specific statistic. Do not use the words 'transforming', 'revolutionising', or 'game-changing'. End with exactly one board-level question.</span>",
+            out:"<span class='hl'>AI in UK Financial Services — Executive Briefing</span>\n\n72% of major UK banks now deploy machine learning in at least one core function, up from 41% in 2022. The adoption curve is steepening — not flattening.\n\nFraud detection leads, saving the sector an estimated £1.2B annually. Customer service automation follows: NatWest's Cora handles 58% of first-contact queries without human handoff. Algorithmic trading firms report 23% improvement in execution efficiency.\n\nRegulatory pressure is real. The FCA's DP5/22 paper signals incoming requirements: 89% of surveyed compliance officers expect mandatory model explainability by 2027. Firms without governance frameworks face both regulatory risk and competitive disadvantage.\n\n<span class='hl'>The board question:</span> Given that our three largest competitors have each committed over £20M to AI programmes this year, what is our maximum acceptable timeline to reach production deployment?",
+            insight:"<strong>Constraints force precision.</strong> Banning buzzwords ('transforming', 'game-changing') stops the AI from hiding behind vague language. Requiring statistics in every paragraph means every claim is grounded. One question at the end gives the board something to act on.",
+            quality:3, ver:"With constraints"
+          }
+        ]
+      },
+      {
+        name:"Summarise", icon:"📝", desc:"Control how AI condenses information",
+        base:"Summarise what happened in the project meeting.",
+        baseOut:"The meeting covered various aspects of the project. The team discussed progress, some challenges that have come up, and next steps. There were some disagreements about timelines but the team agreed to move forward. Several action items were assigned. The overall mood was positive and everyone seems committed to the project goals.",
+        layers:[
+          {
+            name:"Focus areas",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Focus:</span> Extract only: (1) decisions made, (2) action items with owners, (3) unresolved questions. Ignore general discussion.</span>",
+            out:"<span class='hl'>Decisions Made</span>\n• Go-live date confirmed: 21 March\n• Contractor budget approved (£8.4k for 3 weeks)\n• API integration approach: parallel development track, not sequential\n\n<span class='hl'>Action Items</span>\n• Sarah — complete vendor API spec review by Friday 28 Feb\n• Dev team — deploy staging environment by Monday 3 March\n• Mike — send revised SOW to client by end of day Wednesday\n\n<span class='hl'>Unresolved</span>\n• No agreement on QA resourcing — revisit at Thursday standup\n• Client hasn't confirmed UAT participants — Sarah to chase",
+            insight:"<strong>Focused extraction</strong> turns a rambling summary into an actionable reference. By telling the AI exactly what to extract, you skip the filler. This is a meeting summary someone would actually read.",
+            quality:2, ver:"With focus areas"
+          },
+          {
+            name:"Audience lens",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Audience:</span> Write for someone who wasn't in the room. Each point must be self-contained — no 'as discussed' or 'the team agreed'. Include enough context to act without asking follow-up questions.</span>",
+            out:"<span class='hl'>Decisions Made</span>\n• <strong>Go-live confirmed for 21 March</strong> — all workstreams aligned, no dependencies outstanding\n• <strong>£8.4k approved</strong> for a frontend contractor (3 weeks from 3 March) to cover the resource gap left by Tom's departure\n• <strong>Vendor API integration will use a parallel dev track</strong> rather than waiting for the vendor's revised spec — reduces delay risk from 10 days to 3\n\n<span class='hl'>Action Items</span>\n• <strong>Sarah Chen</strong> — review vendor API spec and flag breaking changes → due Friday 28 Feb\n• <strong>Dev team (led by James)</strong> — deploy staging environment with mock API endpoints → due Monday 3 March\n• <strong>Mike Chatterton</strong> — send revised SOW reflecting the new timeline to Nexus Retail → due Wednesday 26 Feb\n\n<span class='hl'>Unresolved — Needs Input</span>\n• QA resourcing: current plan assumes 1.5 QA engineers but only 1 is available. Options being evaluated at Thursday standup.\n• Client UAT: Nexus hasn't named their test users. Blocking risk if not resolved by 7 March. Sarah chasing.",
+            insight:"<strong>Audience awareness changes everything.</strong> When you tell the AI 'write for someone who wasn't there', it adds the context that makes each point standalone. No insider references, no assumed knowledge. This summary works as a Slack post, an email, or a handoff note.",
+            quality:3, ver:"With audience lens"
+          }
+        ]
+      },
+      {
+        name:"Output Form", icon:"📊", desc:"Specify exactly how you want it structured",
+        base:"Compare Notion, Monday.com, and Asana for our team.",
+        baseOut:"Notion is a versatile tool that combines notes, databases, and project management. It's very flexible but can have a learning curve. Monday.com is more visual and intuitive, great for tracking tasks with its colourful boards. Asana is popular for project management with good task dependencies and timeline views. All three have free tiers. The best choice depends on your team's needs and preferences.",
+        layers:[
+          {
+            name:"Table format",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Format:</span> Present as a comparison table with columns: Tool | Best For | Price (10 users) | Key Strength | Biggest Limitation</span>",
+            out:"<span class='hl'>Project Management Tool Comparison</span>\n\n| Tool | Best For | Price (10 users) | Key Strength | Biggest Limitation |\n|------|----------|-------------------|--------------|--------------------|\n| Notion | Knowledge-heavy teams who need docs + PM in one place | £72/mo | Unmatched flexibility — wiki, database, and PM combined | Steep learning curve; no native time tracking |\n| Monday.com | Visual thinkers who want quick setup | £90/mo | Intuitive drag-and-drop; fastest to get started | Gets expensive fast; automation limits on lower tiers |\n| Asana | Process-driven teams with complex dependencies | £88/mo | Best-in-class task dependencies and timeline views | Cluttered UI at scale; limited document features |",
+            insight:"<strong>Specifying output format</strong> forces structure. A table is instantly scannable — your team can compare tools in 10 seconds instead of reading three paragraphs. The AI fills the structure with useful, specific content instead of hedging.",
+            quality:2, ver:"With table format"
+          },
+          {
+            name:"Decision lens",
+            add:"\n\n<span class='added' style='border-color:var(--l1)'><span class='label-tag' style='color:var(--l1)'>Decision:</span> Rank by value for money. Add a 'Verdict' row recommending one tool, with a one-line justification. Include a 'Watch out for' warning for the recommended tool.</span>",
+            out:"<span class='hl'>Project Management Tool Comparison (Ranked by Value)</span>\n\n| Rank | Tool | Best For | Price (10 users) | Key Strength | Biggest Limitation |\n|------|------|----------|-------------------|--------------|--------------------|\n| 1 | Notion | Knowledge-heavy teams | £72/mo | Docs + PM in one tool | Steep learning curve |\n| 2 | Asana | Process-driven teams | £88/mo | Task dependencies | Cluttered at scale |\n| 3 | Monday.com | Visual setup | £90/mo | Quick onboarding | Expensive to scale |\n\n<span class='hl'>Verdict: Notion</span>\nBest value at £72/mo, and the only tool that eliminates your separate wiki. For a 10-person team doing knowledge work, consolidating docs and PM saves more time than any feature difference.\n\n<span class='hl'>⚠️ Watch out for:</span> Notion's flexibility means you need to invest 2-3 days upfront designing your workspace structure. Without this, it becomes messy fast. Assign one person as 'Notion lead' for the first month.",
+            insight:"<strong>A decision lens turns comparison into recommendation.</strong> Anyone can list features. By forcing a rank order, verdict, and warning, the AI commits to an opinion backed by reasoning. This is the output you can actually take to a team decision.",
+            quality:3, ver:"With decision lens"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name:"Context & Patterns", icon:"📚",
+    tagline:"Without context the AI guesses. With context it <em>knows</em> — examples teach structure, roles shape framing",
+    color:"var(--l2)", bg:"var(--l2-bg)",
+    techniques:[
+      {
+        name:"Priming", icon:"🧩", desc:"Give background so the AI starts from the right place",
+        base:"Write a follow-up email to a client.",
+        baseOut:"Hi,\n\nThank you for meeting with us. We really enjoyed learning about your company and discussing potential ways we could work together.\n\nWe'd love to continue the conversation and explore next steps. Please let us know when you're available for a follow-up call.\n\nLooking forward to hearing from you.\n\nBest regards",
+        layers:[
+          {
+            name:"Company context",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>Context:</span> Client: Sarah Chen, CTO at Nexus Retail (e-commerce, 200 staff). Met last Thursday. She's interested in our AI audit service but worried about disruption to her 15-person engineering team during their platform migration.</span>",
+            out:"Hi Sarah,\n\nGreat to meet you on Thursday — I appreciated you being candid about the platform migration pressures your engineering team is under.\n\nI've been thinking about the timing concern you raised. Our AI audit is specifically designed to run <span class='hl'>alongside existing workstreams, not compete with them.</span> The first two weeks are purely observational — we interview team leads and review workflows. Your engineers aren't pulled off their migration work.\n\nThe real value for Nexus is that we'd identify where AI can accelerate the migration itself, not just add to the backlog.\n\nWould a 20-minute call next week work to walk through how we'd structure this to minimise disruption? I could bring our audit lead who ran a similar engagement at a 180-person e-commerce team.\n\nBest,\nMike",
+            insight:"<strong>Context eliminates guesswork.</strong> With background on who Sarah is, what she cares about, and what worried her, the AI writes an email that directly addresses her objection. No more 'we enjoyed meeting you' filler — every sentence does a job.",
+            quality:2, ver:"With company context"
+          },
+          {
+            name:"Relationship history",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>History:</span> Sarah's company raised Series B (£12M) last month. Their main competitor, ShopAI, launched AI-powered recommendations 3 weeks ago. Sarah mentioned she has board pressure to 'have an AI story' by Q2. She also said she'd been burned by a consultancy last year that disrupted a sprint cycle.</span>",
+            out:"Hi Sarah,\n\nGreat meeting on Thursday. I could tell the ShopAI launch has sharpened the urgency — and I understand why the board wants an AI narrative for Q2.\n\nHere's what I think makes your timing actually quite good: with the Series B closed, you have the runway to do this properly rather than rushing a reactive feature. <span class='hl'>Our audit would give you a credible AI roadmap to present to the board by end of Q1</span> — not vaporware, but a costed, prioritised plan your engineering team has actually validated.\n\nOn the disruption concern: I completely understand after last year's experience. Our approach is different — <span class='hl'>we work around your sprint cycle, not through it.</span> Weeks 1-2 are observational only. I'd suggest we start the Monday after your current sprint ends so there's zero overlap.\n\nCould we do 20 minutes next Tuesday? I'll bring a one-page scope showing exactly what your team's time commitment looks like, day by day.\n\nBest,\nMike",
+            insight:"<strong>Relationship history creates empathy.</strong> The AI now references the competitor threat, the board pressure, the Series B timing, and the bad past experience — without being heavy-handed. This reads like an email from someone who was actually paying attention in the meeting.",
+            quality:3, ver:"With relationship history"
+          }
+        ]
+      },
+      {
+        name:"Roles", icon:"🎭", desc:"Give the AI a perspective to reason from",
+        base:"Give me feedback on this marketing plan.",
+        baseOut:"Your marketing plan looks good overall. You've covered the main channels and have a reasonable budget. Some suggestions: you might want to consider social media more, and your timeline seems ambitious but achievable. The target audience section could be more specific. Overall it's a solid start that could be refined further.",
+        layers:[
+          {
+            name:"Expert role",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>Role:</span> You are a CMO who has scaled three B2B SaaS companies from £5M to £50M ARR. You've seen 100+ marketing plans. Be specific and direct.</span>",
+            out:"I've seen this plan before — at about 30 other companies. That's the problem.\n\n<span class='hl'>What's missing:</span>\n\nYour plan lists channels but not a <strong>thesis</strong>. Why will content marketing work for you specifically? What's your unfair distribution advantage? Without this, you're doing the same thing as everyone else and hoping to out-execute.\n\n<span class='hl'>Budget allocation is backwards.</span> You've put 40% into paid ads before you've proven your messaging converts organically. At your stage (£5M ARR), I'd flip it: 60% content/SEO, 25% events/partnerships, 15% paid for retargeting only.\n\n<span class='hl'>Your timeline assumes linear growth.</span> It won't be. Month 1-3 will feel like nothing is working. Month 4-6 is where compounding kicks in — if your content engine is good. Budget for that emotional valley.\n\nThe target audience section says 'mid-market companies'. That's not a target — that's a census category. Give me a named persona with a specific problem and I'll take this more seriously.",
+            insight:"<strong>Roles unlock experience-based reasoning.</strong> A 'CMO who's scaled three companies' doesn't give polite feedback — they tell you what they've seen fail. The AI now pattern-matches against imagined experience, producing critique you'd normally pay a consultant for.",
+            quality:2, ver:"With expert role"
+          },
+          {
+            name:"Adversarial angle",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>Perspective:</span> Now review this as if you were the board member most sceptical of marketing spend. What would you challenge? What would make you decline the budget request?</span>",
+            out:"If I'm the sceptical board member, here's what I'm circling in red:\n\n<span class='hl'>1. Where's the pipeline attribution model?</span>\nThis plan has £380k in spend but no mechanism to track which pound generated which lead. If you can't prove ROI on the first £100k, I'm not approving the next £280k.\n\n<span class='hl'>2. 'Brand awareness' isn't a metric I'll fund.</span>\nI count three KPIs that are vanity metrics (impressions, followers, newsletter subscribers). I want to see: SQLs generated, pipeline value created, CAC by channel. Rewrite the KPIs or I'll assume this is a spending exercise.\n\n<span class='hl'>3. You're hiring before proving the channel.</span>\nA content marketing manager (£65k + benefits) before you've validated that content drives pipeline? Run a 90-day test with freelancers first. If it works, I'll approve the hire.\n\n<span class='hl'>4. Competitive analysis is missing.</span>\nYou haven't mentioned what your three closest competitors are spending or where they're winning. Are you about to spend £380k to compete on the same keywords they already own?\n\n<span class='hl'>My ask:</span> Come back with a 90-day pilot plan at £40k. Prove the thesis, then we'll talk about the full budget.",
+            insight:"<strong>Switching perspective reveals blind spots.</strong> Same plan, same AI, but the adversarial lens surfaces the questions your board will actually ask. This is how you stress-test a strategy before presenting it.",
+            quality:3, ver:"With adversarial angle"
+          }
+        ]
+      },
+      {
+        name:"Few-Shot", icon:"📎", desc:"Teach the AI your style by showing examples",
+        base:"Write a case study headline for our AI training programme.",
+        baseOut:"How Our AI Training Programme Helped Company X Achieve Better Results\n\n(A look at the benefits of AI training and how it can transform your organisation's approach to artificial intelligence.)",
+        layers:[
+          {
+            name:"Show a good example",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>Example I like:</span> \"Nexus Retail cut support tickets by 40% in 90 days — here's the 3-step playbook their CTO used\"</span>",
+            out:"\"How a 200-person e-commerce team went from AI-sceptic to <span class='hl'>saving 12 hours per person per week</span> — in one quarter\"\n\n(The specific tactics, timeline, and mistakes that made Nexus Retail's AI rollout actually stick.)",
+            insight:"<strong>One example teaches structure, specificity, and tone.</strong> The AI learned: use a specific number, name the outcome, include a timeframe, and hint at the story. It matched the pattern without copying — that's few-shot learning at work.",
+            quality:2, ver:"With one example"
+          },
+          {
+            name:"Show multiple examples",
+            add:"\n\n<span class='added' style='border-color:var(--l2)'><span class='label-tag' style='color:var(--l2)'>More examples:</span>\n• \"£2.1M in pipeline from one prompt template — how FinTech Corp rebuilt their outbound\"\n• \"From 47 manual reports to 3 automated dashboards: inside a mid-market AI transformation\"</span>",
+            out:"Option A:\n\"<span class='hl'>£180k saved, zero engineers displaced</span> — how a retail team used AI to eliminate the work nobody wanted to do\"\n\nOption B:\n\"From 4-hour response times to 40 minutes: <span class='hl'>the 90-day AI sprint</span> that turned a support team into a growth engine\"\n\nOption C:\n\"One AI workshop changed how 28 people work — <span class='hl'>here's what the CTO said she'd do differently</span>\"",
+            insight:"<strong>Multiple examples establish a pattern.</strong> With three examples, the AI has enough signal to identify the formula: specific metric + named outcome + emotional hook + timeframe. It now generates options that follow the pattern while varying the angle. This is how you create a consistent brand voice.",
+            quality:3, ver:"With multiple examples"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name:"Thinking Process", icon:"🧠",
+    tagline:"Guide <em>how</em> the AI thinks, not just what it produces — decomposition, multiple paths, self-checking",
+    color:"var(--l3)", bg:"var(--l3-bg)",
+    techniques:[
+      {
+        name:"Chain of Thought", icon:"🔗", desc:"Make the AI reason step by step",
+        base:"Should we hire a Head of AI?",
+        baseOut:"Hiring a Head of AI could be a great move for your organisation. AI leadership is increasingly important as companies look to adopt AI technologies. A Head of AI can help develop your AI strategy, build a team, and identify opportunities. However, it's a significant investment so you should make sure you're ready. Consider your budget, current AI maturity, and what you'd expect the role to achieve in the first year.",
+        layers:[
+          {
+            name:"Step by step",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Reasoning:</span> Think through this step by step. Consider: (1) What problem are we actually solving? (2) What are the alternatives? (3) What's the cost vs. the alternatives? (4) What's our recommendation and under what conditions?</span>",
+            out:"<span class='hl'>Step 1 — What problem are we solving?</span>\nYou need someone to turn AI from a buzzword into business value. Currently, AI decisions are being made by people without AI expertise, leading to wasted vendor spend and stalled pilots.\n\n<span class='hl'>Step 2 — What are the alternatives?</span>\n• Fractional CAIO (2 days/week): £3-5k/month, immediate expertise, no commitment\n• Upskill an existing senior leader: £5-10k training investment, 6-month ramp\n• External consultancy: £15-30k per engagement, no ongoing presence\n• Full-time Head of AI: £120-150k salary + benefits\n\n<span class='hl'>Step 3 — Cost comparison</span>\nA full-time hire at £140k all-in costs the same as 28 months of fractional CAIO or 5-9 consultancy engagements. The hire only makes financial sense if you have enough AI work to keep them busy full-time for 2+ years.\n\n<span class='hl'>Step 4 — Recommendation</span>\nStart fractional. Hire full-time only when: (a) you have 3+ AI projects running simultaneously, (b) you need someone to manage an AI team of 4+, or (c) AI becomes a revenue-generating product, not just an internal efficiency play.",
+            insight:"<strong>Chain of thought is System 2 for AI.</strong> Instead of jumping to 'it depends', the AI works through costs, alternatives, and conditions methodically. Each step builds on the last. The conclusion is justified by the reasoning, not asserted.",
+            quality:2, ver:"With step-by-step"
+          },
+          {
+            name:"Show working",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Working:</span> Quantify at every step. Show the maths. If you're making an assumption, state it explicitly and rate your confidence (high/medium/low).</span>",
+            out:"<span class='hl'>Step 1 — The problem, quantified</span>\n3 AI pilots launched this year. 2 stalled (est. £45k wasted). 1 succeeded but took 3x longer than benchmarked. <em>[Assumption: your situation matches typical mid-market pattern — MEDIUM confidence]</em>\n\n<span class='hl'>Step 2 — Alternatives costed over 12 months</span>\n• Fractional CAIO: £48-60k/year (2 days/week × £3-5k/month)\n• Upskill existing leader: £8k training + £25k productivity loss during ramp = £33k\n• Consultancy: £60-120k/year (4-6 engagements)\n• Full-time hire: £140-175k (£120-150k salary + 16% employer costs)\n<em>[Assumption: salaries based on London market Q4 2025 — HIGH confidence]</em>\n\n<span class='hl'>Step 3 — Break-even calculation</span>\nA full-time hire at £157k (midpoint) breaks even vs fractional at month 29 — <strong>only if utilisation stays above 80%</strong>.\nAt 60% utilisation (realistic for year 1), the break-even extends to month 44.\n<em>[Assumption: fractional at £4k/month average — HIGH confidence]</em>\n\n<span class='hl'>Step 4 — Recommendation</span>\n<strong>Start fractional (£48-60k/year). HIGH confidence.</strong>\nConvert to full-time when any two of these conditions are met:\n(a) 3+ concurrent AI projects [you currently have 1]\n(b) Managing 4+ people doing AI work [you currently have 0]\n(c) AI contributes to revenue, not just cost savings [currently cost-savings only]",
+            insight:"<strong>Showing working creates accountability.</strong> When you force the AI to quantify and label its assumptions, you can check its reasoning. The confidence ratings tell you where to push back. This is the difference between advice and analysis.",
+            quality:3, ver:"With visible working"
+          }
+        ]
+      },
+      {
+        name:"Tree of Thought", icon:"🌳", desc:"Generate multiple approaches, then evaluate",
+        base:"Our biggest client is threatening to leave. What should we do?",
+        baseOut:"Client retention is crucial for any business. When a major client threatens to leave, it's important to understand their concerns and address them promptly. Schedule a meeting to listen to their issues, show that you value the relationship, and propose solutions. Consider offering a discount or improved service level. Make sure to follow up regularly and demonstrate your commitment to the partnership.",
+        layers:[
+          {
+            name:"Generate options",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Options:</span> Generate 3 fundamentally different strategies to handle this. Each should take a completely different approach. Don't give me 3 variations of the same idea.</span>",
+            out:"<span class='hl'>Strategy A — The Deep Listen</span>\nBook a face-to-face meeting with their decision-maker this week. No agenda, no sales pitch. Ask one question: \"What would have to be true for you to stay?\" Then shut up and listen. Don't solve anything in the room — take it away and come back in 48 hours with a specific plan that addresses their exact concerns.\n\n<span class='hl'>Strategy B — The Pre-emptive Upgrade</span>\nDon't wait for the meeting. Before they've formally decided to leave, deliver something unexpected: a free strategic review of their AI maturity, a complimentary workshop for their leadership team, or early access to your new service tier. Make leaving feel like they'd be giving up something they've already got.\n\n<span class='hl'>Strategy C — The Graceful Release</span>\nCounterintuitive: make it easy for them to leave. Offer a structured transition plan with full knowledge transfer. Remove any lock-in. This shows confidence and integrity — and in 40% of cases, the client reconsiders when they see you're not desperate. Even if they go, you protect the referral relationship.",
+            insight:"<strong>Tree of Thought forces genuine diversity.</strong> Most AI outputs give you three versions of 'schedule a meeting'. By demanding fundamentally different approaches, you get a save-the-deal strategy, a pre-empt strategy, and a let-them-go strategy. Now you can actually choose.",
+            quality:2, ver:"With multiple options"
+          },
+          {
+            name:"Evaluate & rank",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Evaluate:</span> Score each strategy on: likelihood of retention (%), implementation speed, and risk level. Recommend one as your primary approach, but suggest how elements of the others could be combined.</span>",
+            out:"<span class='hl'>Strategy Evaluation</span>\n\n| Strategy | Retention Likelihood | Speed | Risk |\n|----------|---------------------|-------|------|\n| A: Deep Listen | 60-70% | 1 week | Low — worst case, you understand why they're leaving |\n| B: Pre-emptive Upgrade | 45-55% | Immediate | Medium — if they've already decided, it looks desperate |\n| C: Graceful Release | 35-45% (with delayed win-back potential) | 2 weeks | Low — protects long-term reputation |\n\n<span class='hl'>Recommendation: Lead with A, layer in B</span>\nStart with the Deep Listen meeting this week — it's the highest-probability move and the lowest risk. But before the meeting, send the pre-emptive value gesture (Strategy B) as a signal of good faith. This combines urgency with substance.\n\n<span class='hl'>Keep C in your back pocket.</span> If the meeting reveals they've already made their decision, switch immediately to Graceful Release. A client who leaves well is worth more than a client who stays resentfully — 40% of graceful exits result in a return within 18 months.",
+            insight:"<strong>Evaluation turns brainstorming into decision-making.</strong> Options without evaluation is just a list. Adding scores and a recommendation forces the AI to commit — and the combination insight (lead A, layer B, pocket C) is the kind of nuanced strategy that emerges from structured comparison.",
+            quality:3, ver:"With evaluation"
+          }
+        ]
+      },
+      {
+        name:"Chain of Verification", icon:"🔍", desc:"Make the AI check its own work",
+        base:"What's the ROI of our AI training programme if we train 50 people at £500 each?",
+        baseOut:"If you train 50 people at £500 each, your total investment is £25,000. AI training typically provides significant ROI through improved productivity, better decision-making, and time savings. Studies suggest AI training can improve productivity by 20-40%. If each employee saves just 2 hours per week, that adds up to significant value over a year. The ROI would likely be very positive.",
+        layers:[
+          {
+            name:"Self-check",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Verify:</span> After each calculation, check your maths. After each claim, state whether it's based on data I gave you, a reasonable assumption, or a guess. Flag anything uncertain.</span>",
+            out:"<span class='hl'>Investment</span>\n50 people × £500 = <strong>£25,000</strong> ✓ (your data)\n\n<span class='hl'>Productivity gain estimate</span>\nIf trained employees save 3 hours/week on average:\n50 × 3hrs × 48 working weeks = 7,200 hours/year\n<em>[Assumption: 3hrs/week saving. Based on Microsoft/GitHub studies showing 2-5hr range for knowledge workers. MEDIUM confidence — depends on role mix.]</em>\n\n<span class='hl'>Value of saved time</span>\nAt average fully-loaded cost of £35/hr:\n7,200 × £35 = <strong>£252,000/year</strong>\n<em>[Assumption: £35/hr average. Reasonable for UK professional services but ⚠️ this could range from £25-50 depending on your team's seniority mix.]</em>\n\n<span class='hl'>ROI calculation</span>\n(£252,000 - £25,000) / £25,000 = <strong>908% ROI</strong>\n✓ Maths checks out: £252k benefit, £25k cost.\n\n<span class='hl'>⚠️ Honesty check</span>\nThat 908% figure is <strong>the optimistic case</strong>. Reality adjustments:\n• Not all 50 people will adopt AI tools (assume 70% adoption = 35 people)\n• Revised: 35 × 3hrs × 48wks × £35 = £176,400 → <strong>606% ROI</strong>\n• If only 2hrs saved (conservative): 35 × 2 × 48 × £35 = £117,600 → <strong>370% ROI</strong>\n\n<span class='hl'>Verdict:</span> Even the conservative case (370% ROI) is a strong business case. Present the range, not the headline number.",
+            insight:"<strong>Self-verification catches the AI's own optimism.</strong> Without the check step, you'd get a single impressive number (908%) that wouldn't survive a board challenge. With it, you get a credible range (370-908%) and transparent assumptions.",
+            quality:2, ver:"With self-check"
+          },
+          {
+            name:"Stress test",
+            add:"\n\n<span class='added' style='border-color:var(--l3)'><span class='label-tag' style='color:var(--l3)'>Challenge:</span> Now argue against your own numbers. What's the weakest assumption? Under what circumstances would this investment NOT pay off? Give me the honest worst case.</span>",
+            out:"<span class='hl'>Challenging my own analysis:</span>\n\n<span class='hl'>Weakest assumption: the 3 hours/week saving</span>\nThis assumes people actually change their daily behaviour after a one-day training course. Research on corporate training shows <strong>only 12-15% of training transfers to sustained workplace behaviour</strong> without reinforcement. If only 15% of trainees fully adopt AI tools:\n• 50 × 15% = 7.5 people genuinely changing\n• 7.5 × 3hrs × 48wks × £35 = <strong>£37,800</strong>\n• ROI: (£37,800 - £25,000) / £25,000 = <strong>51% ROI</strong>\nStill positive, but not the headline number.\n\n<span class='hl'>When this investment DOESN'T pay off:</span>\n1. <strong>No follow-up programme</strong> — training without reinforcement decays within 30 days\n2. <strong>Tool access blocked</strong> — if IT hasn't approved AI tools, training is theoretical\n3. <strong>Wrong 50 people</strong> — training reluctant staff yields near-zero adoption\n4. <strong>No measurement</strong> — without baseline metrics, you can't prove the ROI\n\n<span class='hl'>Honest range:</span>\n• Best case (high adoption, reinforced): 600%+ ROI\n• Likely case (moderate adoption, some support): 200-350% ROI\n• Worst case (no follow-up, low adoption): 50-100% ROI\n\n<span class='hl'>Recommendation:</span> Budget an extra £5,000 for a 90-day reinforcement programme (coaching sessions, tool access, usage tracking). This shifts the likely outcome from 200% to 400%+ by tripling adoption rates.",
+            insight:"<strong>Making the AI argue against itself is the most powerful verification technique.</strong> It found the real weakness: not the maths, but the behaviour change assumption. And it turned the challenge into an actionable recommendation (add a reinforcement programme). This is rigour that builds trust.",
+            quality:3, ver:"With stress test"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    name:"Building Systems", icon:"⚡",
+    tagline:"Move from writing prompts to <em>designing prompt systems</em> — meta-prompting, chaining, and letting go",
+    color:"var(--l4)", bg:"var(--l4-bg)",
+    techniques:[
+      {
+        name:"Meta-Prompting", icon:"🔧", desc:"Ask the AI to design prompts for you",
+        base:"I keep having to write weekly client update emails and they take ages.",
+        baseOut:"I understand writing weekly client updates can be time-consuming. Here are some tips: create a template, keep a running log of achievements, set aside a specific time each week for updates, use bullet points for readability, and focus on outcomes rather than activities. You might also want to automate parts of the process using tools like Notion or Monday.com.",
+        layers:[
+          {
+            name:"Design a template",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Meta:</span> Don't write me a client update. Instead, design a reusable prompt template I can use every week. Include placeholders I fill in — [client name], [this week's work], [blockers], etc. The template should produce a professional update email in under 60 seconds.</span>",
+            out:"<span class='hl'>Your Reusable Client Update Prompt</span>\n\n<span style='font-family:JetBrains Mono,monospace;font-size:0.7rem;background:rgba(0,132,178,0.08);padding:8px;border-radius:4px;display:block;white-space:pre-wrap;'>You are a senior account manager writing a weekly client update. Be direct, specific, and action-oriented. Never use filler phrases like 'I hope this finds you well'.\n\nClient: [CLIENT NAME]\nRelationship context: [FRIENDLY / FORMAL / NEW]\n\nThis week we:\n- [ACHIEVEMENT 1]\n- [ACHIEVEMENT 2]\n- [ACHIEVEMENT 3 if applicable]\n\nBlockers/risks: [ANY BLOCKERS or 'None']\nWhat we need from them: [ACTION NEEDED or 'Nothing right now']\nNext week's focus: [1-2 PRIORITIES]\n\nWrite a 100-word email update. End with a specific next step, not a vague 'let me know'.</span>\n\nFill in the brackets, paste into any AI tool, and you'll get a polished update in seconds. Works for any client, any week.",
+            insight:"<strong>Meta-prompting creates leverage.</strong> Instead of getting one email, you got a tool that produces infinite emails. The 30 minutes you'd spend crafting each update becomes 60 seconds of filling in brackets. This is the shift from using AI to building with AI.",
+            quality:2, ver:"With template design"
+          },
+          {
+            name:"Optimise the template",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Optimise:</span> Now improve that template. What's missing? What edge cases would break it? Add a tone selector and a conditional section for when things have gone wrong. Make it bulletproof.</span>",
+            out:"<span class='hl'>Client Update Prompt v2 — Optimised</span>\n\n<span style='font-family:JetBrains Mono,monospace;font-size:0.7rem;background:rgba(0,132,178,0.08);padding:8px;border-radius:4px;display:block;white-space:pre-wrap;'>You are a senior account manager. Match the tone below.\n\nClient: [CLIENT NAME]\nTone: [CONFIDENT — things are on track / TRANSPARENT — there's a problem / REASSURING — recovering from an issue]\n\nThis week:\n- [COMPLETED ITEM 1]\n- [COMPLETED ITEM 2]\n- [IN PROGRESS: item and expected completion]\n\n[IF PROBLEM EXISTS]\nIssue: [WHAT WENT WRONG]\nImpact: [WHAT IT MEANS FOR THEM]\nFix: [WHAT WE'RE DOING — be specific]\nTimeline: [WHEN IT'LL BE RESOLVED]\n[END IF]\n\nAsk from client: [SPECIFIC ACTION + DEADLINE or 'None — just keeping you informed']\nNext week: [TOP PRIORITY]\n\nRules: Under 120 words. No filler. Every sentence must contain either a fact, a date, or an action. If the tone is TRANSPARENT, lead with the issue — don't bury it.</span>\n\n<span class='hl'>What changed:</span>\n• Added tone selector for different situations\n• Conditional problem section (so good-news weeks stay clean)\n• Explicit rule: lead with issues when tone is 'transparent'\n• 'In progress' item added — not everything is done each week\n• Word limit tightened to 120 for real brevity",
+            insight:"<strong>Optimising a meta-prompt creates a robust system.</strong> The first version worked for good weeks. Version 2 handles bad news, different tones, and incomplete work. This is prompt engineering at system level — you're building a reusable tool that handles edge cases.",
+            quality:3, ver:"With optimisation"
+          }
+        ]
+      },
+      {
+        name:"Prompt Chaining", icon:"⛓️", desc:"Break complex tasks into linked steps",
+        base:"Turn these messy meeting notes into a client-ready report.",
+        baseOut:"Based on the meeting notes, here is a report summarising the key discussion points, decisions made, and action items. The meeting covered several topics including project progress, budget updates, and timeline changes. The team agreed on next steps and assigned responsibilities. Overall the project is progressing well with some areas needing attention.",
+        layers:[
+          {
+            name:"Split into steps",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Chain:</span> Do this in 4 separate steps. Complete each fully before moving to the next.\nStep 1: EXTRACT — Pull out every fact, number, decision, and action item. Raw data only, no prose.\nStep 2: ORGANISE — Group the extracted items by theme. Identify gaps.\nStep 3: DRAFT — Write the client-facing report using only verified extracted data.\nStep 4: QA — Check the report against your extraction. Flag anything in the report not supported by the notes.</span>",
+            out:"<span class='hl'>Step 1 — EXTRACT</span>\n<em>Raw data from notes:</em>\n• Budget: £142k spent of £200k (71%)\n• Timeline: go-live moved from 14 March → 21 March (+7 days)\n• Decision: approved parallel dev track for vendor API\n• Decision: contractor budget approved (£8.4k)\n• Action: Sarah → vendor spec review by 28 Feb\n• Action: Dev team → staging deploy by 3 March\n• Risk: QA resourcing gap (1 of 1.5 needed)\n• Risk: client hasn't confirmed UAT testers\n\n<span class='hl'>Step 2 — ORGANISE</span>\n<em>Themes:</em> Budget (on track) | Timeline (slight slip, mitigated) | Technical (parallel track decision) | Risks (2 open)\n<em>Gap identified:</em> No data on client satisfaction or feedback from last sprint\n\n<span class='hl'>Step 3 — CLIENT REPORT</span>\nProject Atlas — Weekly Update (24 Feb)\n\nYour project is 71% through budget and tracking to a 21 March go-live. We've adjusted the timeline by one week to accommodate a more robust integration approach — this reduces delivery risk significantly.\n\nKey progress: staging environment on track for 3 March, vendor integration running via parallel development (faster than sequential). Budget remains healthy with headroom for contingency.\n\nWe need from you: confirmation of your UAT test participants by 7 March to stay on schedule.\n\n<span class='hl'>Step 4 — QA CHECK</span>\n✅ All facts in report trace to extraction\n✅ No unsupported claims\n⚠️ Report doesn't mention QA resourcing risk — excluded because it's internal. Correct decision for client-facing doc.",
+            insight:"<strong>Chaining prevents the AI from cutting corners.</strong> When you ask for extraction → organisation → drafting → QA as separate steps, the AI can't skip from messy notes to polished prose (where it would hallucinate details). Each step is auditable and each output feeds the next.",
+            quality:2, ver:"With step chain"
+          },
+          {
+            name:"Connect outputs",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Handoff:</span> Format each step's output so it's ready to feed into the next step. Use a structured format (not prose) for Steps 1-2. The Step 4 QA must reference specific line items from Step 1 — if anything in the report can't be traced back, remove it.</span>",
+            out:"<span class='hl'>Step 1 — EXTRACT</span> <em style='color:var(--slate)'>[structured for handoff]</em>\n<span style='font-family:JetBrains Mono,monospace;font-size:0.68rem'>FACTS:\n  F1: Budget £142k/£200k (71%)\n  F2: Go-live 21 March (was 14 March)\n  F3: Parallel dev track approved\n  F4: Contractor £8.4k approved\nACTIONS:\n  A1: Sarah → vendor spec review → 28 Feb\n  A2: Dev → staging deploy → 3 March\nRISKS:\n  R1: QA gap (1 of 1.5 FTE) — internal\n  R2: No UAT testers confirmed — client-facing</span>\n\n<span class='hl'>Step 2 — ORGANISE</span> <em style='color:var(--slate)'>[grouped, gaps flagged]</em>\n<span style='font-family:JetBrains Mono,monospace;font-size:0.68rem'>CLIENT-FACING: F1, F2, F3, R2\nINTERNAL ONLY: F4, A1, A2, R1\nGAP: No client satisfaction data</span>\n\n<span class='hl'>Step 3 — REPORT</span>\nProject Atlas — Weekly Update (24 Feb)\n\nBudget: on track at 71% [F1]. Go-live: 21 March [F2], adjusted +7 days for a more robust vendor integration approach [F3]. Risk is lower as a result.\n\nWe need: your UAT test participants confirmed by 7 March [R2].\n\n<span class='hl'>Step 4 — QA TRACE</span>\n<span style='font-family:JetBrains Mono,monospace;font-size:0.68rem'>✅ '71%' → F1\n✅ '21 March' → F2\n✅ 'vendor integration approach' → F3\n✅ 'UAT test participants' → R2\n✅ No untraced claims found\n❌ Excluded: F4, A1, A2, R1 (internal)</span>",
+            insight:"<strong>Connected outputs create an audit trail.</strong> Every claim in the final report can be traced back to extracted data with a reference code. Nothing is invented, nothing slips through. This is how you build trust in AI-generated client communications — every fact is provable.",
+            quality:3, ver:"With connected outputs"
+          }
+        ]
+      },
+      {
+        name:"Unprompting", icon:"🎯", desc:"State the goal, trust the model",
+        base:"<span class='dim'>[Over-specified prompt — 200 words telling the AI exactly how to structure a board presentation, what slides to include, what order, what tone, what font suggestions, how many bullet points per slide, which data to emphasise...]</span>\n\nCreate a board presentation about our Q4 results with exactly 8 slides. Slide 1 should be a title slide with our company name and 'Q4 Results' as the subtitle. Slide 2 should contain an executive summary with 3 bullet points. Slide 3 should show revenue data in a table format with quarterly comparisons...",
+        baseOut:"<span class='hl'>Slide 1: Title</span>\nCompany Name — Q4 Results\n\n<span class='hl'>Slide 2: Executive Summary</span>\n• Revenue grew 12% year-on-year\n• Three major milestones achieved\n• Two risks identified for Q1\n\n<span class='hl'>Slide 3: Revenue Data</span>\n| Quarter | Revenue |\n| Q1 | £3.2M |\n| Q2 | £3.4M |\n| Q3 | £3.5M |\n| Q4 | £3.9M |\n\n<em>[Follows instructions precisely but feels mechanical. No narrative flow, no insight, no story arc. The AI did what you said, not what you needed.]</em>",
+        layers:[
+          {
+            name:"Goal + constraints only",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Unprompt — replace the above with:</span>\nGoal: A board presentation that makes our Q4 results tell a compelling story.\nData: [attached Q4 figures]\nAudience: Board of directors, 15-minute slot, they care about growth trajectory and risk.\nConstraints: Maximum 8 slides. Every slide must have a 'so what' — no data without interpretation.\nYou decide the structure.</span>",
+            out:"<span class='hl'>Slide 1: The Headline</span>\n\"Q4: 12% growth masks a bigger story — we're building a different kind of company\"\n\n<span class='hl'>Slide 2: The Shape of Growth</span>\nRevenue chart showing acceleration curve. Callout: Enterprise segment grew 28% — this is where the story is.\n\n<span class='hl'>Slide 3: Why Enterprise Won</span>\nFinServ cluster: 8 of 14 new logos. Not an accident — evidence of emerging vertical dominance.\n\n<span class='hl'>Slide 4: The SME Question</span>\n-7% decline. Honest assessment: pricing change hurt. But SME at £870k is now a smaller share of a bigger pie.\n\n<span class='hl'>Slide 5: The Pipeline Reality</span>\nCoverage dropped from 3.2x to 2.7x. If we don't act, Q1 underperforms by 13%. Here's the plan.\n\n<span class='hl'>Slide 6: Three Bets for Q1</span>\nDouble down on FinServ | Fix SME pricing | Pipeline blitz by 15 Feb\n\n<span class='hl'>Slide 7: What We Need From the Board</span>\n£8.4k contractor approval. Green light on revised SME pricing tier.\n\n<span class='hl'>Slide 8: Where We'll Be in 90 Days</span>\nSpecific targets: pipeline restored to 3x, SME churn halved, FinServ playbook live.",
+            insight:"<strong>Unprompting is the most advanced technique.</strong> By stripping away structural instructions and giving only the goal, data, audience, and constraints, you let the AI use its own judgement. The result: a narrative arc, honest self-assessment, and clear asks. The AI told a story instead of filling a template.",
+            quality:2, ver:"Goal + constraints"
+          },
+          {
+            name:"Full trust",
+            add:"\n\n<span class='added' style='border-color:var(--l4)'><span class='label-tag' style='color:var(--l4)'>Even simpler:</span>\nHere's our Q4 data. [attached]\nMake the board care. 15 minutes. You decide everything.</span>",
+            out:"<span class='hl'>The board deck the AI chose to build:</span>\n\n1. <strong>\"£3.9M and accelerating\"</strong> — one number, one chart, one sentence\n2. <strong>The Enterprise breakout</strong> — FinServ cluster visualised as a heat map. Board sees the pattern immediately.\n3. <strong>\"We have an SME problem — and a plan\"</strong> — leads with the bad news. Shows the pricing correlation. Proposes the fix.\n4. <strong>Pipeline warning + solution</strong> — red/amber/green coverage chart. Three specific actions already in motion.\n5. <strong>The ask</strong> — two decisions needed, both under £15k. Easy yes.\n6. <strong>90-day scorecard</strong> — \"Hold us to these numbers. If we miss two of four, we'll pivot.\"\n\n<em>Six slides, not eight. The AI decided you didn't need a title slide or a summary — the story IS the summary.</em>\n\n<span class='hl'>The presentation has a narrative arc: momentum → opportunity → honesty → action → accountability.</span>",
+            insight:"<strong>Less instruction, better results.</strong> This is the paradox of advanced prompting: the less you prescribe, the more the AI can bring its own intelligence. You moved from 200 words of instructions to 15 words — and got a better deck. The AI chose 6 slides instead of 8 because 6 was enough. That's judgement, not obedience.",
+            quality:3, ver:"Full trust"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+/* ──────────────────── STATE ──────────────────── */
+let curLevel = 0;
+let curTech = 0;
+let appliedCount = 0;
+
+/* ──────────────────── RENDER ──────────────────── */
+function renderLevelTabs() {
+  document.getElementById('levelTabs').innerHTML = LEVELS.map((l, i) =>
+    `<div class="level-tab ${i===curLevel?'active':''}" onclick="pickLevel(${i})" style="${i===curLevel?`border-color:${l.color};background:${l.bg}`:''}" id="lt${i}">
+      <div class="lt-num">Level ${i+1}</div>
+      <div class="lt-name" style="${i===curLevel?`color:${l.color}`:''}">${l.icon} ${l.name}</div>
+    </div>`
+  ).join('');
+}
+
+function renderPrinciple() {
+  const l = LEVELS[curLevel];
+  const el = document.getElementById('principle');
+  el.innerHTML = `<span class="pr-icon">${l.icon}</span><span class="pr-text"><strong style="color:${l.color}">Level ${curLevel+1}:</strong> ${l.tagline}</span>`;
+}
+
+function renderTechRow() {
+  const l = LEVELS[curLevel];
+  document.getElementById('techRow').innerHTML = l.techniques.map((t, i) =>
+    `<div class="tech-card ${i===curTech?'active':''}" onclick="pickTech(${i})" style="${i===curTech?`border-color:${l.color};background:${l.bg}`:''}" id="tc${i}">
+      <div class="tc-icon">${t.icon}</div>
+      <div class="tc-name" style="${i===curTech?`color:${l.color}`:''}">${t.name}</div>
+      <div class="tc-desc">${t.desc}</div>
+    </div>`
+  ).join('');
+}
+
+/* Convert markdown pipe tables to HTML tables */
+function mdTables(html) {
+  return html.replace(/((?:\|[^\n]+\|\n?)+)/g, function(block) {
+    const rows = block.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return block;
+    // Separator row contains only |, -, :, and whitespace
+    const isSep = r => /^[|\-:\s]+$/.test(r.trim()) && r.includes('-');
+    const sepIdx = rows.findIndex((r,i) => i > 0 && isSep(r));
+    if (sepIdx < 0) return block;
+    const parse = r => r.split('|').slice(1,-1).map(c => c.trim());
+    let t = '<table>';
+    t += '<thead>';
+    for (let i = 0; i < sepIdx; i++) {
+      t += '<tr>' + parse(rows[i]).map(c => `<th>${c}</th>`).join('') + '</tr>';
+    }
+    t += '</thead><tbody>';
+    for (let i = sepIdx + 1; i < rows.length; i++) {
+      t += '<tr>' + parse(rows[i]).map(c => `<td>${c}</td>`).join('') + '</tr>';
+    }
+    t += '</tbody></table>';
+    return t;
+  });
+}
+
+function renderBuilder() {
+  const l = LEVELS[curLevel];
+  const t = l.techniques[curTech];
+
+  // Prompt text — show base + applied layers
+  let prompt = `<span class="original">${t.base}</span>`;
+  for (let i = 0; i < appliedCount; i++) prompt += t.layers[i].add;
+  document.getElementById('promptText').innerHTML = prompt;
+
+  // Output text
+  const outEl = document.getElementById('outputText');
+  if (appliedCount === 0) {
+    outEl.innerHTML = mdTables(t.baseOut);
+  } else {
+    outEl.innerHTML = mdTables(t.layers[appliedCount - 1].out);
+  }
+
+  // Quality badge
+  const badge = document.getElementById('qBadge');
+  const qi = appliedCount === 0 ? 0 : t.layers[appliedCount - 1].quality;
+  const qLabels = ['Basic', 'Good', 'Strong', 'Excellent'];
+  const qColors = ['rgba(255,255,255,0.1);color:var(--slate)', `${l.bg};color:${l.color}`, `${l.bg};color:${l.color}`, `${l.bg};color:${l.color}`];
+  badge.textContent = qLabels[qi];
+  badge.style.cssText = `background:${qi===0?'rgba(255,255,255,0.08)':l.bg};color:${qi===0?'var(--slate)':l.color}`;
+
+  // Version label
+  const ver = appliedCount === 0 ? 'Base prompt' : t.layers[appliedCount - 1].ver;
+  document.getElementById('verLabel').textContent = ver;
+
+  // Output label colour
+  document.getElementById('outLabel').style.color = qi === 0 ? 'var(--cerulean)' : l.color;
+
+  // Insight
+  if (appliedCount === 0) {
+    document.getElementById('insightText').innerHTML = `This is what a vague prompt gets you — generic output. <strong style="color:${l.color}">Click the layers below</strong> to see the ${t.name.toLowerCase()} technique in action.`;
+  } else {
+    document.getElementById('insightText').innerHTML = t.layers[appliedCount - 1].insight;
+  }
+
+  // Layer buttons
+  let btns = t.layers.map((la, i) => {
+    let cls = 'layer-btn';
+    if (i < appliedCount) cls += ' applied';
+    else if (i === appliedCount) cls += ' next';
+    else cls += ' locked';
+    return `<button class="${cls}" onclick="applyLayer(${i})">+ ${la.name}</button>`;
+  }).join('');
+  btns += `<button class="reset-btn" onclick="resetTech()">↺ Reset</button>`;
+  document.getElementById('layerBar').innerHTML = btns;
+}
+
+/* ──────────────────── ACTIONS ──────────────────── */
+function pickLevel(i) {
+  curLevel = i;
+  curTech = 0;
+  appliedCount = 0;
+  renderLevelTabs();
+  renderPrinciple();
+  renderTechRow();
+  renderBuilder();
+}
+
+function pickTech(i) {
+  curTech = i;
+  appliedCount = 0;
+  renderTechRow();
+  renderBuilder();
+}
+
+function applyLayer(i) {
+  if (i !== appliedCount) return;
+  appliedCount++;
+  const outEl = document.getElementById('outputText');
+  outEl.style.opacity = '0.3';
+  setTimeout(() => { renderBuilder(); outEl.style.opacity = '1'; }, 350);
+}
+
+function resetTech() {
+  appliedCount = 0;
+  renderBuilder();
+}
+
+/* ──────────────────── INIT ──────────────────── */
+renderLevelTabs();
+renderPrinciple();
+renderTechRow();
+renderBuilder();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.level-tabs, .tabs, [class*=level-tab]') || document.querySelector('.levels'),
+    title: 'Choose a skill level',
+    desc: 'Four levels from beginner to expert. Each unlocks more advanced prompting techniques.', pad: 8 },
+  { target: () => document.querySelector('.tech-card, .technique, [class*=tech]') || document.querySelector('.cards'),
+    title: 'Select a technique',
+    desc: 'Click a technique card to load it into the prompt builder. Each one shows a different way to improve your prompts.', pad: 6 },
+  { target: () => document.querySelector('.layer-btn, .apply-btn, [class*=layer]') || document.querySelector('.builder'),
+    title: 'Build up your prompt',
+    desc: 'Click the layer buttons to progressively add elements. Watch how each addition improves the output quality.', pad: 8 },
+  { target: () => document.querySelector('.output, .result, .quality, [class*=output]') || document.querySelector('.right'),
+    title: 'See the improvement',
+    desc: 'The output panel and quality badge update as you add layers — from basic to professional.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

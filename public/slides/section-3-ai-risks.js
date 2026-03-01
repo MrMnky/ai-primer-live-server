@@ -42,6 +42,21 @@ const SECTION_3_AI_RISKS = [
     notes: `This is the anchor risk. Don't rush. "Treat every output as a hallucination" is the principle that governs everything else. It sounds extreme but it's the right starting position. You're not being cynical — you're being competent. Mitigation: cross-check, use web search, ask the AI to verify its own reasoning.`,
   },
 
+  // ── 3.1b  Hallucinations Interactive ─────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'AI RISKS',
+    title: 'Explore: Spotting Hallucinations',
+    subtitle: 'Can you tell which AI claims are real and which are fabricated?',
+    graphic: {
+      id: 'hallucinations',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive scenario exploration. Participants examine AI-generated claims and try to identify hallucinations. Builds the instinct to question confident-sounding AI output. Debrief: "How did it feel when a fluent, confident response turned out to be wrong? That's the daily reality of using AI without verification."`,
+  },
+
   {
     type: 'content',
     theme: 'light',

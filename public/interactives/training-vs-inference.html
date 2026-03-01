@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training vs Inference — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C; --gable-light: #243d4e; --gable-lighter: #2d4f64;
+    --turquoise: #00FFBC; --dodger: #00B1FF; --cerulean: #0084B2;
+    --malibu: #5CD5FF; --meadow: #17CE95; --cornflower: #6161FF;
+    --moonraker: #C5B6F1; --seapink: #EFACA8; --chicago: #575756;
+    --greenpea: #226B4D; --bittersweet: #FF5F5F; --white: #FFFFFF;
+    --accessible-accent: #007A5E; --amber: #FFC107;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable); color: var(--white);
+    height: 100vh; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .layout {
+    width: 100vw; height: 100vh;
+    padding: 22px 36px 14px;
+    display: flex; flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 26px; font-weight: 700; line-height: 1.15; }
+  .header h1 .train { color: var(--cornflower); }
+  .header h1 .infer { color: var(--meadow); }
+  .header .sub { font-size: 12px; font-weight: 400; opacity: 0.5; margin-top: 2px; }
+
+  /* ─── PHASE TOGGLE ─── */
+  .phase-toggle {
+    display: flex; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; overflow: hidden;
+  }
+  .phase-btn {
+    background: none; border: none; color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 500;
+    padding: 10px 28px; cursor: pointer;
+    transition: all 0.3s; position: relative;
+  }
+  .phase-btn:hover { background: rgba(255,255,255,0.04); }
+  .phase-btn.active.train-active { background: var(--cornflower); font-weight: 600; }
+  .phase-btn.active.infer-active { background: var(--greenpea); font-weight: 600; }
+  .phase-btn.active.both-active { background: var(--cerulean); font-weight: 600; }
+
+  /* ─── MAIN CONTENT ─── */
+  .main { flex: 1; min-height: 0; position: relative; }
+  .view { position: absolute; inset: 0; transition: opacity 0.4s, visibility 0.4s; }
+  .view.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  /* ═══ TRAINING VIEW ═══ */
+  .train-view {
+    display: grid; grid-template-columns: 320px 1fr;
+    gap: 16px; height: 100%;
+  }
+  .train-left { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+  .train-left::-webkit-scrollbar { width: 3px; }
+  .train-left::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .train-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+
+  /* Pipeline stages */
+  .phase-group-label {
+    font-size: 8px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--cornflower);
+    opacity: 0.6; margin: 8px 0 4px; padding-left: 4px;
+  }
+  .phase-group-label:first-child { margin-top: 0; }
+
+  .pipe-stage {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 7px 10px;
+    opacity: 0.25; transform: translateX(-12px);
+    transition: all 0.4s ease; margin-bottom: 4px;
+    cursor: default;
+  }
+  .pipe-stage.visible { opacity: 1; transform: translateX(0); }
+  .pipe-stage.active {
+    border-color: rgba(97,97,255,0.4);
+    background: rgba(97,97,255,0.1);
+    box-shadow: 0 0 12px rgba(97,97,255,0.15);
+  }
+  .pipe-stage.complete {
+    opacity: 0.6; border-color: rgba(97,97,255,0.15);
+  }
+  .pipe-stage.error-stage.active {
+    border-color: rgba(255,95,95,0.4);
+    background: rgba(255,95,95,0.1);
+    box-shadow: 0 0 12px rgba(255,95,95,0.15);
+  }
+  .stage-icon { font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; }
+  .stage-name { font-size: 10.5px; font-weight: 600; line-height: 1.3; }
+  .stage-detail { font-size: 9px; font-weight: 400; opacity: 0.45; line-height: 1.35; }
+
+  .pipe-arrow {
+    text-align: center; font-size: 9px; opacity: 0.1;
+    padding: 0; margin: -2px 0; transition: opacity 0.3s;
+  }
+  .pipe-arrow.lit { opacity: 0.4; }
+
+  /* Neural network canvas */
+  .nn-container {
+    flex: 1; min-height: 0;
+    background: rgba(97,97,255,0.04);
+    border: 1px solid rgba(97,97,255,0.1);
+    border-radius: 12px; position: relative;
+    overflow: hidden;
+  }
+  .nn-container canvas { width: 100%; height: 100%; }
+  .nn-label {
+    position: absolute; top: 10px; left: 14px;
+    font-size: 8px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--cornflower); opacity: 0.5;
+  }
+  .nn-epoch {
+    position: absolute; top: 10px; right: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--cornflower); opacity: 0.5;
+  }
+  .nn-caption {
+    position: absolute; bottom: 8px; left: 14px; right: 14px;
+    font-size: 9px; opacity: 0.4; line-height: 1.4;
+    transition: all 0.3s;
+  }
+  .nn-caption.highlight { opacity: 0.7; }
+
+  /* Training stats */
+  .train-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .t-stat {
+    background: rgba(97,97,255,0.05);
+    border: 1px solid rgba(97,97,255,0.1);
+    border-radius: 8px; padding: 8px 10px; text-align: center;
+  }
+  .t-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700; color: var(--cornflower);
+  }
+  .t-stat-label { font-size: 8px; opacity: 0.35; margin-top: 1px; letter-spacing: 0.3px; }
+
+  /* ═══ INFERENCE VIEW ═══ */
+  .infer-view {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; gap: 20px;
+  }
+  .infer-flow {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: nowrap;
+  }
+  .infer-step {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; opacity: 0; transform: scale(0.9);
+    transition: all 0.4s ease; width: 120px;
+  }
+  .infer-step.visible { opacity: 1; transform: scale(1); }
+  .infer-step.active .infer-icon-wrap {
+    box-shadow: 0 0 20px rgba(23,206,149,0.3);
+    border-color: rgba(23,206,149,0.5);
+  }
+  .infer-icon-wrap {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: rgba(23,206,149,0.08);
+    border: 1px solid rgba(23,206,149,0.15);
+    transition: all 0.3s;
+  }
+  .infer-icon-wrap.model-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: rgba(23,206,149,0.12);
+    border: 2px solid rgba(23,206,149,0.3);
+    font-size: 28px; position: relative;
+  }
+  .lock-badge {
+    position: absolute; bottom: -4px; right: -4px;
+    font-size: 12px; background: var(--gable);
+    border-radius: 50%; padding: 2px;
+    border: 1px solid rgba(23,206,149,0.3);
+  }
+  .infer-step-name {
+    font-size: 10px; font-weight: 600; text-align: center;
+    color: var(--meadow); line-height: 1.3;
+  }
+  .infer-step-detail {
+    font-size: 8.5px; opacity: 0.4; text-align: center;
+    line-height: 1.35; max-width: 110px;
+  }
+  .infer-arrow {
+    font-size: 16px; opacity: 0.15; margin: 0 -4px;
+    transition: all 0.3s; flex-shrink: 0;
+    padding-bottom: 28px;
+  }
+  .infer-arrow.lit { opacity: 0.5; color: var(--meadow); }
+
+  /* Inference stats bar */
+  .infer-stats {
+    display: flex; gap: 40px;
+  }
+  .i-stat { text-align: center; }
+  .i-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; font-weight: 700; color: var(--meadow);
+  }
+  .i-stat-label { font-size: 9px; opacity: 0.35; margin-top: 2px; }
+
+  .infer-insight {
+    max-width: 560px; text-align: center;
+    font-size: 11px; opacity: 0.4; line-height: 1.6;
+    font-style: italic;
+  }
+  .infer-insight strong { opacity: 1; font-style: normal; color: var(--meadow); }
+
+  /* ═══ COMPARE VIEW ═══ */
+  .compare-view {
+    display: grid; grid-template-columns: 1fr 60px 1fr;
+    height: 100%; gap: 0;
+  }
+  .cmp-panel {
+    border-radius: 12px; padding: 18px;
+    display: flex; flex-direction: column;
+  }
+  .cmp-panel.cmp-train {
+    background: rgba(97,97,255,0.05);
+    border: 1px solid rgba(97,97,255,0.12);
+  }
+  .cmp-panel.cmp-infer {
+    background: rgba(23,206,149,0.05);
+    border: 1px solid rgba(23,206,149,0.12);
+  }
+  .cmp-label {
+    font-size: 8px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .cmp-label.purple { color: var(--cornflower); }
+  .cmp-label.green { color: var(--meadow); }
+  .cmp-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .cmp-desc { font-size: 10px; opacity: 0.45; line-height: 1.5; margin-bottom: 12px; }
+
+  .cmp-stages { flex: 1; display: flex; flex-direction: column; gap: 5px; justify-content: center; }
+  .cmp-stage {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 7px; padding: 6px 10px;
+  }
+  .cmp-stage-icon { font-size: 14px; width: 22px; text-align: center; }
+  .cmp-stage-name { font-size: 9.5px; font-weight: 500; }
+
+  .cmp-stats { display: flex; gap: 12px; margin-top: 10px; }
+  .cmp-stat { text-align: center; flex: 1; }
+  .cmp-stat-val { font-size: 14px; font-weight: 700; }
+  .cmp-stat-label { font-size: 7.5px; opacity: 0.3; letter-spacing: 0.3px; }
+  .cmp-stat-val.purple { color: var(--cornflower); }
+  .cmp-stat-val.green { color: var(--meadow); }
+
+  .cmp-analogy {
+    margin-top: 8px; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .cmp-analogy-label {
+    font-size: 8px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; opacity: 0.25; margin-bottom: 3px;
+  }
+  .cmp-analogy-text {
+    font-size: 10px; opacity: 0.5; line-height: 1.5; font-style: italic;
+  }
+  .cmp-analogy-text strong { opacity: 1; font-style: normal; }
+
+  .cmp-divider {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .cmp-divider-line {
+    width: 2px; flex: 1;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent);
+  }
+  .cmp-divider-icon {
+    font-size: 18px; background: var(--gable);
+    padding: 8px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    flex-shrink: 0; display: flex;
+    justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer-left { display: flex; gap: 8px; align-items: center; }
+  .play-btn {
+    background: var(--cerulean); border: none; color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; font-weight: 600;
+    padding: 8px 22px; border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .play-btn:hover:not(:disabled) { background: var(--dodger); }
+  .play-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .footer-hint { font-size: 11px; opacity: 0.3; }
+  .wm { font-size: 10px; opacity: 0.2; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="header">
+    <div>
+      <h1><span class="train">Training</span> vs <span class="infer">Inference</span></h1>
+      <div class="sub">How an AI model is built — and how it uses what it learned</div>
+    </div>
+    <div class="phase-toggle">
+      <button class="phase-btn active both-active" id="bothBtn" onclick="setPhase('both')">↔ Compare</button>
+      <button class="phase-btn" id="trainBtn" onclick="setPhase('train')">⚙️ Training</button>
+      <button class="phase-btn" id="inferBtn" onclick="setPhase('infer')">⚡ Inference</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- ═══ TRAINING VIEW ═══ -->
+    <div class="view train-view hidden" id="trainView">
+      <div class="train-left">
+        <div class="phase-group-label">Phase 1 — Data preparation</div>
+        <div class="pipe-stage" data-idx="0"><div class="stage-icon">📚</div><div><div class="stage-name">Gather training data</div><div class="stage-detail">Trillions of words — books, websites, code, academic papers</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage" data-idx="1"><div class="stage-icon">🧹</div><div><div class="stage-name">Clean &amp; filter</div><div class="stage-detail">Remove duplicates, toxic content, low-quality text</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage" data-idx="2"><div class="stage-icon">🔢</div><div><div class="stage-name">Tokenise everything</div><div class="stage-detail">Convert all text into numerical sequences the model can process</div></div></div>
+
+        <div class="phase-group-label">Phase 2 — Pre-training</div>
+        <div class="pipe-stage" data-idx="3"><div class="stage-icon">🧠</div><div><div class="stage-name">Self-supervised learning</div><div class="stage-detail">"Predict the next token" — billions of passes over the data</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage" data-idx="4"><div class="stage-icon">🔄</div><div><div class="stage-name">Backpropagation</div><div class="stage-detail">Compare predictions to reality, adjust billions of weights to reduce errors</div></div></div>
+
+        <div class="phase-group-label">Phase 3 — Alignment</div>
+        <div class="pipe-stage" data-idx="5"><div class="stage-icon">👨‍🏫</div><div><div class="stage-name">Supervised fine-tuning</div><div class="stage-detail">Human-written example conversations teach the model how to be helpful</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage" data-idx="6"><div class="stage-icon">🏆</div><div><div class="stage-name">RLHF — Human reinforcement</div><div class="stage-detail">Humans rank outputs → train a reward model → optimise with PPO</div></div></div>
+
+        <div class="phase-group-label">Phase 4 — Evaluation</div>
+        <div class="pipe-stage" data-idx="7"><div class="stage-icon">🔍</div><div><div class="stage-name">Benchmark &amp; safety testing</div><div class="stage-detail">Reasoning, factuality, safety — score against hundreds of tests</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage error-stage" data-idx="8"><div class="stage-icon">⚠️</div><div><div class="stage-name">Collapse detection</div><div class="stage-detail">Check for catastrophic forgetting — the model may lose earlier knowledge</div></div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-stage" data-idx="9"><div class="stage-icon">❄️</div><div><div class="stage-name">Frozen model</div><div class="stage-detail">Weights are locked — the model is ready to deploy</div></div></div>
+      </div>
+
+      <div class="train-right">
+        <div class="nn-container">
+          <div class="nn-label">Neural network — weights evolving</div>
+          <div class="nn-epoch" id="nnEpoch"></div>
+          <canvas id="nnCanvas"></canvas>
+          <div class="nn-caption" id="nnCaption">Each line is a connection between neurons. Thickness = strength of that connection. Training adjusts every weight simultaneously.</div>
+        </div>
+        <div class="train-stats">
+          <div class="t-stat"><div class="t-stat-val" id="statCost">$100M+</div><div class="t-stat-label">Estimated cost</div></div>
+          <div class="t-stat"><div class="t-stat-val" id="statTime">3–6 months</div><div class="t-stat-label">Duration</div></div>
+          <div class="t-stat"><div class="t-stat-val" id="statGPU">25,000+</div><div class="t-stat-label">GPUs</div></div>
+          <div class="t-stat"><div class="t-stat-val" id="statParams">405B</div><div class="t-stat-label">Parameters</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ INFERENCE VIEW ═══ -->
+    <div class="view infer-view hidden" id="inferView">
+      <div class="infer-flow">
+        <div class="infer-step" data-infer="0">
+          <div class="infer-icon-wrap">💬</div>
+          <div class="infer-step-name">User prompt</div>
+          <div class="infer-step-detail">"Summarise this report for my manager"</div>
+        </div>
+        <div class="infer-arrow">→</div>
+        <div class="infer-step" data-infer="1">
+          <div class="infer-icon-wrap">🔢</div>
+          <div class="infer-step-name">Tokenise</div>
+          <div class="infer-step-detail">Words become numbers the model understands</div>
+        </div>
+        <div class="infer-arrow">→</div>
+        <div class="infer-step" data-infer="2">
+          <div class="infer-icon-wrap model-icon">🧠<span class="lock-badge">🔒</span></div>
+          <div class="infer-step-name">Frozen model</div>
+          <div class="infer-step-detail">Weights are locked — predicting, not learning</div>
+        </div>
+        <div class="infer-arrow">→</div>
+        <div class="infer-step" data-infer="3">
+          <div class="infer-icon-wrap">⚡</div>
+          <div class="infer-step-name">Generate tokens</div>
+          <div class="infer-step-detail">One token at a time, each based on what came before</div>
+        </div>
+        <div class="infer-arrow">→</div>
+        <div class="infer-step" data-infer="4">
+          <div class="infer-icon-wrap">🔤</div>
+          <div class="infer-step-name">Detokenise</div>
+          <div class="infer-step-detail">Convert numbers back into readable text</div>
+        </div>
+        <div class="infer-arrow">→</div>
+        <div class="infer-step" data-infer="5">
+          <div class="infer-icon-wrap">✨</div>
+          <div class="infer-step-name">Response</div>
+          <div class="infer-step-detail">Presented to the user in natural language</div>
+        </div>
+      </div>
+
+      <div class="infer-stats">
+        <div class="i-stat"><div class="i-stat-val">~$0.01</div><div class="i-stat-label">Cost per query</div></div>
+        <div class="i-stat"><div class="i-stat-val">1–30 sec</div><div class="i-stat-label">Response time</div></div>
+        <div class="i-stat"><div class="i-stat-val">Billions/day</div><div class="i-stat-label">Global queries</div></div>
+        <div class="i-stat"><div class="i-stat-val">0</div><div class="i-stat-label">New learning</div></div>
+      </div>
+
+      <div class="infer-insight">
+        Every ChatGPT conversation, every Copilot suggestion, every Claude response is inference. The model <strong>doesn't learn from your prompts</strong> — it applies patterns it already learned during training. <strong>Same frozen model, millions of users, every time.</strong>
+      </div>
+    </div>
+
+    <!-- ═══ COMPARE VIEW ═══ -->
+    <div class="view compare-view" id="compareView">
+      <div class="cmp-panel cmp-train">
+        <div class="cmp-label purple">Training</div>
+        <div class="cmp-title">Building the model</div>
+        <div class="cmp-desc">A multi-month, multi-million pound process that happens once. Teaches the model everything it knows.</div>
+        <div class="cmp-stages">
+          <div class="cmp-stage"><div class="cmp-stage-icon">📚</div><div class="cmp-stage-name">Gather &amp; clean trillions of words</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🔢</div><div class="cmp-stage-name">Tokenise all training data</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🧠</div><div class="cmp-stage-name">Pre-train: predict next token, billions of times</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🔄</div><div class="cmp-stage-name">Backpropagation adjusts billions of weights</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🏆</div><div class="cmp-stage-name">Fine-tune with human feedback (RLHF)</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🔍</div><div class="cmp-stage-name">Evaluate, test, fix collapse issues</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">❄️</div><div class="cmp-stage-name">Freeze the model → deploy</div></div>
+        </div>
+        <div class="cmp-stats">
+          <div class="cmp-stat"><div class="cmp-stat-val purple">~$100M</div><div class="cmp-stat-label">Cost</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val purple">Months</div><div class="cmp-stat-label">Duration</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val purple">Once</div><div class="cmp-stat-label">Frequency</div></div>
+        </div>
+        <div class="cmp-analogy">
+          <div class="cmp-analogy-label">Analogy</div>
+          <div class="cmp-analogy-text">Training is like <strong>writing a recipe book</strong> by eating at every restaurant in the world. It costs a fortune, takes years, and you only do it once.</div>
+        </div>
+      </div>
+
+      <div class="cmp-divider">
+        <div class="cmp-divider-line"></div>
+        <div class="cmp-divider-icon">→</div>
+        <div class="cmp-divider-line"></div>
+      </div>
+
+      <div class="cmp-panel cmp-infer">
+        <div class="cmp-label green">Inference</div>
+        <div class="cmp-title">Using the model</div>
+        <div class="cmp-desc">Every AI chat is inference. The frozen model predicts what comes next — fast, cheap, and at massive scale.</div>
+        <div class="cmp-stages">
+          <div class="cmp-stage"><div class="cmp-stage-icon">💬</div><div class="cmp-stage-name">User sends a prompt</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🔢</div><div class="cmp-stage-name">Prompt is tokenised into numbers</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🧠</div><div class="cmp-stage-name">Frozen model predicts next tokens</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">🔤</div><div class="cmp-stage-name">Tokens converted back to text</div></div>
+          <div class="cmp-stage"><div class="cmp-stage-icon">✨</div><div class="cmp-stage-name">Response presented to the user</div></div>
+        </div>
+        <div class="cmp-stats">
+          <div class="cmp-stat"><div class="cmp-stat-val green">~$0.01</div><div class="cmp-stat-label">Per query</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val green">Seconds</div><div class="cmp-stat-label">Duration</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val green">Billions/day</div><div class="cmp-stat-label">Frequency</div></div>
+        </div>
+        <div class="cmp-analogy">
+          <div class="cmp-analogy-label">Analogy</div>
+          <div class="cmp-analogy-text">Inference is <strong>cooking from the recipe book</strong>. Cheap, fast, done millions of times. The cook <strong>doesn't revisit restaurants</strong> — they apply what they already know.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">
+      <button class="play-btn" id="playBtn" onclick="animate()">▶ Animate</button>
+      <span class="footer-hint" id="hint">Toggle between phases above, or animate to step through</span>
+    </div>
+    <span class="wm">© aiaccelerator.uk</span>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+let phase = 'both';
+let animating = false;
+let animTimer = null;
+
+/* ═══════════════════════════════════════════
+   NEURAL NETWORK SETUP
+   ═══════════════════════════════════════════ */
+const canvas = document.getElementById('nnCanvas');
+const ctx = canvas.getContext('2d');
+let nnNodes = [];
+let nnEdges = [];
+let nnProgress = 0; // 0 to 1 — how far through training
+let nnAnimFrame = null;
+let nnPulse = 0;
+
+const LAYER_SIZES = [6, 10, 14, 14, 10, 6, 4];
+const LAYER_COLOURS = ['#5CD5FF', '#6161FF', '#6161FF', '#C5B6F1', '#C5B6F1', '#6161FF', '#17CE95'];
+
+function initNN() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const w = rect.width;
+  const h = rect.height;
+  const padX = 50, padY = 40, padTop = 30;
+  const usableW = w - 2 * padX;
+  const usableH = h - padY - padTop - 20;
+
+  nnNodes = [];
+  nnEdges = [];
+
+  // Create nodes arranged in layers — brain-like elliptical distribution
+  const numLayers = LAYER_SIZES.length;
+  for (let l = 0; l < numLayers; l++) {
+    const count = LAYER_SIZES[l];
+    const x = padX + (usableW * l) / (numLayers - 1);
+    for (let n = 0; n < count; n++) {
+      const spread = count > 1 ? (n / (count - 1)) - 0.5 : 0;
+      // Elliptical bulge in the middle layers
+      const layerPos = l / (numLayers - 1); // 0 to 1
+      const bulge = 1 - 2 * Math.abs(layerPos - 0.5); // peaks at 0.5
+      const yRange = usableH * (0.4 + 0.6 * bulge);
+      const y = padTop + usableH / 2 + spread * yRange;
+      // Slight random jitter for organic feel
+      const jx = (Math.random() - 0.5) * 6;
+      const jy = (Math.random() - 0.5) * 6;
+      nnNodes.push({
+        x: x + jx, y: y + jy,
+        layer: l, colour: LAYER_COLOURS[l],
+        radius: 3 + bulge * 2,
+        activation: 0
+      });
+    }
+  }
+
+  // Create edges between adjacent layers — sparse connections
+  let nodeIdx = 0;
+  for (let l = 0; l < numLayers - 1; l++) {
+    const currStart = nodeIdx;
+    const currCount = LAYER_SIZES[l];
+    const nextStart = currStart + currCount;
+    const nextCount = LAYER_SIZES[l + 1];
+
+    for (let i = 0; i < currCount; i++) {
+      // Connect to subset of next layer for readability
+      const connectCount = Math.min(nextCount, Math.max(3, Math.ceil(nextCount * 0.5)));
+      const connected = new Set();
+      while (connected.size < connectCount) {
+        connected.add(Math.floor(Math.random() * nextCount));
+      }
+      for (const j of connected) {
+        nnEdges.push({
+          from: currStart + i,
+          to: nextStart + j,
+          weight: 0.05 + Math.random() * 0.1, // initial weak weights
+          targetWeight: 0.1 + Math.random() * 0.9, // what they'll grow to
+          noise: Math.random() * Math.PI * 2 // for animation variation
+        });
+      }
+    }
+    nodeIdx += currCount;
+  }
+}
+
+function drawNN() {
+  if (!canvas.parentElement) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+
+  ctx.clearRect(0, 0, w, h);
+  nnPulse += 0.02;
+
+  // Draw edges
+  for (const edge of nnEdges) {
+    const from = nnNodes[edge.from];
+    const to = nnNodes[edge.to];
+    // Interpolate weight based on progress
+    const currentWeight = edge.weight + (edge.targetWeight - edge.weight) * nnProgress;
+    // Some edges get weaker (pruning)
+    const effectiveWeight = edge.targetWeight < 0.3
+      ? edge.weight * (1 - nnProgress * 0.7)
+      : currentWeight;
+
+    const pulse = Math.sin(nnPulse + edge.noise) * 0.15 * nnProgress;
+    const alpha = Math.max(0.02, effectiveWeight * 0.4 + pulse);
+    const thickness = Math.max(0.3, effectiveWeight * 2);
+
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.strokeStyle = `rgba(97, 97, 255, ${alpha})`;
+    ctx.lineWidth = thickness;
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (const node of nnNodes) {
+    const pulse = Math.sin(nnPulse * 1.5 + node.x * 0.01 + node.y * 0.01) * 0.2;
+    const alpha = 0.3 + nnProgress * 0.5 + pulse * nnProgress;
+    const r = node.radius + nnProgress * 1.5;
+
+    // Glow
+    if (nnProgress > 0.1) {
+      const grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 3);
+      grad.addColorStop(0, `rgba(97, 97, 255, ${alpha * 0.2})`);
+      grad.addColorStop(1, 'rgba(97, 97, 255, 0)');
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, r * 3, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = node.colour;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function nnLoop() {
+  drawNN();
+  nnAnimFrame = requestAnimationFrame(nnLoop);
+}
+
+/* ═══════════════════════════════════════════
+   PHASE SWITCHING
+   ═══════════════════════════════════════════ */
+function setPhase(p) {
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+  animating = false;
+  phase = p;
+
+  const btn = document.getElementById('playBtn');
+  btn.disabled = false;
+  btn.textContent = '▶ Animate';
+  btn.onclick = animate;
+  document.getElementById('hint').textContent = (p === 'both')
+    ? 'Switch to Training or Inference to see the full animated walkthrough'
+    : 'Press Animate to step through the process';
+
+  // Hide animate button in compare mode
+  document.getElementById('playBtn').style.display = (p === 'both') ? 'none' : '';
+
+  // Toggle buttons
+  document.querySelectorAll('.phase-btn').forEach(b =>
+    b.classList.remove('active','train-active','infer-active','both-active'));
+
+  if (p === 'train') {
+    document.getElementById('trainBtn').classList.add('active','train-active');
+  } else if (p === 'infer') {
+    document.getElementById('inferBtn').classList.add('active','infer-active');
+  } else {
+    document.getElementById('bothBtn').classList.add('active','both-active');
+  }
+
+  // Show/hide views
+  document.getElementById('trainView').classList.toggle('hidden', p !== 'train');
+  document.getElementById('inferView').classList.toggle('hidden', p !== 'infer');
+  document.getElementById('compareView').classList.toggle('hidden', p !== 'both');
+
+  // Reset stages
+  resetTrainStages();
+  resetInferStages();
+
+  // If switching to training, start NN rendering
+  if (p === 'train') {
+    nnProgress = 0;
+    setTimeout(() => {
+      initNN();
+      if (!nnAnimFrame) nnLoop();
+    }, 100);
+    // Show all stages immediately
+    setTimeout(() => {
+      document.querySelectorAll('#trainView .pipe-stage').forEach(s => s.classList.add('visible'));
+    }, 150);
+  } else {
+    if (nnAnimFrame) { cancelAnimationFrame(nnAnimFrame); nnAnimFrame = null; }
+  }
+
+  // If switching to inference, show all steps
+  if (p === 'infer') {
+    setTimeout(() => {
+      document.querySelectorAll('.infer-step').forEach(s => s.classList.add('visible'));
+    }, 150);
+  }
+}
+
+function resetTrainStages() {
+  document.querySelectorAll('#trainView .pipe-stage').forEach(s =>
+    s.classList.remove('visible','active','complete'));
+  document.querySelectorAll('#trainView .pipe-arrow').forEach(a =>
+    a.classList.remove('lit'));
+  nnProgress = 0;
+  document.getElementById('nnEpoch').textContent = '';
+  document.getElementById('nnCaption').classList.remove('highlight');
+  document.getElementById('nnCaption').textContent =
+    'Each line is a connection between neurons. Thickness = strength of that connection. Training adjusts every weight simultaneously.';
+}
+
+function resetInferStages() {
+  document.querySelectorAll('.infer-step').forEach(s =>
+    s.classList.remove('visible','active'));
+  document.querySelectorAll('.infer-arrow').forEach(a =>
+    a.classList.remove('lit'));
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION
+   ═══════════════════════════════════════════ */
+const TRAIN_CAPTIONS = [
+  'Gathering data — trillions of words scraped from the internet, books, and code repositories.',
+  'Cleaning — removing duplicates, filtering toxic content, checking quality and licensing.',
+  'Tokenising — every word gets split into subword tokens and converted to numbers.',
+  'Pre-training begins — the model learns to predict the next token, over and over.',
+  'Backpropagation — errors flow backwards through the network, adjusting every weight to improve.',
+  'Supervised fine-tuning — human-written examples teach the model what helpful responses look like.',
+  'RLHF — humans rank outputs, a reward model learns their preferences, PPO optimises the weights.',
+  'Benchmark testing — reasoning, safety, factuality. Scoring against hundreds of tests.',
+  'Checking for collapse — has the model forgotten what it knew? If so, roll back and retrain.',
+  'Weights are locked. The model is frozen and ready to deploy to millions of users.'
+];
+
+const TRAIN_EPOCHS = [
+  '', '', '',
+  'Epoch 1 / 100,000', 'Epoch 25,000', 'SFT round 3',
+  'RLHF step 12,000', 'Eval pass 4', '⚠️ Collapse check',
+  '✓ Model frozen'
+];
+
+function animate() {
+  if (animating) return;
+  animating = true;
+
+  const btn = document.getElementById('playBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Playing…';
+
+  if (phase === 'train') animateTrain();
+  else if (phase === 'infer') animateInfer();
+}
+
+function animateTrain() {
+  resetTrainStages();
+  if (!nnAnimFrame) { initNN(); nnLoop(); }
+
+  const stages = [...document.querySelectorAll('#trainView .pipe-stage')];
+  const arrows = [...document.querySelectorAll('#trainView .pipe-arrow')];
+  const caption = document.getElementById('nnCaption');
+  const epoch = document.getElementById('nnEpoch');
+
+  let idx = 0;
+  function step() {
+    if (idx >= stages.length) {
+      finishAnim('Training complete. The model is frozen — billions of weights locked in place. Now it can serve millions of users.');
+      return;
+    }
+
+    // Mark previous as complete
+    if (idx > 0) {
+      stages[idx - 1].classList.remove('active');
+      stages[idx - 1].classList.add('complete');
+    }
+
+    stages[idx].classList.add('visible', 'active');
+    if (idx > 0 && arrows[idx - 1]) arrows[idx - 1].classList.add('lit');
+
+    // Update NN progress
+    nnProgress = Math.min(1, (idx + 1) / stages.length);
+
+    // Update captions
+    caption.classList.add('highlight');
+    caption.textContent = TRAIN_CAPTIONS[idx] || '';
+    epoch.textContent = TRAIN_EPOCHS[idx] || '';
+
+    idx++;
+    animTimer = setTimeout(step, 1800);
+  }
+  step();
+}
+
+function animateInfer() {
+  resetInferStages();
+  const steps = [...document.querySelectorAll('.infer-step')];
+  const arrows = [...document.querySelectorAll('.infer-arrow')];
+
+  let idx = 0;
+  function step() {
+    if (idx >= steps.length) {
+      finishAnim('Inference is instant, cheap, and stateless. The model doesn\'t learn from your conversation — it applies what it already knows.');
+      return;
+    }
+
+    if (idx > 0) steps[idx - 1].classList.remove('active');
+    steps[idx].classList.add('visible', 'active');
+    if (idx > 0) arrows[idx - 1].classList.add('lit');
+
+    idx++;
+    animTimer = setTimeout(step, 900);
+  }
+  step();
+}
+
+function finishAnim(msg) {
+  animating = false;
+  const btn = document.getElementById('playBtn');
+  btn.disabled = false;
+  btn.textContent = '↺ Replay';
+  btn.onclick = () => {
+    document.getElementById('hint').style.opacity = '';
+    if (phase === 'train') resetTrainStages();
+    else if (phase === 'infer') resetInferStages();
+    setTimeout(animate, 200);
+  };
+  document.getElementById('hint').textContent = msg;
+  document.getElementById('hint').style.opacity = '0.5';
+}
+
+/* ═══════════════════════════════════════════
+   RESIZE HANDLER
+   ═══════════════════════════════════════════ */
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (phase === 'train' && canvas.parentElement) {
+      canvas.width = 0; canvas.height = 0;
+      initNN();
+      if (!nnAnimFrame) nnLoop();
+    }
+  }, 200);
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+setPhase('both');
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.phase-toggle, .phase-btn, [class*=phase]') || document.querySelector('.toggle'),
+    title: 'Switch between phases',
+    desc: 'Toggle between Training, Inference, or Both to see how each phase of the AI lifecycle works.', pad: 8 },
+  { target: () => document.querySelector('.pipe-stage, .pipeline, [class*=pipe]') || document.querySelector('.stages'),
+    title: 'Pipeline stages',
+    desc: 'Each stage lights up as the process runs. Click or watch them animate through the full pipeline.', pad: 6 },
+  { target: () => document.querySelector('canvas') || document.querySelector('.viz'),
+    title: 'Neural network visualisation',
+    desc: 'The animated network shows data flowing through layers — forward passes during inference, backpropagation during training.', pad: 6 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

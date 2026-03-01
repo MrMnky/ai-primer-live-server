@@ -68,6 +68,21 @@ const SECTION_4_HOW_AI_WORKS = [
     notes: `Keep this brisk and functional — it's a building block, not an emotional moment. The examples make tokenisation real. The practical implication is the payoff: "This is why long documents hit limits. Why conversations drift. Why you sometimes hit a wall." Tokens come up again and again.`,
   },
 
+  // ── 4.2b  Tokenisation Interactive ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: Tokenisation',
+    subtitle: 'Type any text and see how an AI model splits it into tokens.',
+    graphic: {
+      id: 'tokenisation',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive tokeniser. Participants type text and see it split into tokens in real time. Try these: "unhappy" → 2 tokens. "antidisestablishmentarianism" → many tokens. An emoji → multiple tokens. Debrief: "Notice how the model doesn't see words the way you do? That's why token limits matter."`,
+  },
+
   // ── 4.3  Chat Window ─────────────────────────
   {
     type: 'content',
@@ -188,6 +203,21 @@ const SECTION_4_HOW_AI_WORKS = [
       body: 'Better reasoning doesn\'t mean the model suddenly knows what\'s true. It can reason beautifully through a false premise. System 2 makes AI more useful — it doesn\'t make it reliable. You still have to check the work.',
     },
     notes: `Walk through the prompt examples clearly — these are templates people can use immediately. The caveat is crucial: System 2 ≠ truth. A model can reason beautifully through a completely false premise. The work is clearer, so you can spot where it went wrong — but it can still be wrong. Verification still matters.`,
+  },
+
+  // ── 4.5b  System 1 vs System 2 Interactive ───
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: System 1 vs System 2',
+    subtitle: 'Test your intuition — can you beat the AI at reasoning challenges?',
+    graphic: {
+      id: 'system1-vs-system2',
+      responsive: true,
+      preload: true,
+    },
+    notes: `Interactive reasoning quiz. Participants face challenges designed to trip up System 1 thinking — both their own and the AI's. Builds intuition for when to activate System 2 deliberately. Debrief: "Which questions caught you out? Those are the same ones that catch AI out — unless you prompt for careful reasoning."`,
   },
 
   // ── How AI Works: Quick Check ────────────────

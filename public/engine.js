@@ -93,8 +93,23 @@
     const contentKey = slide.contentKey || slide.id;
     if (!contentKey) return slide;
 
-    const content = (state.i18n && state.i18n.slides && state.i18n.slides[contentKey]) ||
-                    (state.i18nFallback && state.i18nFallback.slides && state.i18nFallback.slides[contentKey]);
+    // Determine which language this slide should use
+    // Priority: slide.language override → session language → English
+    const slideLanguage = slide.language || state.language || 'en';
+    const sessionLanguage = state.language || 'en';
+
+    // Check course-level translations first (for custom courses)
+    var content = null;
+    if (state.courseTranslations && state.courseTranslations[contentKey]) {
+      content = state.courseTranslations[contentKey][slideLanguage] || null;
+    }
+
+    // Fall back to global i18n files
+    if (!content) {
+      content = (state.i18n && state.i18n.slides && state.i18n.slides[contentKey]) ||
+                (state.i18nFallback && state.i18nFallback.slides && state.i18nFallback.slides[contentKey]);
+    }
+
     if (!content) return slide; // no translation entry — use inline strings
 
     const loc = Object.assign({}, slide);
@@ -1525,6 +1540,7 @@
           const resolved = SlideRegistry.resolveCustomCourse(courseData);
           state.slides = resolved.slides;
           state.customCourseId = config.customCourseId;
+          state.courseTranslations = courseData.translations || {};
           state.courseMeta = { title: resolved.title, sections: resolved.sections, metadata: resolved.metadata };
           console.log(`[Engine] Loaded custom course '${resolved.title}' with ${resolved.slides.length} slides`);
         } else {

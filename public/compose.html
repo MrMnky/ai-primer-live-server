@@ -43,20 +43,35 @@
       min-width: 120px;
     }
 
-    .compose-back {
-      color: var(--dodger-blue, #00B1FF);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: opacity 0.15s;
-      display: inline-flex;
+    /* ─── App Nav ─── */
+    .app-nav {
+      display: flex;
       align-items: center;
-      gap: 6px;
+      padding: 0 24px;
+      height: 48px;
+      background: rgba(27, 47, 60, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 24px;
+      flex-shrink: 0;
     }
-
-    .compose-back:hover {
-      opacity: 0.8;
+    .app-nav__logo img { height: 22px; opacity: 0.7; }
+    .app-nav__links {
+      display: flex;
+      gap: 4px;
+      list-style: none;
+      margin: 0; padding: 0;
     }
+    .app-nav__links a {
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .app-nav__links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .app-nav__links a.active { color: #fff; background: rgba(0, 177, 255, 0.15); }
 
     .compose-top-bar__center {
       flex: 1;
@@ -800,6 +815,33 @@
       border-color: rgba(255, 255, 255, 0.3);
     }
 
+    .compose-modal__tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+    .compose-modal__tab {
+      font-family: var(--font-family, 'Poppins', sans-serif);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+      background: none;
+      border: none;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .compose-modal__tab:hover { color: rgba(255, 255, 255, 0.7); }
+    .compose-modal__tab.active {
+      color: #fff;
+      border-bottom-color: var(--dodger-blue, #00B1FF);
+    }
+    .compose-modal__tab-content { display: none; }
+    .compose-modal__tab-content.active { display: contents; }
+
     .compose-modal__body {
       display: grid;
       grid-template-columns: 60% 40%;
@@ -807,6 +849,67 @@
       padding: 20px;
       overflow-y: auto;
       flex: 1;
+    }
+
+    /* Translations panel */
+    .compose-translations {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .compose-translations__controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .compose-translations__lang-select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-family: var(--font-family, 'Poppins', sans-serif);
+      font-size: 0.85rem;
+    }
+    .compose-translations__lang-select option { background: #1a1a1a; }
+    .compose-translations__generate {
+      font-family: var(--font-family, 'Poppins', sans-serif);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 177, 255, 0.3);
+      background: rgba(0, 177, 255, 0.1);
+      color: #00B1FF;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .compose-translations__generate:hover { background: rgba(0, 177, 255, 0.2); }
+    .compose-translations__generate:disabled { opacity: 0.4; cursor: not-allowed; }
+    .compose-translations__status {
+      display: flex;
+      gap: 8px;
+      font-size: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .compose-translations__status-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .compose-translations__status-badge--done {
+      background: rgba(0, 255, 188, 0.15);
+      color: #00FFBC;
+    }
+    .compose-translations__status-badge--missing {
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.3);
+    }
+    .compose-translations__fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .compose-modal__form {
@@ -858,6 +961,21 @@
     .compose-form-group select option {
       background: #1a1a1a;
       color: #fff;
+    }
+
+    .compose-form-divider {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.35);
+      padding: 16px 0 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 8px;
+    }
+
+    .compose-media-preview {
+      min-height: 0;
     }
 
     .compose-form-field-reset {
@@ -1096,11 +1214,18 @@
 </head>
 <body>
   <div class="compose-container">
+    <!-- App Nav -->
+    <nav class="app-nav">
+      <div class="app-nav__logo"><img src="assets/AIA_Logo_White.svg" alt="AIA"></div>
+      <ul class="app-nav__links">
+        <li><a href="presenter.html">Dashboard</a></li>
+        <li><a href="compose.html" class="active">Courses</a></li>
+        <li><a href="manage.html">Sessions</a></li>
+      </ul>
+    </nav>
     <!-- Top Bar -->
     <div class="compose-top-bar">
-      <div class="compose-top-bar__left">
-        <a href="presenter.html" class="compose-back">← Back</a>
-      </div>
+      <div class="compose-top-bar__left"></div>
       <div class="compose-top-bar__center">
         <input type="text" class="compose-title-input" placeholder="Course title" id="courseTitle" value="">
       </div>
@@ -1220,15 +1345,26 @@
         </div>
         <button class="compose-modal__close" id="modalCloseBtn">✕</button>
       </div>
+      <div class="compose-modal__tabs">
+        <button class="compose-modal__tab active" data-tab="edit" onclick="switchModalTab('edit')">Edit</button>
+        <button class="compose-modal__tab" data-tab="translations" onclick="switchModalTab('translations')">Translations</button>
+      </div>
       <div class="compose-modal__body">
-        <div class="compose-modal__form" id="modalForm">
-          <!-- Populated by JS -->
+        <div class="compose-modal__tab-content active" id="tabEdit">
+          <div class="compose-modal__form" id="modalForm">
+            <!-- Populated by JS -->
+          </div>
+          <div class="compose-modal__preview">
+            <div class="compose-modal__preview-card" id="previewCard">
+              <div class="compose-modal__preview-title" id="previewTitle">Title</div>
+              <div class="compose-modal__preview-subtitle" id="previewSubtitle"></div>
+              <div class="compose-modal__preview-body" id="previewBody"></div>
+            </div>
+          </div>
         </div>
-        <div class="compose-modal__preview">
-          <div class="compose-modal__preview-card" id="previewCard">
-            <div class="compose-modal__preview-title" id="previewTitle">Title</div>
-            <div class="compose-modal__preview-subtitle" id="previewSubtitle"></div>
-            <div class="compose-modal__preview-body" id="previewBody"></div>
+        <div class="compose-modal__tab-content" id="tabTranslations">
+          <div class="compose-translations" id="translationsPanel">
+            <!-- Populated by JS -->
           </div>
         </div>
       </div>
@@ -1792,7 +1928,12 @@
       form.appendChild(createFormGroup('Subtitle', 'subtitle', slide.subtitle || '', overrides.subtitle));
 
       // Theme
-      const themeGroup = createFormGroup('Theme', 'theme', '', overrides.theme || slide.theme || 'dark', true);
+      const themeOptions = [
+        { value: 'dark', label: 'Dark' },
+        { value: 'light', label: 'Light' },
+        { value: 'gradient', label: 'Gradient' },
+      ];
+      const themeGroup = createFormGroup('Theme', 'theme', '', overrides.theme || slide.theme || 'dark', themeOptions);
       form.appendChild(themeGroup);
 
       // Speaker Notes
@@ -1813,7 +1954,11 @@
           const key = `quiz.option${i}`;
           form.appendChild(createFormGroup(`Option ${String.fromCharCode(65 + i)}`, key, options[i] || '', overrides[key]));
         }
-        form.appendChild(createFormGroup('Correct Answer', 'quiz.correct', '', overrides['quiz.correct'] ?? slide.quiz.correct ?? 0, true));
+        const correctOptions = options.map((_, i) => ({
+          value: String(i),
+          label: `${String.fromCharCode(65 + i)} — ${options[i] || `Option ${i + 1}`}`,
+        }));
+        form.appendChild(createFormGroup('Correct Answer', 'quiz.correct', '', String(overrides['quiz.correct'] ?? slide.quiz.correct ?? 0), correctOptions));
       }
 
       if (slideType === 'poll' && slide.poll) {
@@ -1830,6 +1975,44 @@
         form.appendChild(createFormGroup('Placeholder', 'textInput.placeholder', slide.textInput.placeholder || '', overrides['textInput.placeholder']));
       }
 
+      // ─── Media Fields ────────────────────────
+      const mediaDivider = document.createElement('div');
+      mediaDivider.className = 'compose-form-divider';
+      mediaDivider.textContent = 'Media';
+      form.appendChild(mediaDivider);
+
+      const existingMedia = slide.media || {};
+      const mediaTypeOptions = [
+        { value: '', label: 'None' },
+        { value: 'image', label: 'Image' },
+        { value: 'video', label: 'Video' },
+        { value: 'embed', label: 'Embed / iframe' },
+      ];
+      form.appendChild(createFormGroup('Media Type', 'media.type', '', overrides['media.type'] || existingMedia.type || '', mediaTypeOptions));
+      form.appendChild(createFormGroup('URL', 'media.src', existingMedia.src || '', overrides['media.src']));
+      form.appendChild(createFormGroup('Alt Text', 'media.alt', existingMedia.alt || '', overrides['media.alt']));
+
+      const positionOptions = [
+        { value: '', label: 'Default' },
+        { value: 'split', label: 'Split (right side)' },
+        { value: 'background', label: 'Background' },
+      ];
+      form.appendChild(createFormGroup('Position', 'media.position', '', overrides['media.position'] || existingMedia.position || '', positionOptions));
+
+      const fitOptions = [
+        { value: '', label: 'Default' },
+        { value: 'cover', label: 'Cover (fill, crop)' },
+        { value: 'contain', label: 'Contain (full visible)' },
+      ];
+      form.appendChild(createFormGroup('Fit', 'media.fit', '', overrides['media.fit'] || existingMedia.fit || '', fitOptions));
+
+      // Media preview
+      const mediaPreviewEl = document.createElement('div');
+      mediaPreviewEl.className = 'compose-media-preview';
+      mediaPreviewEl.id = 'mediaPreview';
+      form.appendChild(mediaPreviewEl);
+      updateMediaPreview();
+
       // Update preview
       updatePreview();
 
@@ -1843,7 +2026,7 @@
     }
 
     // ─── Create Form Group ─────────────────────
-    function createFormGroup(label, key, baseValue, overrideValue, isSelect = false, isTextarea = false) {
+    function createFormGroup(label, key, baseValue, overrideValue, selectOptions = null, isTextarea = false) {
       const groupEl = document.createElement('div');
       groupEl.className = 'compose-form-row';
 
@@ -1855,9 +2038,16 @@
       formGroup.appendChild(labelEl);
 
       let inputEl;
-      if (isSelect) {
+      if (selectOptions) {
         inputEl = document.createElement('select');
-        inputEl.innerHTML = '<option value="dark">Dark</option><option value="light">Light</option><option value="gradient">Gradient</option>';
+        if (Array.isArray(selectOptions)) {
+          inputEl.innerHTML = selectOptions.map(o =>
+            `<option value="${o.value}">${o.label}</option>`
+          ).join('');
+        } else {
+          // Legacy boolean true — default to theme options
+          inputEl.innerHTML = '<option value="dark">Dark</option><option value="light">Light</option><option value="gradient">Gradient</option>';
+        }
       } else if (isTextarea) {
         inputEl = document.createElement('textarea');
         inputEl.rows = key === 'notes' ? 4 : 8;
@@ -1896,7 +2086,15 @@
           }
         }
         updatePreview();
+        if (key.startsWith('media.')) updateMediaPreview();
       });
+
+      // For select elements, also listen to 'change' (not just input)
+      if (selectOptions) {
+        inputEl.addEventListener('change', () => {
+          inputEl.dispatchEvent(new Event('input'));
+        });
+      }
 
       formGroup.appendChild(inputEl);
       groupEl.appendChild(formGroup);
@@ -1918,6 +2116,29 @@
     }
 
     // ─── Update Preview ────────────────────────
+    function updateMediaPreview() {
+      const el = document.getElementById('mediaPreview');
+      if (!el || !currentEditingSlideId) return;
+      const overrides = slideOverrides[currentEditingSlideId] || {};
+      const slide = getSlide(currentEditingSlideId) || {};
+      const existingMedia = slide.media || {};
+      const mediaType = overrides['media.type'] || existingMedia.type || '';
+      const mediaSrc = overrides['media.src'] || existingMedia.src || '';
+
+      if (!mediaType || !mediaSrc) {
+        el.innerHTML = '';
+        return;
+      }
+
+      if (mediaType === 'image') {
+        el.innerHTML = `<img src="${mediaSrc}" alt="Preview" style="max-width:100%;max-height:140px;border-radius:6px;margin-top:8px;">`;
+      } else if (mediaType === 'video') {
+        el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(0,177,255,0.1);border-radius:6px;margin-top:8px;font-size:0.8rem;color:#00B1FF;">🎬 Video: ${mediaSrc.substring(0, 50)}...</div>`;
+      } else if (mediaType === 'embed') {
+        el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(0,255,188,0.1);border-radius:6px;margin-top:8px;font-size:0.8rem;color:#00FFBC;">🔗 Embed: ${mediaSrc.substring(0, 50)}...</div>`;
+      }
+    }
+
     function updatePreview() {
       if (!currentEditingSlideId) return;
 
@@ -1951,9 +2172,209 @@
       openSlideEditor(currentEditingSlideId);
     }
 
+    // ─── Modal Tab Switching ──────────────────
+    function switchModalTab(tabName) {
+      document.querySelectorAll('.compose-modal__tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.compose-modal__tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.compose-modal__tab[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(tabName === 'edit' ? 'tabEdit' : 'tabTranslations').classList.add('active');
+      if (tabName === 'translations') renderTranslationsPanel();
+    }
+
+    // ─── Translations ─────────────────────────
+    const SUPPORTED_LANGUAGES = {
+      en: 'English', fr: 'Français', de: 'Deutsch', es: 'Español',
+      it: 'Italiano', pt: 'Português', nl: 'Nederlands', ja: '日本語',
+      zh: '中文', ar: 'العربية',
+    };
+
+    // Course-level translations store
+    if (!courseData.translations) courseData.translations = {};
+
+    function renderTranslationsPanel() {
+      const panel = document.getElementById('translationsPanel');
+      if (!panel || !currentEditingSlideId) return;
+
+      const slideId = currentEditingSlideId;
+      const slide = getSlide(slideId);
+      const overrides = slideOverrides[slideId] || {};
+      const slideTrans = courseData.translations[slideId] || {};
+
+      // Build status badges
+      const statusHtml = Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => {
+        if (code === 'en') return ''; // English is the base
+        const has = slideTrans[code] && Object.keys(slideTrans[code]).length > 0;
+        return `<span class="compose-translations__status-badge compose-translations__status-badge--${has ? 'done' : 'missing'}">${has ? '✓' : '✗'} ${code.toUpperCase()}</span>`;
+      }).join('');
+
+      panel.innerHTML = `
+        <div class="compose-translations__controls">
+          <select class="compose-translations__lang-select" id="transLangSelect">
+            ${Object.entries(SUPPORTED_LANGUAGES).filter(([c]) => c !== 'en').map(([code, name]) =>
+              `<option value="${code}">${name}</option>`
+            ).join('')}
+          </select>
+          <button class="compose-translations__generate" id="transGenerateBtn" onclick="generateTranslation()">Generate with AI</button>
+          <span id="transStatus" style="font-size:0.8rem;opacity:0.6;"></span>
+        </div>
+        <div class="compose-translations__status">${statusHtml}</div>
+        <div class="compose-form-divider">Slide Language Override</div>
+        <div class="compose-form-row" style="margin-bottom:12px;">
+          <div class="compose-form-group">
+            <label>Render this slide in</label>
+            <select id="slideLanguageOverride" style="padding:8px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-family:var(--font-family);font-size:0.85rem;">
+              <option value="">Session default</option>
+              ${Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) =>
+                `<option value="${code}" ${(overrides.language || '') === code ? 'selected' : ''}>${name}</option>`
+              ).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="compose-form-divider">Translation Fields</div>
+        <div class="compose-translations__fields" id="transFields">
+          <!-- Populated when language is selected -->
+        </div>
+      `;
+
+      // Wire language override
+      document.getElementById('slideLanguageOverride').addEventListener('change', function() {
+        if (!slideOverrides[slideId]) slideOverrides[slideId] = {};
+        if (this.value) {
+          slideOverrides[slideId].language = this.value;
+        } else {
+          delete slideOverrides[slideId].language;
+        }
+        if (customSlides[slideId]) {
+          if (this.value) customSlides[slideId].language = this.value;
+          else delete customSlides[slideId].language;
+        }
+      });
+
+      // Wire language select
+      document.getElementById('transLangSelect').addEventListener('change', () => renderTranslationFields());
+      renderTranslationFields();
+    }
+
+    function renderTranslationFields() {
+      const container = document.getElementById('transFields');
+      if (!container || !currentEditingSlideId) return;
+
+      const slideId = currentEditingSlideId;
+      const lang = document.getElementById('transLangSelect').value;
+      const slide = getSlide(slideId);
+      const overrides = slideOverrides[slideId] || {};
+      const trans = (courseData.translations[slideId] && courseData.translations[slideId][lang]) || {};
+
+      // Determine which fields to show based on slide content
+      const fields = [];
+      if (slide.title) fields.push({ key: 'title', label: 'Title', value: trans.title || '', base: overrides.title || slide.title });
+      if (slide.subtitle) fields.push({ key: 'subtitle', label: 'Subtitle', value: trans.subtitle || '', base: overrides.subtitle || slide.subtitle });
+      if (slide.body) fields.push({ key: 'body', label: 'Body', value: trans.body || '', base: overrides.body || slide.body, textarea: true });
+      if (slide.notes) fields.push({ key: 'notes', label: 'Speaker Notes', value: trans.notes || '', base: overrides.notes || slide.notes, textarea: true });
+      if (slide.quiz) {
+        fields.push({ key: 'quiz.question', label: 'Quiz Question', value: trans['quiz.question'] || '', base: slide.quiz.question });
+        (slide.quiz.options || []).forEach((opt, i) => {
+          fields.push({ key: `quiz.option${i}`, label: `Option ${String.fromCharCode(65 + i)}`, value: trans[`quiz.option${i}`] || '', base: opt });
+        });
+      }
+      if (slide.poll) {
+        fields.push({ key: 'poll.question', label: 'Poll Question', value: trans['poll.question'] || '', base: slide.poll.question });
+        (slide.poll.options || []).forEach((opt, i) => {
+          fields.push({ key: `poll.option${i}`, label: `Option ${i + 1}`, value: trans[`poll.option${i}`] || '', base: opt });
+        });
+      }
+      if (slide.textInput) {
+        fields.push({ key: 'textInput.prompt', label: 'Prompt', value: trans['textInput.prompt'] || '', base: slide.textInput.prompt });
+        fields.push({ key: 'textInput.placeholder', label: 'Placeholder', value: trans['textInput.placeholder'] || '', base: slide.textInput.placeholder });
+      }
+
+      container.innerHTML = fields.map(f => `
+        <div class="compose-form-group">
+          <label>${f.label} <span style="opacity:0.3;font-size:0.7rem;margin-left:4px;">EN: ${(f.base || '').substring(0, 40).replace(/</g, '&lt;')}${(f.base || '').length > 40 ? '...' : ''}</span></label>
+          ${f.textarea
+            ? `<textarea data-trans-key="${f.key}" rows="4" placeholder="Enter ${SUPPORTED_LANGUAGES[lang]} translation..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-family:var(--font-family);font-size:0.85rem;resize:vertical;">${f.value}</textarea>`
+            : `<input type="text" data-trans-key="${f.key}" value="${f.value.replace(/"/g, '&quot;')}" placeholder="Enter ${SUPPORTED_LANGUAGES[lang]} translation..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-family:var(--font-family);font-size:0.85rem;">`
+          }
+        </div>
+      `).join('');
+
+      // Wire up change handlers
+      container.querySelectorAll('[data-trans-key]').forEach(input => {
+        input.addEventListener('input', () => {
+          const key = input.dataset.transKey;
+          if (!courseData.translations[slideId]) courseData.translations[slideId] = {};
+          if (!courseData.translations[slideId][lang]) courseData.translations[slideId][lang] = {};
+          if (input.value) {
+            courseData.translations[slideId][lang][key] = input.value;
+          } else {
+            delete courseData.translations[slideId][lang][key];
+          }
+        });
+      });
+    }
+
+    async function generateTranslation() {
+      const slideId = currentEditingSlideId;
+      if (!slideId) return;
+
+      const lang = document.getElementById('transLangSelect').value;
+      const btn = document.getElementById('transGenerateBtn');
+      const status = document.getElementById('transStatus');
+
+      const slide = getSlide(slideId);
+      const overrides = slideOverrides[slideId] || {};
+
+      // Build content to translate
+      const content = {};
+      if (slide.title) content.title = overrides.title || slide.title;
+      if (slide.subtitle) content.subtitle = overrides.subtitle || slide.subtitle;
+      if (slide.body) content.body = overrides.body || slide.body;
+      if (slide.notes) content.notes = overrides.notes || slide.notes;
+      if (slide.quiz) {
+        content['quiz.question'] = slide.quiz.question;
+        (slide.quiz.options || []).forEach((opt, i) => { content[`quiz.option${i}`] = opt; });
+      }
+      if (slide.poll) {
+        content['poll.question'] = slide.poll.question;
+        (slide.poll.options || []).forEach((opt, i) => { content[`poll.option${i}`] = opt; });
+      }
+      if (slide.textInput) {
+        content['textInput.prompt'] = slide.textInput.prompt;
+        content['textInput.placeholder'] = slide.textInput.placeholder;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Translating...';
+
+      try {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const res = await fetch(`${serverUrl}/api/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, targetLang: lang, sourceLang: 'en' }),
+        });
+
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const translated = await res.json();
+
+        if (!courseData.translations[slideId]) courseData.translations[slideId] = {};
+        courseData.translations[slideId][lang] = translated;
+
+        status.textContent = '✓ Done';
+        renderTranslationsPanel(); // Refresh to show new translations
+      } catch (err) {
+        console.error('Translation failed:', err);
+        status.textContent = '✗ Failed — enter manually or check API key';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     // ─── Close Slide Editor ────────────────────
     function closeSlideEditor() {
       document.getElementById('editorModal').classList.remove('open');
+      // Reset to Edit tab
+      switchModalTab('edit');
       currentEditingSlideId = null;
     }
 

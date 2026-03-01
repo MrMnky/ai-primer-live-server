@@ -463,7 +463,7 @@ app.get('/api/courses/:id', async (req, res) => {
 app.post('/api/courses', async (req, res) => {
   if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
 
-  const { title, description, presenterId, slides, sections, language } = req.body;
+  const { title, description, presenterId, slides, sections, language, translations } = req.body;
   if (!title || !presenterId) return res.status(400).json({ error: 'title and presenterId are required' });
 
   const course = {
@@ -473,6 +473,7 @@ app.post('/api/courses', async (req, res) => {
     slides: slides || [],
     sections: sections || [],
     language: language || 'en',
+    translations: translations || {},
   };
 
   const { data, error } = await db.insert('custom_courses', course);
@@ -490,6 +491,7 @@ app.put('/api/courses/:id', async (req, res) => {
   if (req.body.slides !== undefined) updates.slides = req.body.slides;
   if (req.body.sections !== undefined) updates.sections = req.body.sections;
   if (req.body.language !== undefined) updates.language = req.body.language;
+  if (req.body.translations !== undefined) updates.translations = req.body.translations;
 
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
 
@@ -499,6 +501,87 @@ app.put('/api/courses/:id', async (req, res) => {
   // Fetch updated record
   const { data } = await db.select('custom_courses', `id=eq.${req.params.id}`);
   res.json(data?.[0] || { id: req.params.id, ...updates });
+});
+
+// --- Translation API ---
+
+app.post('/api/translate', async (req, res) => {
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(501).json({ error: 'Translation not configured — set ANTHROPIC_API_KEY' });
+  }
+
+  const { content, targetLang, sourceLang } = req.body;
+  if (!content || !targetLang) {
+    return res.status(400).json({ error: 'content and targetLang are required' });
+  }
+
+  const LANG_NAMES = {
+    en: 'English', fr: 'French', de: 'German', es: 'Spanish',
+    it: 'Italian', pt: 'Portuguese', nl: 'Dutch', ja: 'Japanese',
+    zh: 'Chinese (Simplified)', ar: 'Arabic',
+  };
+
+  const fromName = LANG_NAMES[sourceLang || 'en'] || sourceLang || 'English';
+  const toName = LANG_NAMES[targetLang] || targetLang;
+
+  // Build a description of what to translate
+  const fields = Object.entries(content)
+    .filter(([_, v]) => v && String(v).trim())
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n\n');
+
+  if (!fields) {
+    return res.status(400).json({ error: 'No translatable content provided' });
+  }
+
+  const prompt = `Translate the following presentation slide content from ${fromName} to ${toName}.
+
+Return ONLY a JSON object with the same keys, translated values. Keep any HTML tags intact.
+Do not add any explanation or markdown formatting — just the raw JSON object.
+
+${fields}`;
+
+  try {
+    const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: prompt,
+        }],
+      }),
+    });
+
+    if (!apiRes.ok) {
+      const err = await apiRes.text();
+      console.error('[Translate] Anthropic API error:', err);
+      return res.status(502).json({ error: 'Translation API error' });
+    }
+
+    const result = await apiRes.json();
+    const text = result.content?.[0]?.text || '';
+
+    // Extract JSON from response (handle possible markdown wrapping)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('[Translate] Could not parse JSON from response:', text);
+      return res.status(502).json({ error: 'Could not parse translation response' });
+    }
+
+    const translated = JSON.parse(jsonMatch[0]);
+    res.json(translated);
+  } catch (err) {
+    console.error('[Translate] Error:', err.message);
+    res.status(500).json({ error: 'Translation failed: ' + err.message });
+  }
 });
 
 // Delete custom course

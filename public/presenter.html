@@ -155,9 +155,46 @@
     .setup-back:hover { color: #fff; }
 
     /* (exit button removed — controls now live in admin console) */
+
+    /* ─── App Nav ─── */
+    .app-nav {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 48px;
+      background: rgba(27, 47, 60, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 24px;
+    }
+    .app-nav__logo img { height: 22px; opacity: 0.7; }
+    .app-nav__links {
+      display: flex;
+      gap: 4px;
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+    .app-nav__links a {
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .app-nav__links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .app-nav__links a.active { color: #fff; background: rgba(0, 177, 255, 0.15); }
   </style>
 </head>
 <body>
+  <nav class="app-nav" id="appNav">
+    <div class="app-nav__logo"><img src="assets/AIA_Logo_White.svg" alt="AIA"></div>
+    <ul class="app-nav__links">
+      <li><a href="presenter.html" class="active">Dashboard</a></li>
+      <li><a href="compose.html">Courses</a></li>
+      <li><a href="manage.html">Sessions</a></li>
+    </ul>
+  </nav>
   <div id="app"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -213,6 +250,8 @@
     async function showDashboard() {
       activeSessionCode = null;
       if (setupSocket) { setupSocket.disconnect(); setupSocket = null; }
+      const nav = document.getElementById('appNav');
+      if (nav) nav.style.display = '';
 
       const app = document.getElementById('app');
       app.innerHTML = `
@@ -222,10 +261,7 @@
               <div class="dashboard__title">Presenter Dashboard</div>
               <div class="dashboard__subtitle">AI Primer Live</div>
             </div>
-            <div style="display:flex;gap:12px;align-items:center;">
-              <a href="manage.html" class="btn btn--secondary" style="text-decoration:none;font-size:0.85rem;">Manage Sessions</a>
-              <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
-            </div>
+            <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
           </div>
           <div id="session-list" class="session-list">
             <div class="empty-state">Loading sessions...</div>
@@ -479,6 +515,7 @@
     // --- Setup View (waiting for participants) ---
     function openSetup(code) {
       activeSessionCode = code;
+      document.getElementById('appNav').style.display = 'none';
       const app = document.getElementById('app');
 
       const directLink = window.location.origin + '/join.html?code=' + code;

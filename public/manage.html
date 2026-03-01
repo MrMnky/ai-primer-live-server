@@ -365,13 +365,48 @@
                 justify-content: center;
             }
         }
+        /* ─── App Nav ─── */
+        .app-nav {
+          display: flex;
+          align-items: center;
+          padding: 0 24px;
+          height: 48px;
+          background: rgba(27, 47, 60, 0.6);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          gap: 24px;
+        }
+        .app-nav__logo img { height: 22px; opacity: 0.7; }
+        .app-nav__links {
+          display: flex;
+          gap: 4px;
+          list-style: none;
+          margin: 0; padding: 0;
+        }
+        .app-nav__links a {
+          color: rgba(255, 255, 255, 0.5);
+          text-decoration: none;
+          font-size: 0.8rem;
+          font-weight: 500;
+          padding: 6px 14px;
+          border-radius: 6px;
+          transition: all 0.15s;
+        }
+        .app-nav__links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .app-nav__links a.active { color: #fff; background: rgba(0, 177, 255, 0.15); }
     </style>
 </head>
 <body>
+    <nav class="app-nav">
+      <div class="app-nav__logo"><img src="assets/AIA_Logo_White.svg" alt="AIA"></div>
+      <ul class="app-nav__links">
+        <li><a href="presenter.html">Dashboard</a></li>
+        <li><a href="compose.html">Courses</a></li>
+        <li><a href="manage.html" class="active">Sessions</a></li>
+      </ul>
+    </nav>
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator Logo" class="logo">
             <div class="header-text">
                 <h1>Session Manager</h1>
                 <p>Manage AI Primer Live sessions</p>

@@ -31,6 +31,7 @@
     bookmarks: [],        // array of bookmarked slide indices
     questions: [],        // Q&A questions list (populated via socket)
     resources: [],        // session resources/downloads
+    availableLanguages: null, // languages list received from presenter (participant mode)
   };
 
   // --- Slide Definition Format ---
@@ -103,6 +104,11 @@
 
   // Detect which languages are available for the current session
   function getAvailableSessionLanguages() {
+    // If participant received languages from presenter, use those
+    if (state.availableLanguages && state.availableLanguages.length > 0) {
+      return state.availableLanguages;
+    }
+
     var langs = new Set(['en']); // English always available
 
     // Check i18n files that exist (registry-api exposes this for built-in courses)
@@ -1024,6 +1030,14 @@
       state.connected = true;
       console.log('Connected to session:', sessionCode);
       if (state.onSocketReady) state.onSocketReady(state.socket);
+
+      // Presenter: broadcast available languages so participants can switch
+      if (mode === 'presenter') {
+        const langs = getAvailableSessionLanguages();
+        if (langs.length > 1) {
+          state.socket.emit('available-languages', { languages: langs });
+        }
+      }
     });
 
     state.socket.on('disconnect', () => {
@@ -1051,6 +1065,19 @@
         if (data.resources) {
           state.resources = data.resources;
         }
+        if (data.availableLanguages && data.availableLanguages.length > 1) {
+          state.availableLanguages = data.availableLanguages;
+          // Re-render the menu language dropdown if it's open
+          const langSelect = document.querySelector('.pm-lang-select');
+          if (langSelect) {
+            const langs = data.availableLanguages;
+            langSelect.innerHTML = langs.map(function (code) {
+              var selected = code === state.language ? ' selected' : '';
+              var name = LANG_NAMES[code] || code;
+              return '<option value="' + code + '"' + selected + '>' + name + '</option>';
+            }).join('');
+          }
+        }
       });
 
       // Q&A: receive questions list updates
@@ -1061,7 +1088,7 @@
       });
 
       // Session ended
-      state.socket.on('session-ended', () => {
+      state.socket.on('session-end', () => {
         showParticipantSessionEnded();
       });
     }
@@ -2153,6 +2180,13 @@
     }
   }
 
+  function getSlideLabel(slideIndex) {
+    const idx = slideIndex || 0;
+    const slide = state.slides[idx];
+    if (slide && slide.title) return `Slide ${idx + 1}: ${slide.title}`;
+    return `Slide ${idx + 1}`;
+  }
+
   function renderParticipantQAList() {
     if (state.questions.length === 0) {
       return '<div class="pm-empty">No questions yet. Be the first to ask!</div>';
@@ -2160,6 +2194,7 @@
     return state.questions.slice().sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).map(q => {
       const hasUpvoted = q.upvotedBy && q.upvotedBy.includes(state.participantId);
       const answeredClass = q.answered ? ' pm-qa-item--answered' : '';
+      const slideLabel = getSlideLabel(q.slideIndex);
       return `<div class="pm-qa-item${answeredClass}" data-qid="${q.id}">
         <button class="pm-qa-item__upvote ${hasUpvoted ? 'active' : ''}" onclick="AIPrimer.upvoteQuestion('${q.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -2167,7 +2202,8 @@
         </button>
         <div class="pm-qa-item__content">
           <div class="pm-qa-item__text">${escapeHtml(q.text)}</div>
-          <div class="pm-qa-item__meta">${q.participantName || 'Anonymous'} · Slide ${(q.slideIndex || 0) + 1}${q.answered ? ' · ✓ Answered' : ''}</div>
+          <div class="pm-qa-item__meta">${q.participantName || 'Anonymous'}${q.answered ? ' · ✓ Answered' : ''}</div>
+          <div class="pm-qa-item__slide-ref">${slideLabel}</div>
         </div>
       </div>`;
     }).join('');
@@ -2193,11 +2229,13 @@
     }
     return state.questions.slice().sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).map(q => {
       const answeredClass = q.answered ? ' ac-qa-item--answered' : '';
+      const slideLabel = getSlideLabel(q.slideIndex);
       return `<div class="ac-qa-item${answeredClass}" data-qid="${q.id}">
         <div class="ac-qa-item__votes">${q.upvotes || 0}</div>
         <div class="ac-qa-item__content">
           <div class="ac-qa-item__text">${escapeHtml(q.text)}</div>
-          <div class="ac-qa-item__meta">${q.participantName || 'Anonymous'} · Slide ${(q.slideIndex || 0) + 1}</div>
+          <div class="ac-qa-item__meta">${q.participantName || 'Anonymous'}</div>
+          <div class="ac-qa-item__slide-ref">${slideLabel}</div>
         </div>
         <div class="ac-qa-item__actions">
           <button class="ac-qa-item__btn ${q.answered ? 'active' : ''}" onclick="AIPrimer.markQuestionAnswered('${q.id}')" title="${q.answered ? 'Mark unanswered' : 'Mark answered'}">

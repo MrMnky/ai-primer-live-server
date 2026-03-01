@@ -94,7 +94,12 @@ html, body {
   opacity: 1;
   transform: translateX(0);
   pointer-events: all;
+  overflow-y: auto;
 }
+.slide.active::-webkit-scrollbar { width: 6px; }
+.slide.active::-webkit-scrollbar-track { background: transparent; }
+.slide.active::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+.slide.active::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
 /* --- Slide Types --- */
 
@@ -3411,6 +3416,13 @@ body:has(.participant-toolbar) .progress-bar {
   color: rgba(255,255,255,0.3);
   margin-top: 3px;
 }
+.pm-qa-item__slide-ref {
+  font-family: var(--font-family);
+  font-size: 0.6rem;
+  color: var(--dodger-blue);
+  margin-top: 2px;
+  opacity: 0.7;
+}
 
 /* Bookmarks List */
 .pm-bookmark-item {
@@ -3593,6 +3605,14 @@ body:has(.participant-toolbar) .progress-bar {
   font-size: 0.65rem;
   color: rgba(255,255,255,0.3);
   margin-top: 2px;
+}
+
+.ac-qa-item__slide-ref {
+  font-family: var(--font-family);
+  font-size: 0.6rem;
+  color: var(--dodger-blue);
+  margin-top: 2px;
+  opacity: 0.7;
 }
 
 .ac-qa-item__actions {

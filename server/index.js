@@ -821,6 +821,9 @@ io.on('connection', (socket) => {
       sessionState.resources = sessionCache[sessionCode].resources;
     }
     sessionState.currentSlide = sessionCache[sessionCode].currentSlide;
+    if (sessionCache[sessionCode].availableLanguages) {
+      sessionState.availableLanguages = sessionCache[sessionCode].availableLanguages;
+    }
     socket.emit('session-state', sessionState);
 
     // Send existing Q&A questions
@@ -903,6 +906,16 @@ io.on('connection', (socket) => {
       liveParticipants[sessionCode].forEach(p => { p.currentSlide = data.slideIndex; });
     }
     socket.to(sessionCode).emit('slide-change', data);
+  });
+
+  // Available languages (presenter broadcasts to all participants)
+  socket.on('available-languages', (data) => {
+    if (mode !== 'presenter') return;
+    if (data.languages && Array.isArray(data.languages)) {
+      sessionCache[sessionCode].availableLanguages = data.languages;
+      // Send to all participants
+      socket.to(sessionCode).emit('session-state', { availableLanguages: data.languages });
+    }
   });
 
   // Language change (presenter-only, broadcast to all participants)

@@ -577,7 +577,9 @@
         if (state.mode === 'presenter') toggleSectionNav();
         break;
       case 'Escape':
-        if (sectionNavOpen) { toggleSectionNav(); e.preventDefault(); }
+        if (quickExitOpen) { AIPrimer.dismissQuickExit(); e.preventDefault(); }
+        else if (sectionNavOpen) { toggleSectionNav(); e.preventDefault(); }
+        else if (state.mode === 'presenter') { AIPrimer.showQuickExit(); e.preventDefault(); }
         break;
     }
   }
@@ -1110,6 +1112,8 @@
           </div>
         </div>
         <div class="ac-controls">
+          <button class="ac-control-btn" onclick="AIPrimer.pauseAndDashboard()" style="background:rgba(255,255,255,0.08);color:#fff;">← Dashboard</button>
+          <button class="ac-control-btn" onclick="AIPrimer.pauseAndNewSession()" style="background:rgba(0,177,255,0.12);color:#00B1FF;">+ New Session</button>
           <button class="ac-control-btn ac-control-btn--pause" onclick="AIPrimer.adminPause()">⏸ ${t('engine.adminConsole.pauseSession')}</button>
           <button class="ac-control-btn ac-control-btn--end" onclick="AIPrimer.adminEnd()">⏹ ${t('engine.adminConsole.endSession')}</button>
         </div>
@@ -1634,6 +1638,22 @@
   function renderPresenterView(container) {
     container.innerHTML = `
       <div class="presenter-layout">
+        <div class="presenter-topbar">
+          <div class="presenter-topbar__left">
+            <button class="presenter-topbar__btn" onclick="AIPrimer.pauseAndDashboard()" title="Pause session and return to dashboard">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              Dashboard
+            </button>
+            <div class="presenter-topbar__sep"></div>
+            <button class="presenter-topbar__btn presenter-topbar__btn--new" onclick="AIPrimer.pauseAndNewSession()" title="Pause and start a new session">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Session
+            </button>
+          </div>
+          <div class="presenter-topbar__right">
+            <span class="presenter-topbar__code">${state.sessionCode || ''}</span>
+          </div>
+        </div>
         <div class="presenter-main">
           <div class="slide-viewport"></div>
         </div>
@@ -1722,6 +1742,63 @@
   };
   AIPrimer.adminEnd = function () {
     AIPrimer.endSession();
+  };
+
+  // --- Presenter Nav: Pause & Dashboard ---
+  AIPrimer.pauseAndDashboard = function () {
+    if (state.socket) state.socket.emit('session-pause');
+    if (typeof showDashboard === 'function') showDashboard();
+  };
+
+  // --- Presenter Nav: Pause & New Session ---
+  AIPrimer.pauseAndNewSession = function () {
+    if (state.socket) state.socket.emit('session-pause');
+    if (typeof showCoursePickerOrCreate === 'function') showCoursePickerOrCreate();
+  };
+
+  // --- Quick-Exit Menu (Escape key) ---
+  var quickExitOpen = false;
+
+  AIPrimer.showQuickExit = function () {
+    if (quickExitOpen) return;
+    quickExitOpen = true;
+    const overlay = document.createElement('div');
+    overlay.className = 'quick-exit-overlay';
+    overlay.id = 'quick-exit-overlay';
+    overlay.innerHTML = `
+      <div class="quick-exit-menu">
+        <div class="quick-exit-menu__title">Session ${state.sessionCode || ''}</div>
+        <div class="quick-exit-menu__subtitle">Slide ${state.currentSlide + 1} of ${state.slides.length} · ${state.participants.length} participant${state.participants.length !== 1 ? 's' : ''}</div>
+        <div class="quick-exit-menu__actions">
+          <button class="quick-exit-menu__btn quick-exit-menu__btn--dashboard" onclick="AIPrimer.dismissQuickExit(); AIPrimer.pauseAndDashboard();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            Pause &amp; Go to Dashboard
+          </button>
+          <button class="quick-exit-menu__btn quick-exit-menu__btn--new" onclick="AIPrimer.dismissQuickExit(); AIPrimer.pauseAndNewSession();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Start New Session
+          </button>
+          <button class="quick-exit-menu__btn quick-exit-menu__btn--end" onclick="AIPrimer.dismissQuickExit(); AIPrimer.endSession();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            End Session
+          </button>
+          <button class="quick-exit-menu__btn quick-exit-menu__btn--cancel" onclick="AIPrimer.dismissQuickExit();">
+            Continue Presenting
+          </button>
+        </div>
+        <div class="quick-exit-menu__hint">Press Esc to close</div>
+      </div>
+    `;
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) AIPrimer.dismissQuickExit();
+    });
+    document.body.appendChild(overlay);
+  };
+
+  AIPrimer.dismissQuickExit = function () {
+    quickExitOpen = false;
+    const overlay = document.getElementById('quick-exit-overlay');
+    if (overlay) overlay.remove();
   };
 
   // --- End Session with Post-Session Summary ---

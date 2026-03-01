@@ -825,7 +825,7 @@ html, body {
 .presenter-layout {
   display: grid;
   grid-template-columns: 1fr 380px;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: auto 1fr auto auto;
   height: 100vh;
   background: #111;
   color: var(--white);
@@ -961,6 +961,142 @@ html, body {
   height: 8px;
   border-radius: 50%;
   background: var(--mountain-meadow);
+}
+
+/* --- Presenter Top Bar (persistent nav during presentation) --- */
+.presenter-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 36px;
+  background: rgba(17, 17, 17, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 100;
+}
+.presenter-topbar__left,
+.presenter-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.presenter-topbar__btn {
+  font-family: var(--font-family);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.presenter-topbar__btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+.presenter-topbar__btn--new {
+  color: var(--dodger-blue);
+  opacity: 0.7;
+}
+.presenter-topbar__btn--new:hover {
+  opacity: 1;
+  background: rgba(0, 177, 255, 0.08);
+}
+.presenter-topbar__code {
+  font-family: var(--font-family);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.25);
+  padding: 0 8px;
+}
+.presenter-topbar__sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 4px;
+}
+
+/* --- Quick-Exit Menu (Escape key overlay) --- */
+.quick-exit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.quick-exit-menu {
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px 40px;
+  text-align: center;
+  color: #fff;
+  min-width: 320px;
+}
+.quick-exit-menu__title {
+  font-family: var(--font-family);
+  font-weight: var(--fw-bold);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.quick-exit-menu__subtitle {
+  font-size: 0.8rem;
+  opacity: 0.4;
+  margin-bottom: 24px;
+}
+.quick-exit-menu__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quick-exit-menu__btn {
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.quick-exit-menu__btn:hover { opacity: 0.85; transform: scale(1.01); }
+.quick-exit-menu__btn--dashboard {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.quick-exit-menu__btn--new {
+  background: rgba(0, 177, 255, 0.15);
+  color: var(--dodger-blue);
+}
+.quick-exit-menu__btn--end {
+  background: rgba(255, 60, 60, 0.12);
+  color: #ff5c5c;
+}
+.quick-exit-menu__btn--cancel {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+.quick-exit-menu__hint {
+  font-size: 0.7rem;
+  opacity: 0.25;
+  margin-top: 16px;
 }
 
 /* --- Response Stream (presenter sidebar) --- */
@@ -1825,11 +1961,16 @@ html, body {
 
   .presenter-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
   }
 
   .presenter-sidebar {
     display: none;
   }
+
+  .presenter-topbar__btn { font-size: 0.65rem; padding: 3px 8px; }
+  .presenter-topbar__code { font-size: 0.65rem; }
+  .presenter-topbar { height: 32px; padding: 0 10px; }
 
   /* --- Logo & Counters --- */
   .logo-watermark {

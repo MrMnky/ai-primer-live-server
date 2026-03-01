@@ -348,7 +348,19 @@
           <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Create New Session</h1>
           <p style="opacity:0.4;font-size:0.85rem;margin-bottom:32px;">Choose a course to present</p>
 
-          <div style="width:100%;max-width:480px;" id="course-cards"></div>
+          <div style="width:100%;max-width:480px;">
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <input type="text" id="course-search" placeholder="Search courses..." oninput="filterCourses()"
+                style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-family:var(--font-family);font-size:0.85rem;">
+              <select id="course-sort" onchange="sortAndRenderCourses()"
+                style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-family:var(--font-family);font-size:0.8rem;appearance:auto;">
+                <option value="updated">Last updated</option>
+                <option value="name">Name A–Z</option>
+                <option value="slides">Slide count</option>
+              </select>
+            </div>
+            <div id="course-cards"></div>
+          </div>
 
           <div style="margin-top:24px;width:100%;max-width:480px;">
             <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Language</label>
@@ -375,14 +387,42 @@
       updateLanguageOptions();
     }
 
+    let cachedBuiltInCourses = [];
+
     function renderCourseCards(builtInCourses) {
+      cachedBuiltInCourses = builtInCourses;
+      sortAndRenderCourses();
+    }
+
+    function sortAndRenderCourses() {
       const container = document.getElementById('course-cards');
       if (!container) return;
 
+      const sortBy = document.getElementById('course-sort')?.value || 'updated';
+      const search = (document.getElementById('course-search')?.value || '').toLowerCase().trim();
+
+      // Sort custom courses
+      let sorted = [...customCourses];
+      if (sortBy === 'name') {
+        sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      } else if (sortBy === 'slides') {
+        sorted.sort((a, b) => (Array.isArray(b.slides) ? b.slides.length : 0) - (Array.isArray(a.slides) ? a.slides.length : 0));
+      }
+      // 'updated' is default from API (already sorted by updated_at desc)
+
+      // Filter by search
+      if (search) {
+        sorted = sorted.filter(c =>
+          (c.title || '').toLowerCase().includes(search) ||
+          (c.description || '').toLowerCase().includes(search)
+        );
+      }
+
       let html = '';
 
-      // Built-in courses
-      builtInCourses.forEach(c => {
+      // Built-in courses (always show unless filtered out)
+      cachedBuiltInCourses.forEach(c => {
+        if (search && !(c.title || '').toLowerCase().includes(search)) return;
         html += `
           <div class="session-card" style="cursor:pointer;margin-bottom:8px;${!selectedCustomCourseId && c.id === DEFAULT_COURSE_ID ? 'border-color:var(--bright-turquoise);' : ''}"
                onclick="selectCourse('${c.id}', null)" id="card-${c.id}">
@@ -395,26 +435,69 @@
       });
 
       // Custom courses
-      if (customCourses.length > 0) {
-        html += '<div style="margin-top:16px;font-size:0.75rem;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Custom Courses</div>';
-        customCourses.forEach(c => {
+      if (sorted.length > 0) {
+        html += '<div style="margin-top:16px;font-size:0.75rem;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Custom Courses (' + sorted.length + ')</div>';
+        sorted.forEach(c => {
           const slideCount = Array.isArray(c.slides) ? c.slides.length : 0;
           const selected = selectedCustomCourseId === c.id;
+          const updated = c.updated_at ? new Date(c.updated_at).toLocaleDateString([], { day: 'numeric', month: 'short' }) : '';
+          const desc = c.description ? `<div style="font-size:0.75rem;opacity:0.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;">${c.description}</div>` : '';
           html += `
             <div class="session-card" style="cursor:pointer;margin-bottom:8px;${selected ? 'border-color:var(--bright-turquoise);' : ''}"
                  onclick="selectCourse(null, '${c.id}')" id="card-custom-${c.id}">
               <div class="session-card__info">
                 <span style="font-weight:600;font-size:0.95rem;">${c.title}</span>
-                <div class="session-card__meta">${slideCount} slides · Custom</div>
+                <div class="session-card__meta">${slideCount} slides${updated ? ' · Updated ' + updated : ''}</div>
+                ${desc}
               </div>
               <div class="session-card__actions">
+                <button class="session-card__btn session-card__btn--secondary" onclick="event.stopPropagation(); duplicateCourse('${c.id}', '${(c.title || '').replace(/'/g, "\\'")}');" title="Duplicate" style="font-size:0.7rem;padding:4px 8px;">⧉</button>
                 <a href="compose.html?id=${c.id}" class="session-card__btn session-card__btn--secondary" style="text-decoration:none;" onclick="event.stopPropagation()">Edit</a>
               </div>
             </div>`;
         });
+      } else if (search && customCourses.length > 0) {
+        html += '<div style="margin-top:16px;text-align:center;opacity:0.3;font-size:0.85rem;padding:16px;">No courses match "' + search + '"</div>';
       }
 
       container.innerHTML = html;
+    }
+
+    function filterCourses() {
+      sortAndRenderCourses();
+    }
+
+    async function duplicateCourse(sourceId, sourceTitle) {
+      try {
+        const res = await fetch(`${serverUrl}/api/courses/${sourceId}`);
+        if (!res.ok) { alert('Could not load course'); return; }
+        const course = await res.json();
+        const newTitle = prompt('Name for the duplicate:', sourceTitle + ' (copy)');
+        if (!newTitle) return;
+        const createRes = await fetch(`${serverUrl}/api/courses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTitle,
+            description: course.description || '',
+            presenterId: currentUser?.id || '',
+            slides: course.slides || [],
+            sections: course.sections || [],
+            language: course.language || 'en',
+            translations: course.translations || {},
+          }),
+        });
+        if (createRes.ok) {
+          const newCourse = await createRes.json();
+          // Refresh the course picker
+          showCoursePickerOrCreate();
+        } else {
+          alert('Could not duplicate course');
+        }
+      } catch (err) {
+        console.error('Duplicate failed:', err);
+        alert('Could not duplicate course');
+      }
     }
 
     function selectCourse(builtInId, customId) {

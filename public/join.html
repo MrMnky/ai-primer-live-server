@@ -260,14 +260,14 @@
       // If session already started, go straight in
       if (sessionData.status === 'started') {
         lobbySocket.disconnect();
-        startParticipantView(code, name);
+        startParticipantView(code, name, sessionData);
         return;
       }
 
       // Wait for presenter to start
       lobbySocket.on('session-start', () => {
         lobbySocket.disconnect();
-        startParticipantView(code, name);
+        startParticipantView(code, name, sessionData);
       });
 
       // If session ends while in lobby
@@ -298,7 +298,7 @@
       if (existing) existing.remove();
     }
 
-    function startParticipantView(code, name) {
+    function startParticipantView(code, name, sessionData) {
       const lobby = document.getElementById('lobby-screen');
       if (lobby) lobby.remove();
 

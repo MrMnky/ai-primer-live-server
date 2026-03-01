@@ -718,6 +718,16 @@ io.on('connection', (socket) => {
     socket.to(sessionCode).emit('slide-change', data);
   });
 
+  // Language change (presenter-only, broadcast to all participants)
+  socket.on('language-change', (data) => {
+    if (mode !== 'presenter') return;
+    const language = data.language || 'en';
+    sessionCache[sessionCode].language = language;
+    db.update('sessions', `code=eq.${sessionCode}`, { language });
+    logInteraction(sessionCode, 'language_change', { eventData: { language } });
+    socket.to(sessionCode).emit('language-change', { language });
+  });
+
   // Results reveal (presenter-only)
   socket.on('results-reveal', (data) => {
     if (mode !== 'presenter') return;

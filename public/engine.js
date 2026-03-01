@@ -88,6 +88,100 @@
     return str;
   }
 
+  // Language name map (used for the language switcher UI)
+  var LANG_NAMES = {
+    en: 'English', fr: 'Français', de: 'Deutsch', es: 'Español',
+    it: 'Italiano', pt: 'Português', nl: 'Nederlands',
+    ja: '日本語', zh: '中文', ar: 'العربية',
+  };
+
+  // Detect which languages are available for the current session
+  function getAvailableSessionLanguages() {
+    var langs = new Set(['en']); // English always available
+
+    // Check i18n files that exist (registry-api exposes this for built-in courses)
+    if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getAvailableLanguages && state.courseId) {
+      SlideRegistry.getAvailableLanguages(state.courseId).forEach(function (l) { langs.add(l); });
+    }
+
+    // Check course-level translations (custom courses)
+    if (state.courseTranslations) {
+      Object.keys(state.courseTranslations).forEach(function (slideId) {
+        if (state.courseTranslations[slideId]) {
+          Object.keys(state.courseTranslations[slideId]).forEach(function (lang) {
+            if (lang && lang !== 'en') langs.add(lang);
+          });
+        }
+      });
+    }
+
+    return Array.from(langs);
+  }
+
+  // Change language mid-session: reload i18n, re-render all slides
+  async function setLanguage(language) {
+    if (language === state.language) return;
+    console.log('[Engine] Switching language to:', language);
+    await loadI18n(language);
+
+    // Re-render all slides in the viewport
+    var viewport = document.querySelector('.slide-viewport');
+    if (viewport) {
+      // Unmount any graphics first
+      if (typeof GraphicContainer !== 'undefined') {
+        state.slides.forEach(function (slide, i) {
+          if (slide.type === 'graphic') GraphicContainer.unmount(i);
+        });
+      }
+
+      viewport.innerHTML = '';
+      state.slides.forEach(function (slide, i) {
+        viewport.appendChild(renderSlide(slide, i));
+      });
+
+      // Re-activate current slide
+      var slideEls = viewport.querySelectorAll('.slide');
+      slideEls.forEach(function (el, i) {
+        el.classList.toggle('active', i === state.currentSlide);
+      });
+
+      // Re-mount graphic if current slide is graphic type
+      var currentSlide = state.slides[state.currentSlide];
+      if (typeof GraphicContainer !== 'undefined' && currentSlide && currentSlide.type === 'graphic' && currentSlide.graphic) {
+        var containerEl = document.querySelector('.slide__graphic-container[data-slide="' + state.currentSlide + '"]');
+        if (containerEl) {
+          GraphicContainer.mount(containerEl, currentSlide.graphic, state.currentSlide);
+        }
+      }
+
+      // Re-activate media for current slide
+      manageSlideMedia(state.currentSlide, 'activate');
+    }
+
+    // Update the language dropdown if it exists
+    updateLanguageSwitcher();
+  }
+
+  // Render the language switcher dropdown for presenter controls
+  function renderLanguageSwitcher() {
+    var langs = getAvailableSessionLanguages();
+    if (langs.length <= 1) return ''; // No point showing switcher for English only
+
+    var options = langs.map(function (code) {
+      var selected = code === state.language ? ' selected' : '';
+      var name = LANG_NAMES[code] || code;
+      return '<option value="' + code + '"' + selected + '>' + name + '</option>';
+    }).join('');
+
+    return '<select class="presenter-controls__lang-select" onchange="AIPrimer.switchLanguage(this.value)" title="Change language">' + options + '</select>';
+  }
+
+  // Update the dropdown value without rebuilding
+  function updateLanguageSwitcher() {
+    var sel = document.querySelector('.presenter-controls__lang-select');
+    if (sel) sel.value = state.language;
+  }
+
   // Enrich a slide object with translated content (fallback to inline strings)
   function localiseSlide(slide) {
     const contentKey = slide.contentKey || slide.id;
@@ -1002,6 +1096,14 @@
         }
       }
     });
+
+    // Language change — presenter switched language, participants re-render
+    state.socket.on('language-change', (data) => {
+      if (data.language && data.language !== state.language) {
+        console.log('[Engine] Language change received:', data.language);
+        setLanguage(data.language);
+      }
+    });
   }
 
   function handleIncomingResponse(data) {
@@ -1694,6 +1796,7 @@
               <span class="presenter-controls__stat-dot"></span>
               <span><span class="presenter-controls__participant-count">0</span> ${t('engine.presenter.participants')}</span>
             </div>
+            ${renderLanguageSwitcher()}
             <div class="presenter-controls__stat presenter-controls__session-code">
               ${state.sessionCode || ''}
             </div>
@@ -1743,6 +1846,16 @@
   AIPrimer.adminEnd = function () {
     AIPrimer.endSession();
   };
+
+  // --- Language Switcher ---
+  AIPrimer.switchLanguage = async function (language) {
+    await setLanguage(language);
+    // Broadcast to all participants via socket
+    if (state.mode === 'presenter' && state.socket) {
+      state.socket.emit('language-change', { language: language });
+    }
+  };
+  AIPrimer.getAvailableLanguages = getAvailableSessionLanguages;
 
   // --- Presenter Nav: Pause & Dashboard ---
   AIPrimer.pauseAndDashboard = function () {

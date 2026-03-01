@@ -597,6 +597,133 @@
     color: var(--turquoise);
   }
 
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr;
+      padding: 16px 14px 12px;
+      gap: 12px;
+    }
+
+    .header {
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+    }
+
+    .header .sub {
+      font-size: 12px;
+    }
+
+    .mode-pills {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mode-pill {
+      width: 100%;
+      font-size: 10px;
+      padding: 5px 12px;
+    }
+
+    .chat-panel {
+      margin-right: 0;
+      max-height: 300px;
+      order: 2;
+      flex-shrink: 0;
+    }
+
+    .chat-titlebar {
+      padding: 8px 14px;
+    }
+
+    .chat-titlebar-text {
+      font-size: 11px;
+    }
+
+    .chat-messages {
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .msg {
+      max-width: 90%;
+      font-size: 12px;
+    }
+
+    .msg p {
+      font-size: 12px;
+    }
+
+    .msg.user {
+      padding: 10px 14px;
+    }
+
+    .msg.ai {
+      padding: 12px 14px;
+    }
+
+    .typing-indicator {
+      gap: 3px;
+    }
+
+    .typing-dot {
+      width: 5px;
+      height: 5px;
+    }
+
+    .chat-input {
+      padding: 10px 14px;
+      gap: 8px;
+    }
+
+    .chat-input-hint {
+      font-size: 11px;
+    }
+
+    .insight-panel {
+      max-height: 400px;
+      gap: 10px;
+    }
+
+    .insight-card {
+      padding: 14px;
+    }
+
+    .insight-card h3 {
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ring-svg {
+      width: 60px;
+      height: 60px;
+    }
+
+    .score-label {
+      font-size: 11px;
+    }
+
+    .footer {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+
+    .footer-btn {
+      font-size: 10px;
+      padding: 6px 12px;
+    }
+
+    .footer-hint {
+      font-size: 10px;
+    }
+
+    .wm {
+      font-size: 9px;
+    }
+  }
 
 </style>
 </head>

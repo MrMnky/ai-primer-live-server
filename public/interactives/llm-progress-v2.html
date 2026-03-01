@@ -659,6 +659,141 @@
                 font-size: 0.7rem;
             }
         }
+
+        /* ─── MOBILE RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header {
+                margin-bottom: 1rem;
+            }
+
+            .header h1 {
+                font-size: clamp(1.4rem, 4vw, 1.8rem);
+            }
+
+            .header p {
+                font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+            }
+
+            .content {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .browse-container {
+                min-height: 350px;
+            }
+
+            .card-stack {
+                width: var(--card-width);
+                height: clamp(300px, 80vh, 400px);
+            }
+
+            .card {
+                padding: clamp(1rem, 2vw, 1.4rem);
+            }
+
+            .card-header {
+                margin-bottom: clamp(0.6rem, 1.5vw, 0.9rem);
+            }
+
+            .rarity-badge {
+                font-size: clamp(0.6rem, 1.2vw, 0.7rem);
+            }
+
+            .card-year {
+                font-size: clamp(0.65rem, 1.4vw, 0.8rem);
+            }
+
+            .card-icon {
+                font-size: clamp(2rem, 6vw, 3.5rem);
+                margin: clamp(0.4rem, 1.5vw, 0.8rem) 0;
+            }
+
+            .card-title {
+                font-size: clamp(1.1rem, 3vw, 1.5rem);
+            }
+
+            .card-creator {
+                font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+                margin-bottom: clamp(0.6rem, 1.5vw, 0.9rem);
+            }
+
+            .card-divider {
+                margin: clamp(0.4rem, 1.2vw, 0.6rem) 0;
+            }
+
+            .card-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: clamp(0.6rem, 1.5vw, 0.9rem);
+                margin-bottom: clamp(0.6rem, 1.5vw, 0.9rem);
+                font-size: clamp(0.6rem, 1.2vw, 0.75rem);
+            }
+
+            .stat-label {
+                font-size: clamp(0.55rem, 1vw, 0.65rem);
+            }
+
+            .stat-value {
+                font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+            }
+
+            .card-achievement {
+                margin-bottom: clamp(0.4rem, 1.2vw, 0.6rem);
+            }
+
+            .achievement-label {
+                font-size: clamp(0.5rem, 1vw, 0.6rem);
+                margin-bottom: 0.2rem;
+            }
+
+            .achievement-text {
+                font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+            }
+
+            .navigation {
+                margin-top: 1rem;
+                gap: 0.5rem;
+            }
+
+            .nav-arrow {
+                font-size: clamp(0.9rem, 2vw, 1.2rem);
+                padding: clamp(0.4rem, 0.8vw, 0.6rem);
+            }
+
+            .mode-selector {
+                bottom: 0.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+                gap: 0.4rem;
+            }
+
+            .mode-btn {
+                padding: 0.35rem 0.65rem;
+                font-size: 0.65rem;
+            }
+
+            .compare-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .compare-cards {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .timeline-container {
+                gap: 1rem;
+            }
+
+            .timeline-bar {
+                height: 40px;
+            }
+        }
     </style>
 </head>
 <body>

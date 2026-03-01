@@ -76,6 +76,114 @@ body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--wh
 .bottom-insight h3 { font-size:0.7rem; font-weight:700; color:var(--turquoise); margin-bottom:6px; }
 .bottom-insight p { font-size:0.72rem; color:var(--cloud); line-height:1.6; }
 .bottom-insight p strong { color:var(--white); }
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 768px) {
+  body { padding: 16px; }
+
+  .header { margin-bottom: 12px; }
+  .header h1 { font-size: 1.2rem; margin-bottom: 4px; }
+  .header .subtitle { font-size: 0.75rem; line-height: 1.4; }
+
+  .journey { max-width: none; }
+
+  .curve-area { padding: 16px; margin-bottom: 12px; }
+  .curve-area svg { height: auto; }
+
+  .stage-detail {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stage-main {
+    flex: none;
+    width: 100%;
+  }
+
+  .stage-header {
+    padding: 12px 14px;
+  }
+
+  .stage-header .sh-tag { font-size: 0.5rem; margin-bottom: 2px; }
+  .stage-header .sh-name { font-size: 0.95rem; }
+  .stage-header .sh-desc { font-size: 0.7rem; margin-top: 1px; }
+
+  .stage-body { padding: 12px 14px; }
+
+  .checklist { margin-bottom: 12px; }
+  .checklist .cl-label { font-size: 0.55rem; margin-bottom: 6px; }
+
+  .check-item {
+    padding: 5px 0;
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+
+  .check-box {
+    width: 16px;
+    height: 16px;
+    font-size: 0.55rem;
+  }
+
+  .stage-insight {
+    padding: 10px 12px;
+    font-size: 0.7rem;
+    line-height: 1.5;
+  }
+
+  .stage-side {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .progress-card {
+    padding: 12px;
+  }
+
+  .progress-card .pc-label { font-size: 0.55rem; margin-bottom: 8px; }
+
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 8px;
+  }
+
+  .progress-ring .pct {
+    font-size: 1.1rem;
+  }
+
+  .progress-summary { font-size: 0.65rem; }
+
+  .navigate-card {
+    padding: 12px;
+  }
+
+  .navigate-card .nav-label { font-size: 0.55rem; margin-bottom: 8px; }
+
+  .nav-stages { gap: 5px; }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 0.65rem;
+    gap: 6px;
+  }
+
+  .nav-dot { width: 6px; height: 6px; }
+
+  .bottom-insight {
+    padding: 12px;
+  }
+
+  .bottom-insight h3 {
+    font-size: 0.65rem;
+    margin-bottom: 4px;
+  }
+
+  .bottom-insight p {
+    font-size: 0.65rem;
+    line-height: 1.5;
+  }
+}
 </style>
 </head>
 <body>

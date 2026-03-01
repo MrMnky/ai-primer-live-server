@@ -298,6 +298,155 @@
     border: 1px solid rgba(255,255,255,0.1);
   }
 
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    body { padding: 12px 16px 10px; }
+
+    .layout { padding: 12px 16px 10px; }
+
+    .header h1 { font-size: 18px; }
+    .header .sub { font-size: 11px; }
+
+    .phase-toggle {
+      flex-wrap: wrap;
+      gap: 0;
+    }
+
+    .phase-btn {
+      flex: 1;
+      font-size: 11px;
+      padding: 8px 12px;
+    }
+
+    .main { flex: 1; }
+
+    .train-view {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .train-left {
+      max-height: 180px;
+      flex-shrink: 0;
+    }
+
+    .phase-group-label {
+      font-size: 8px;
+      margin: 6px 0 3px;
+    }
+
+    .pipe-stage {
+      padding: 5px 8px;
+      font-size: 10px;
+      margin-bottom: 3px;
+    }
+
+    .stage-icon { font-size: 14px; }
+    .stage-name { font-size: 10px; }
+    .stage-detail { font-size: 8px; }
+
+    .pipe-arrow { font-size: 8px; margin: 0; }
+
+    .nn-container {
+      min-height: 250px;
+    }
+
+    .nn-label { font-size: 7px; }
+    .nn-epoch { font-size: 9px; }
+    .nn-caption { font-size: 8px; }
+
+    .train-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .t-stat { padding: 6px 8px; }
+    .t-stat-val { font-size: 12px; }
+    .t-stat-label { font-size: 7px; }
+
+    .infer-view {
+      gap: 16px;
+    }
+
+    .infer-flow {
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .infer-step {
+      width: 90px;
+      gap: 4px;
+    }
+
+    .infer-icon-wrap {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+    }
+
+    .infer-icon-wrap.model-icon {
+      width: 56px;
+      height: 56px;
+      font-size: 24px;
+    }
+
+    .infer-step-name { font-size: 9px; }
+    .infer-step-detail { font-size: 8px; }
+
+    .infer-arrow {
+      font-size: 14px;
+      margin: 0 -2px;
+      padding-bottom: 20px;
+    }
+
+    .infer-stats {
+      gap: 24px;
+    }
+
+    .i-stat-val { font-size: 16px; }
+    .i-stat-label { font-size: 8px; }
+
+    .infer-insight {
+      max-width: 100%;
+      font-size: 10px;
+    }
+
+    .compare-view {
+      grid-template-columns: 1fr 50px 1fr;
+      gap: 0;
+    }
+
+    .cmp-panel {
+      padding: 14px;
+    }
+
+    .cmp-label { font-size: 7px; margin-bottom: 4px; }
+    .cmp-title { font-size: 14px; margin-bottom: 2px; }
+    .cmp-desc { font-size: 9px; margin-bottom: 8px; }
+
+    .cmp-stage { padding: 5px 8px; }
+    .cmp-stage-icon { font-size: 12px; }
+    .cmp-stage-name { font-size: 8.5px; }
+
+    .cmp-stats { gap: 8px; margin-top: 8px; }
+    .cmp-stat { flex: 1; }
+    .cmp-stat-val { font-size: 12px; }
+    .cmp-stat-label { font-size: 7px; }
+
+    .cmp-analogy { margin-top: 6px; padding: 8px 10px; }
+    .cmp-analogy-label { font-size: 7px; margin-bottom: 2px; }
+    .cmp-analogy-text { font-size: 9px; }
+
+    .cmp-divider {
+      gap: 6px;
+    }
+
+    .cmp-divider-icon {
+      padding: 6px;
+      font-size: 16px;
+    }
+  }
+
   /* ─── FOOTER ─── */
   .footer {
     flex-shrink: 0; display: flex;

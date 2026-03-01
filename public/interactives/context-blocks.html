@@ -481,6 +481,390 @@
   }
   .footer-left { font-size: 9.5px; color: var(--slate); opacity: 0.5; }
   .footer-right { font-size: 9.5px; color: var(--white); opacity: 0.2; }
+
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    .container {
+      max-width: none;
+      padding: 12px 16px 8px;
+    }
+
+    .header {
+      margin-bottom: 3px;
+    }
+
+    .header-text h1 {
+      font-size: 18px;
+    }
+
+    .header-text .subtitle {
+      font-size: 9.5px;
+      margin-top: 1px;
+    }
+
+    .scene-nav {
+      gap: 3px;
+      margin: 6px 0;
+      flex-wrap: wrap;
+    }
+
+    .scene-pill {
+      font-size: 9.5px;
+      padding: 4px 10px;
+      gap: 4px;
+    }
+
+    .scene-pill .num {
+      width: 16px;
+      height: 16px;
+      font-size: 8px;
+    }
+
+    .main {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .scene-title {
+      font-size: 9px;
+      margin-bottom: 6px;
+    }
+
+    .insight-bar {
+      padding: 6px 10px;
+      font-size: 10px;
+      line-height: 1.4;
+      margin-top: auto;
+    }
+
+    .next-btn {
+      font-size: 10px;
+      padding: 5px 12px;
+      margin-left: 8px;
+    }
+
+    .next-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .person-avatar {
+      width: 24px;
+      height: 24px;
+      font-size: 9px;
+    }
+
+    .mono {
+      font-size: 10px;
+    }
+
+    /* Scene 1 */
+    .s1-layout {
+      gap: 16px;
+      flex-direction: column;
+    }
+
+    .s1-person-panel {
+      width: 100%;
+      padding: 10px;
+    }
+
+    .s1-arrow {
+      display: none;
+    }
+
+    .s1-llm-panel {
+      flex: 1;
+    }
+
+    .s1-llm-box {
+      padding: 10px;
+    }
+
+    .s1-output-box {
+      padding: 10px;
+    }
+
+    .error-tag {
+      font-size: 8px;
+      padding: 1px 6px;
+    }
+
+    /* Scene 2 */
+    .s2-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .s2-card {
+      padding: 8px 10px;
+    }
+
+    .s2-card .card-header {
+      gap: 6px;
+    }
+
+    .s2-card .card-name {
+      font-size: 11px;
+    }
+
+    .s2-card .card-role {
+      font-size: 8.5px;
+    }
+
+    .s2-card .ctx-label {
+      font-size: 7.5px;
+    }
+
+    .s2-card .card-output {
+      font-size: 9.5px;
+      padding: 3px 6px;
+    }
+
+    /* Scene 3 */
+    .s3-layout {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .s3-block-demo {
+      width: 100%;
+    }
+
+    .s3-block-card {
+      padding: 12px 14px;
+    }
+
+    .s3-block-card .block-type {
+      font-size: 8px;
+    }
+
+    .s3-block-card .block-name {
+      font-size: 14px;
+    }
+
+    .s3-block-card .block-owner {
+      font-size: 10px;
+    }
+
+    .s3-explanation {
+      gap: 10px;
+    }
+
+    .s3-explanation h2 {
+      font-size: 14px;
+    }
+
+    .s3-bullet {
+      gap: 8px;
+    }
+
+    .s3-bullet .icon {
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+    }
+
+    .s3-bullet .text {
+      font-size: 11px;
+    }
+
+    /* Scene 4 */
+    .s4-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .s4-block {
+      padding: 10px;
+    }
+
+    .s4-block .b-type {
+      font-size: 7.5px;
+    }
+
+    .s4-block .b-name {
+      font-size: 11px;
+    }
+
+    .s4-block .b-owner {
+      font-size: 9px;
+    }
+
+    .s4-block .b-desc {
+      font-size: 9px;
+    }
+
+    .s4-block .b-users .pip {
+      width: 18px;
+      height: 18px;
+      font-size: 7px;
+    }
+
+    .s4-detail {
+      padding: 10px;
+      margin-top: 6px;
+    }
+
+    .s4-detail.visible {
+      gap: 12px;
+    }
+
+    .s4-detail .detail-users {
+      width: 140px;
+    }
+
+    /* Scene 5 */
+    .s5-layout {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .s5-lib {
+      max-height: 150px;
+      gap: 3px;
+    }
+
+    .s5-lib-block {
+      padding: 5px 8px;
+    }
+
+    .s5-lib-block .lb-type {
+      font-size: 7px;
+    }
+
+    .s5-lib-block .lb-name {
+      font-size: 10px;
+    }
+
+    .s5-arrows {
+      display: none;
+    }
+
+    .s5-people {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .s5-person {
+      padding: 8px 10px;
+    }
+
+    .s5-person .sp-header {
+      gap: 5px;
+    }
+
+    .s5-person .sp-name {
+      font-size: 10px;
+    }
+
+    .s5-person .sp-role {
+      font-size: 8px;
+    }
+
+    .s5-person .sp-blocks .tag {
+      font-size: 7px;
+      padding: 1px 5px;
+    }
+
+    /* Scene 6 */
+    .s6-layout {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .rudder-edit {
+      gap: 6px;
+    }
+
+    .rudder-block-select {
+      gap: 3px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .r-block-btn {
+      padding: 5px 8px;
+    }
+
+    .r-block-btn .rb-name {
+      font-size: 10px;
+    }
+
+    .r-block-btn .rb-owner {
+      font-size: 8.5px;
+    }
+
+    .rudder-editor {
+      padding: 8px;
+    }
+
+    .rudder-editor .ed-header {
+      font-size: 9px;
+    }
+
+    .ed-box {
+      font-size: 9.5px;
+      padding: 6px 8px;
+    }
+
+    .propagate-btn {
+      font-size: 10px;
+      padding: 6px 12px;
+    }
+
+    .propagate-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .rudder-people {
+      gap: 5px;
+      max-height: 250px;
+    }
+
+    .r-person {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+
+    .r-person .rp-left {
+      width: 45px;
+    }
+
+    .r-person .rp-avatar {
+      width: 24px;
+      height: 24px;
+      font-size: 9px;
+    }
+
+    .r-person .rp-name {
+      font-size: 9px;
+    }
+
+    .r-person .rp-status {
+      font-size: 7.5px;
+      padding: 1px 5px;
+    }
+
+    .r-person .rp-output {
+      font-size: 9px;
+    }
+
+    .footer {
+      margin-top: 3px;
+      padding-top: 3px;
+    }
+
+    .footer-left {
+      font-size: 8.5px;
+    }
+
+    .footer-right {
+      font-size: 8.5px;
+    }
+  }
 </style>
 </head>
 <body>

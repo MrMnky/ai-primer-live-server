@@ -25,6 +25,12 @@
     i18n: {},          // loaded translation data for current language
     i18nFallback: {},  // English fallback
     revealedSlides: {},   // slideIndex -> true (results have been revealed) (always loaded)
+    // Participant features
+    presenterSlide: 0,    // tracks presenter's current slide (participant mode)
+    freeBrowsing: false,  // true when participant is browsing away from presenter
+    bookmarks: [],        // array of bookmarked slide indices
+    questions: [],        // Q&A questions list (populated via socket)
+    resources: [],        // session resources/downloads
   };
 
   // --- Slide Definition Format ---
@@ -647,6 +653,11 @@
       // Update session panel slide progress
       updateSessionPanel();
     }
+
+    // If participant, update toolbar
+    if (state.mode === 'participant') {
+      updateParticipantToolbar();
+    }
   }
 
   function next() { goToSlide(state.currentSlide + 1); }
@@ -655,6 +666,39 @@
   // --- Keyboard Controls ---
   function handleKeydown(e) {
     if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+    // Participant keyboard controls (free-browse)
+    if (state.mode === 'participant') {
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ':
+        case 'PageDown':
+          e.preventDefault();
+          participantNext();
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'PageUp':
+          e.preventDefault();
+          participantPrev();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          if (participantMenuOpen) toggleParticipantMenu();
+          else participantSnapToLive();
+          break;
+        case 'b':
+          e.preventDefault();
+          toggleBookmark(state.currentSlide);
+          break;
+        case 'm':
+          e.preventDefault();
+          toggleParticipantMenu();
+          break;
+      }
+      return;
+    }
 
     switch (e.key) {
       case 'ArrowRight':
@@ -719,7 +763,12 @@
     // Require horizontal swipe > 40px, more horizontal than vertical, within 500ms
     if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx) || dt > 500) return;
 
-    if (state.mode === 'participant') return; // participants don't navigate (synced to presenter)
+    if (state.mode === 'participant') {
+      // Free-browse: swipe left to go forward (up to presenter), swipe right to go back
+      if (dx < 0) participantNext();
+      else participantPrev();
+      return;
+    }
 
     if (dx < 0) next();
     else prev();
@@ -981,16 +1030,39 @@
       state.connected = false;
     });
 
-    // Participant: follow presenter's slide
+    // Participant: follow presenter's slide (with free-browse support)
     if (mode === 'participant') {
       state.socket.on('slide-change', (data) => {
-        goToSlide(data.slideIndex);
+        state.presenterSlide = data.slideIndex;
+        if (!state.freeBrowsing) {
+          goToSlide(data.slideIndex);
+        }
+        // Update the snap-to-live button state
+        updateParticipantToolbar();
       });
 
       state.socket.on('session-state', (data) => {
         if (data.revealedSlides) {
           state.revealedSlides = data.revealedSlides;
         }
+        if (data.currentSlide !== undefined) {
+          state.presenterSlide = data.currentSlide;
+        }
+        if (data.resources) {
+          state.resources = data.resources;
+        }
+      });
+
+      // Q&A: receive questions list updates
+      state.socket.on('questions-update', (data) => {
+        state.questions = data.questions || [];
+        updateQAPanel();
+        updateQABadge();
+      });
+
+      // Session ended
+      state.socket.on('session-ended', () => {
+        showParticipantSessionEnded();
       });
     }
 
@@ -1029,6 +1101,13 @@
         state.participants = data.participants || [];
         updateParticipantCount();
         addActivityItem('🔴', data.participantName || t('engine.fallback.someone'), t('engine.activity.left'));
+      });
+
+      // Q&A: receive questions list updates (presenter)
+      state.socket.on('questions-update', (data) => {
+        state.questions = data.questions || [];
+        updatePresenterQAPanel();
+        addActivityItem('❓', data.latestFrom || 'Participant', 'asked a question');
       });
     }
 
@@ -1111,8 +1190,14 @@
       }
     });
 
-    // Language change — presenter switched language, participants re-render
+    // Language change — presenter switched language
+    // In participant mode, language is now personal (client-side only), so we don't auto-switch
     state.socket.on('language-change', (data) => {
+      if (state.mode === 'participant') {
+        // Don't auto-switch for participants — they choose their own language
+        console.log('[Engine] Presenter changed language to', data.language, '— participant keeps their own choice');
+        return;
+      }
       if (data.language && data.language !== state.language) {
         console.log('[Engine] Language change received:', data.language);
         setLanguage(data.language);
@@ -1200,6 +1285,7 @@
 
       <div class="ac-tabs">
         <button class="ac-tab ac-tab--active" data-tab="participants" onclick="AIPrimer.switchAdminTab('participants')">${t('engine.adminConsole.participants')}</button>
+        <button class="ac-tab" data-tab="qa" onclick="AIPrimer.switchAdminTab('qa')">Q&amp;A <span class="ac-tab__badge" id="ac-qa-badge" style="display:${state.questions.length > 0 ? 'inline' : 'none'}">${state.questions.length}</span></button>
         <button class="ac-tab" data-tab="activity" onclick="AIPrimer.switchAdminTab('activity')">${t('engine.adminConsole.activity')}</button>
         <button class="ac-tab" data-tab="session" onclick="AIPrimer.switchAdminTab('session')">${t('engine.adminConsole.session')}</button>
       </div>
@@ -1207,6 +1293,12 @@
       <div class="ac-panel" id="ac-panel-participants">
         <div id="ac-participant-list" class="ac-participant-list">
           ${renderParticipantList()}
+        </div>
+      </div>
+
+      <div class="ac-panel ac-panel--hidden" id="ac-panel-qa">
+        <div id="ac-qa-list" class="ac-qa-list">
+          ${renderPresenterQAList()}
         </div>
       </div>
 
@@ -1746,9 +1838,25 @@
     pb.innerHTML = '<div class="progress-bar__fill" style="width:0%"></div>';
     container.appendChild(pb);
 
-    // Slide counter
-    const counter = el('div', 'slide-counter', `1 / ${state.slides.length}`);
-    container.appendChild(counter);
+    // Slide counter (hidden for participant mode — replaced by toolbar)
+    if (state.mode !== 'participant') {
+      const counter = el('div', 'slide-counter', `1 / ${state.slides.length}`);
+      container.appendChild(counter);
+    }
+
+    // Participant toolbar
+    if (state.mode === 'participant') {
+      loadBookmarks();
+      container.appendChild(renderParticipantToolbar());
+
+      // Free-browse indicator (floats above content when browsing)
+      const indicator = document.createElement('div');
+      indicator.className = 'pt-browse-indicator';
+      indicator.id = 'pt-browse-indicator';
+      indicator.style.display = 'none';
+      indicator.innerHTML = '<span>Browsing — tap LIVE to return</span>';
+      container.appendChild(indicator);
+    }
   }
 
   function renderPresenterView(container) {
@@ -1835,6 +1943,385 @@
     buildSectionProgress();
   }
 
+  // ============================================
+  // PARTICIPANT FEATURES
+  // ============================================
+
+  // --- Free-Browse Navigation ---
+  function participantNext() {
+    // Can go forward up to (but not past) presenter's current slide
+    const maxSlide = state.presenterSlide;
+    if (state.currentSlide < maxSlide) {
+      state.freeBrowsing = true;
+      goToSlide(state.currentSlide + 1);
+      // If we've caught up to presenter, exit free-browse
+      if (state.currentSlide >= state.presenterSlide) {
+        state.freeBrowsing = false;
+      }
+      updateParticipantToolbar();
+    }
+  }
+
+  function participantPrev() {
+    if (state.currentSlide > 0) {
+      state.freeBrowsing = true;
+      goToSlide(state.currentSlide - 1);
+      updateParticipantToolbar();
+    }
+  }
+
+  function participantSnapToLive() {
+    state.freeBrowsing = false;
+    goToSlide(state.presenterSlide);
+    updateParticipantToolbar();
+  }
+
+  // --- Participant Toolbar (bottom bar) ---
+  function renderParticipantToolbar() {
+    const toolbar = el('div', 'participant-toolbar');
+    toolbar.id = 'participant-toolbar';
+    toolbar.innerHTML = `
+      <div class="pt-left">
+        <button class="pt-btn pt-btn--menu" onclick="AIPrimer.toggleParticipantMenu()" title="Menu (M)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="pt-center">
+        <button class="pt-btn pt-btn--nav" onclick="AIPrimer.participantPrev()" title="Previous slide">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="pt-slide-info" id="pt-slide-info">${state.currentSlide + 1} / ${state.slides.length}</span>
+        <button class="pt-btn pt-btn--nav" onclick="AIPrimer.participantNext()" title="Next slide">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="pt-right">
+        <button class="pt-btn pt-btn--bookmark ${state.bookmarks.includes(state.currentSlide) ? 'active' : ''}" id="pt-bookmark-btn" onclick="AIPrimer.toggleBookmark(${state.currentSlide})" title="Bookmark (B)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="${state.bookmarks.includes(state.currentSlide) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button class="pt-btn pt-btn--live ${state.freeBrowsing ? 'pt-btn--pulse' : ''}" id="pt-live-btn" onclick="AIPrimer.participantSnapToLive()" title="Snap to presenter" style="display:${state.freeBrowsing ? 'flex' : 'none'}">
+          LIVE
+        </button>
+      </div>
+    `;
+    return toolbar;
+  }
+
+  function updateParticipantToolbar() {
+    const slideInfo = document.getElementById('pt-slide-info');
+    if (slideInfo) slideInfo.textContent = `${state.currentSlide + 1} / ${state.slides.length}`;
+
+    const liveBtn = document.getElementById('pt-live-btn');
+    if (liveBtn) {
+      liveBtn.style.display = state.freeBrowsing ? 'flex' : 'none';
+      liveBtn.classList.toggle('pt-btn--pulse', state.freeBrowsing);
+    }
+
+    const bookmarkBtn = document.getElementById('pt-bookmark-btn');
+    if (bookmarkBtn) {
+      const isBookmarked = state.bookmarks.includes(state.currentSlide);
+      bookmarkBtn.className = `pt-btn pt-btn--bookmark ${isBookmarked ? 'active' : ''}`;
+      bookmarkBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+      bookmarkBtn.onclick = function () { AIPrimer.toggleBookmark(state.currentSlide); };
+    }
+
+    // Update free-browse indicator
+    const indicator = document.getElementById('pt-browse-indicator');
+    if (indicator) {
+      indicator.style.display = state.freeBrowsing ? 'flex' : 'none';
+    }
+  }
+
+  // --- Participant Menu (slide-out drawer) ---
+  let participantMenuOpen = false;
+  let participantMenuTab = 'qa';
+
+  function toggleParticipantMenu() {
+    let panel = document.getElementById('participant-menu');
+    if (!panel) {
+      panel = renderParticipantMenu();
+      document.body.appendChild(panel);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => panel.classList.add('open'));
+      });
+      participantMenuOpen = true;
+    } else {
+      if (panel.classList.contains('open')) {
+        panel.classList.remove('open');
+        participantMenuOpen = false;
+        setTimeout(() => { if (!panel.classList.contains('open')) panel.remove(); }, 300);
+      } else {
+        panel.classList.add('open');
+        participantMenuOpen = true;
+      }
+    }
+  }
+
+  function renderParticipantMenu() {
+    const panel = document.createElement('div');
+    panel.className = 'participant-menu';
+    panel.id = 'participant-menu';
+
+    const langs = getAvailableSessionLanguages();
+    const langOptions = langs.map(function (code) {
+      var selected = code === state.language ? ' selected' : '';
+      var name = LANG_NAMES[code] || code;
+      return '<option value="' + code + '"' + selected + '>' + name + '</option>';
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="pm-overlay" onclick="AIPrimer.toggleParticipantMenu()"></div>
+      <div class="pm-drawer">
+        <div class="pm-header">
+          <div class="pm-header__title">Menu</div>
+          <div class="pm-header__lang">
+            <select class="pm-lang-select" onchange="AIPrimer.participantSwitchLanguage(this.value)" title="Language">
+              ${langOptions}
+            </select>
+          </div>
+          <button class="pm-header__close" onclick="AIPrimer.toggleParticipantMenu()">&times;</button>
+        </div>
+        <div class="pm-tabs">
+          <button class="pm-tab ${participantMenuTab === 'qa' ? 'pm-tab--active' : ''}" data-tab="qa" onclick="AIPrimer.switchParticipantTab('qa')">Q&amp;A <span class="pm-tab__badge" id="pm-qa-badge" style="display:${state.questions.length > 0 ? 'inline' : 'none'}">${state.questions.length}</span></button>
+          <button class="pm-tab ${participantMenuTab === 'bookmarks' ? 'pm-tab--active' : ''}" data-tab="bookmarks" onclick="AIPrimer.switchParticipantTab('bookmarks')">Bookmarks</button>
+          <button class="pm-tab ${participantMenuTab === 'resources' ? 'pm-tab--active' : ''}" data-tab="resources" onclick="AIPrimer.switchParticipantTab('resources')">Resources</button>
+        </div>
+        <div class="pm-panel" id="pm-panel-qa">
+          <div class="pm-qa">
+            <div class="pm-qa__input">
+              <textarea id="pm-qa-input" class="pm-qa__textarea" placeholder="Type your question..." rows="2" maxlength="500"></textarea>
+              <button class="pm-qa__submit" onclick="AIPrimer.submitQuestion()">Ask</button>
+            </div>
+            <div class="pm-qa__list" id="pm-qa-list">
+              ${renderParticipantQAList()}
+            </div>
+          </div>
+        </div>
+        <div class="pm-panel pm-panel--hidden" id="pm-panel-bookmarks">
+          <div class="pm-bookmarks" id="pm-bookmarks-list">
+            ${renderBookmarksList()}
+          </div>
+        </div>
+        <div class="pm-panel pm-panel--hidden" id="pm-panel-resources">
+          <div class="pm-resources" id="pm-resources-list">
+            ${renderResourcesList()}
+          </div>
+        </div>
+      </div>
+    `;
+
+    return panel;
+  }
+
+  function switchParticipantTab(tab) {
+    participantMenuTab = tab;
+    const menu = document.getElementById('participant-menu');
+    if (!menu) return;
+    menu.querySelectorAll('.pm-tab').forEach(t => {
+      t.classList.toggle('pm-tab--active', t.dataset.tab === tab);
+    });
+    menu.querySelectorAll('.pm-panel').forEach(p => {
+      p.classList.toggle('pm-panel--hidden', !p.id.endsWith(tab));
+    });
+  }
+
+  // --- Q&A System (Participant) ---
+  function submitQuestion() {
+    const input = document.getElementById('pm-qa-input');
+    if (!input || !input.value.trim()) return;
+    const text = input.value.trim();
+    if (text.length < 2) return;
+
+    if (state.socket && state.connected) {
+      state.socket.emit('question-submit', {
+        text: text,
+        participantId: state.participantId,
+        participantName: state.participantName,
+        slideIndex: state.currentSlide,
+        timestamp: Date.now(),
+      });
+    }
+    input.value = '';
+  }
+
+  function upvoteQuestion(questionId) {
+    if (state.socket && state.connected) {
+      state.socket.emit('question-upvote', {
+        questionId: questionId,
+        participantId: state.participantId,
+      });
+    }
+  }
+
+  function renderParticipantQAList() {
+    if (state.questions.length === 0) {
+      return '<div class="pm-empty">No questions yet. Be the first to ask!</div>';
+    }
+    return state.questions.slice().sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).map(q => {
+      const hasUpvoted = q.upvotedBy && q.upvotedBy.includes(state.participantId);
+      const answeredClass = q.answered ? ' pm-qa-item--answered' : '';
+      return `<div class="pm-qa-item${answeredClass}" data-qid="${q.id}">
+        <button class="pm-qa-item__upvote ${hasUpvoted ? 'active' : ''}" onclick="AIPrimer.upvoteQuestion('${q.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          <span>${q.upvotes || 0}</span>
+        </button>
+        <div class="pm-qa-item__content">
+          <div class="pm-qa-item__text">${escapeHtml(q.text)}</div>
+          <div class="pm-qa-item__meta">${q.participantName || 'Anonymous'} · Slide ${(q.slideIndex || 0) + 1}${q.answered ? ' · ✓ Answered' : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function updateQAPanel() {
+    const list = document.getElementById('pm-qa-list');
+    if (list) list.innerHTML = renderParticipantQAList();
+  }
+
+  function updateQABadge() {
+    const badge = document.getElementById('pm-qa-badge');
+    if (badge) {
+      badge.textContent = state.questions.length;
+      badge.style.display = state.questions.length > 0 ? 'inline' : 'none';
+    }
+  }
+
+  // --- Q&A System (Presenter) ---
+  function renderPresenterQAList() {
+    if (state.questions.length === 0) {
+      return '<div class="ac-empty">No questions from participants yet.</div>';
+    }
+    return state.questions.slice().sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).map(q => {
+      const answeredClass = q.answered ? ' ac-qa-item--answered' : '';
+      return `<div class="ac-qa-item${answeredClass}" data-qid="${q.id}">
+        <div class="ac-qa-item__votes">${q.upvotes || 0}</div>
+        <div class="ac-qa-item__content">
+          <div class="ac-qa-item__text">${escapeHtml(q.text)}</div>
+          <div class="ac-qa-item__meta">${q.participantName || 'Anonymous'} · Slide ${(q.slideIndex || 0) + 1}</div>
+        </div>
+        <div class="ac-qa-item__actions">
+          <button class="ac-qa-item__btn ${q.answered ? 'active' : ''}" onclick="AIPrimer.markQuestionAnswered('${q.id}')" title="${q.answered ? 'Mark unanswered' : 'Mark answered'}">
+            ${q.answered ? '✓' : '○'}
+          </button>
+          <button class="ac-qa-item__btn ac-qa-item__btn--dismiss" onclick="AIPrimer.dismissQuestion('${q.id}')" title="Dismiss">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function updatePresenterQAPanel() {
+    const list = document.getElementById('ac-qa-list');
+    if (list) list.innerHTML = renderPresenterQAList();
+    // Update badge
+    const badge = document.getElementById('ac-qa-badge');
+    if (badge) {
+      const unanswered = state.questions.filter(q => !q.answered && !q.dismissed).length;
+      badge.textContent = unanswered;
+      badge.style.display = unanswered > 0 ? 'inline' : 'none';
+    }
+  }
+
+  function markQuestionAnswered(questionId) {
+    if (state.socket && state.connected) {
+      state.socket.emit('question-answered', { questionId });
+    }
+  }
+
+  function dismissQuestion(questionId) {
+    if (state.socket && state.connected) {
+      state.socket.emit('question-dismiss', { questionId });
+    }
+  }
+
+  // --- Bookmarks (localStorage) ---
+  function loadBookmarks() {
+    try {
+      const key = 'aip_bookmarks_' + (state.sessionCode || 'self');
+      const stored = localStorage.getItem(key);
+      state.bookmarks = stored ? JSON.parse(stored) : [];
+    } catch (e) { state.bookmarks = []; }
+  }
+
+  function saveBookmarks() {
+    try {
+      const key = 'aip_bookmarks_' + (state.sessionCode || 'self');
+      localStorage.setItem(key, JSON.stringify(state.bookmarks));
+    } catch (e) {}
+  }
+
+  function toggleBookmark(slideIndex) {
+    const idx = state.bookmarks.indexOf(slideIndex);
+    if (idx >= 0) {
+      state.bookmarks.splice(idx, 1);
+    } else {
+      state.bookmarks.push(slideIndex);
+    }
+    saveBookmarks();
+    updateParticipantToolbar();
+    // Update bookmarks panel if open
+    const list = document.getElementById('pm-bookmarks-list');
+    if (list) list.innerHTML = renderBookmarksList();
+  }
+
+  function renderBookmarksList() {
+    if (state.bookmarks.length === 0) {
+      return '<div class="pm-empty">No bookmarks yet. Tap the bookmark icon on any slide to save it.</div>';
+    }
+    return state.bookmarks.sort((a, b) => a - b).map(idx => {
+      const slide = state.slides[idx];
+      if (!slide) return '';
+      return `<div class="pm-bookmark-item" onclick="AIPrimer.goToSlide(${idx}); AIPrimer.toggleParticipantMenu();">
+        <div class="pm-bookmark-item__num">${idx + 1}</div>
+        <div class="pm-bookmark-item__info">
+          <div class="pm-bookmark-item__title">${slide.title || slide.type}</div>
+          <div class="pm-bookmark-item__section">${slide.sectionLabel || ''}</div>
+        </div>
+        <button class="pm-bookmark-item__remove" onclick="event.stopPropagation(); AIPrimer.toggleBookmark(${idx});">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  // --- Resources Panel ---
+  function renderResourcesList() {
+    if (state.resources.length === 0) {
+      return '<div class="pm-empty">No resources available for this session.</div>';
+    }
+    return state.resources.map(r => {
+      const icon = r.type === 'pdf' ? '📄' : r.type === 'link' ? '🔗' : r.type === 'video' ? '🎬' : '📎';
+      return `<a class="pm-resource-item" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">
+        <span class="pm-resource-item__icon">${icon}</span>
+        <div class="pm-resource-item__info">
+          <div class="pm-resource-item__title">${escapeHtml(r.title)}</div>
+          ${r.description ? '<div class="pm-resource-item__desc">' + escapeHtml(r.description) + '</div>' : ''}
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>`;
+    }).join('');
+  }
+
+  // --- Session Ended (participant view) ---
+  function showParticipantSessionEnded() {
+    const overlay = document.createElement('div');
+    overlay.className = 'participant-ended-overlay';
+    overlay.innerHTML = `
+      <div class="participant-ended">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--bright-turquoise)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <h2>Session Complete</h2>
+        <p>Thank you for participating!</p>
+        <button class="participant-ended__btn" onclick="window.location.href='/'">Return Home</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  // --- HTML Escape Helper ---
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   function generateId() {
     return 'p_' + Math.random().toString(36).substr(2, 9);
   }
@@ -1864,12 +2351,30 @@
   // --- Language Switcher ---
   AIPrimer.switchLanguage = async function (language) {
     await setLanguage(language);
-    // Broadcast to all participants via socket
+    // Broadcast to all participants via socket (presenter only)
     if (state.mode === 'presenter' && state.socket) {
       state.socket.emit('language-change', { language: language });
     }
   };
   AIPrimer.getAvailableLanguages = getAvailableSessionLanguages;
+
+  // --- Participant Language Switcher (personal, no broadcast) ---
+  AIPrimer.participantSwitchLanguage = async function (language) {
+    await setLanguage(language);
+    // Personal — no broadcast. Participant's choice only.
+  };
+
+  // --- Participant Features ---
+  AIPrimer.participantNext = participantNext;
+  AIPrimer.participantPrev = participantPrev;
+  AIPrimer.participantSnapToLive = participantSnapToLive;
+  AIPrimer.toggleParticipantMenu = toggleParticipantMenu;
+  AIPrimer.switchParticipantTab = switchParticipantTab;
+  AIPrimer.submitQuestion = submitQuestion;
+  AIPrimer.upvoteQuestion = upvoteQuestion;
+  AIPrimer.toggleBookmark = toggleBookmark;
+  AIPrimer.markQuestionAnswered = markQuestionAnswered;
+  AIPrimer.dismissQuestion = dismissQuestion;
 
   // --- Presenter Nav: Pause & Dashboard ---
   AIPrimer.pauseAndDashboard = function () {

@@ -82,6 +82,7 @@ const db = {
 const sessionCache = {};
 const liveParticipants = {};
 const responseCache = {};
+const questionCache = {};  // Q&A questions per session { sessionCode: [{ id, text, participantId, participantName, slideIndex, upvotes: Set, answered, dismissed, createdAt }] }
 
 // --- Load active sessions from Supabase on startup ---
 async function loadActiveSessions() {
@@ -117,6 +118,7 @@ async function loadActiveSessions() {
       };
       liveParticipants[s.code] = [];
       responseCache[s.code] = [];
+      questionCache[s.code] = [];
     }
 
     // Load responses for active sessions (for real-time aggregation)
@@ -276,6 +278,7 @@ app.post('/api/sessions', async (req, res) => {
   };
   liveParticipants[code] = [];
   responseCache[code] = [];
+  questionCache[code] = [];
 
   logInteraction(code, 'session_created', {
     eventData: { title: session.title, presenterName: session.presenter_name },
@@ -309,6 +312,15 @@ app.get('/api/sessions/:code/responses', async (req, res) => {
   }
 
   res.json(responseCache[req.params.code] || []);
+});
+
+// Get Q&A questions for a session
+app.get('/api/sessions/:code/questions', (req, res) => {
+  if (!sessionCache[req.params.code]) return res.status(404).json({ error: 'Session not found' });
+  const questions = (questionCache[req.params.code] || [])
+    .filter(q => !q.dismissed)
+    .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+  res.json(questions);
 });
 
 // Get responses for a specific slide
@@ -421,6 +433,7 @@ app.delete('/api/sessions/:code', async (req, res) => {
   // Clean up in-memory caches
   delete sessionCache[code];
   delete responseCache[code];
+  delete questionCache[code];
   delete liveParticipants[code];
 
   // Disconnect any remaining sockets in this room
@@ -773,6 +786,14 @@ io.on('connection', (socket) => {
         joinedAt: p.joinedAt, lastActivity: p.lastActivity, lastActivityType: p.lastActivityType,
       })),
     });
+
+    // Send existing Q&A questions to presenter
+    const presenterQuestions = (questionCache[sessionCode] || [])
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    if (presenterQuestions.length) {
+      socket.emit('questions-update', { questions: presenterQuestions });
+    }
   }
 
   if (mode === 'participant') {
@@ -792,8 +813,22 @@ io.on('connection', (socket) => {
 
     socket.emit('slide-change', { slideIndex: sessionCache[sessionCode].currentSlide });
     // Send revealed slides state for late joiners
+    const sessionState = {};
     if (sessionCache[sessionCode].revealedSlides && Object.keys(sessionCache[sessionCode].revealedSlides).length) {
-      socket.emit('session-state', { revealedSlides: sessionCache[sessionCode].revealedSlides });
+      sessionState.revealedSlides = sessionCache[sessionCode].revealedSlides;
+    }
+    if (sessionCache[sessionCode].resources) {
+      sessionState.resources = sessionCache[sessionCode].resources;
+    }
+    sessionState.currentSlide = sessionCache[sessionCode].currentSlide;
+    socket.emit('session-state', sessionState);
+
+    // Send existing Q&A questions
+    const participantQuestions = (questionCache[sessionCode] || [])
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    if (participantQuestions.length) {
+      socket.emit('questions-update', { questions: participantQuestions });
     }
 
     const participantList = liveParticipants[sessionCode].map(p => ({
@@ -1034,6 +1069,112 @@ io.on('connection', (socket) => {
         },
       });
     }
+  });
+
+  // --- Q&A System ---
+
+  // Submit a question (participant)
+  socket.on('question-submit', (data) => {
+    if (!questionCache[sessionCode]) questionCache[sessionCode] = [];
+
+    const question = {
+      id: uuidv4(),
+      text: (data.text || '').trim().slice(0, 500),
+      participantId: data.participantId || participantId || 'anon',
+      participantName: data.participantName || participantName || 'Anonymous',
+      slideIndex: data.slideIndex || sessionCache[sessionCode].currentSlide,
+      upvotes: new Set(),
+      upvoteCount: 0,
+      answered: false,
+      dismissed: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (!question.text) return;
+
+    questionCache[sessionCode].push(question);
+
+    logInteraction(sessionCode, 'question_submitted', {
+      participantId: question.participantId,
+      participantName: question.participantName,
+      slideIndex: question.slideIndex,
+      eventData: { questionId: question.id, text: question.text },
+    });
+
+    // Broadcast to all clients
+    const questions = questionCache[sessionCode]
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    io.to(sessionCode).emit('questions-update', {
+      questions,
+      latestFrom: question.participantName,
+    });
+
+    console.log(`Q&A: "${question.participantName}" asked in ${sessionCode}`);
+  });
+
+  // Upvote a question (any participant)
+  socket.on('question-upvote', (data) => {
+    if (!questionCache[sessionCode]) return;
+    const question = questionCache[sessionCode].find(q => q.id === data.questionId);
+    if (!question) return;
+
+    const voterId = data.participantId || participantId || socket.id;
+
+    // Toggle upvote
+    if (question.upvotes.has(voterId)) {
+      question.upvotes.delete(voterId);
+    } else {
+      question.upvotes.add(voterId);
+    }
+
+    // Broadcast update
+    const questions = questionCache[sessionCode]
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    io.to(sessionCode).emit('questions-update', { questions });
+  });
+
+  // Mark question as answered (presenter only)
+  socket.on('question-answered', (data) => {
+    if (mode !== 'presenter') return;
+    if (!questionCache[sessionCode]) return;
+    const question = questionCache[sessionCode].find(q => q.id === data.questionId);
+    if (!question) return;
+
+    question.answered = !question.answered; // Toggle
+
+    logInteraction(sessionCode, 'question_answered', {
+      eventData: { questionId: question.id, answered: question.answered },
+    });
+
+    const questions = questionCache[sessionCode]
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    io.to(sessionCode).emit('questions-update', { questions });
+
+    console.log(`Q&A: Question ${question.answered ? 'answered' : 'unmarked'} in ${sessionCode}`);
+  });
+
+  // Dismiss question (presenter only)
+  socket.on('question-dismiss', (data) => {
+    if (mode !== 'presenter') return;
+    if (!questionCache[sessionCode]) return;
+    const question = questionCache[sessionCode].find(q => q.id === data.questionId);
+    if (!question) return;
+
+    question.dismissed = true;
+
+    logInteraction(sessionCode, 'question_dismissed', {
+      eventData: { questionId: question.id, text: question.text },
+    });
+
+    const questions = questionCache[sessionCode]
+      .filter(q => !q.dismissed)
+      .map(q => ({ ...q, upvotes: q.upvotes ? q.upvotes.size : 0 }));
+    io.to(sessionCode).emit('questions-update', { questions });
+
+    console.log(`Q&A: Question dismissed in ${sessionCode}`);
   });
 
   // Disconnect

@@ -322,7 +322,10 @@
         },
       };
 
-      if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse('ai-primer-full')) {
+      // Check if session uses a custom course
+      if (sessionData && sessionData.customCourseId && typeof SlideRegistry !== 'undefined') {
+        initConfig.customCourseId = sessionData.customCourseId;
+      } else if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse('ai-primer-full')) {
         initConfig.courseId = 'ai-primer-full';
       } else {
         initConfig.slides = AI_PRIMER_SLIDES;

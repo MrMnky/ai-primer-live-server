@@ -152,6 +152,65 @@ const SlideRegistry = {
    * @param {object[]} legacySlides - AI_PRIMER_SLIDES array
    * @returns {object[]} Same slides with `id` fields added
    */
+  /**
+   * Resolve a custom course's slide array against the registry.
+   * Each entry can be a string (slide ID) or an object { id, ...overrides }.
+   * Dotted override keys (e.g. 'quiz.question') are unflattened into nested objects.
+   *
+   * @param {object} courseData - { title, slides: [...], sections: [...] }
+   * @returns {{ title: string, slides: object[], sections: object[] }}
+   */
+  resolveCustomCourse(courseData) {
+    const slides = [];
+    const missing = [];
+
+    (courseData.slides || []).forEach(ref => {
+      const slideId = typeof ref === 'string' ? ref : ref.id;
+      const baseSlide = SLIDE_REGISTRY[slideId];
+
+      if (!baseSlide) {
+        missing.push(slideId);
+        return;
+      }
+
+      if (typeof ref === 'object') {
+        const { id: _id, ...flatOverrides } = ref;
+        // Unflatten dotted keys into nested objects
+        const overrides = {};
+        Object.entries(flatOverrides).forEach(([key, value]) => {
+          if (key.includes('.')) {
+            const [parent, child] = key.split('.', 2);
+            if (!overrides[parent]) overrides[parent] = { ...(baseSlide[parent] || {}) };
+            // Handle option indices (e.g. 'quiz.option0' → quiz.options[0])
+            const optMatch = child.match(/^option(\d+)$/);
+            if (optMatch) {
+              if (!overrides[parent].options) overrides[parent].options = [...(baseSlide[parent]?.options || [])];
+              overrides[parent].options[parseInt(optMatch[1])] = value;
+            } else {
+              overrides[parent][child] = value;
+            }
+          } else {
+            overrides[key] = value;
+          }
+        });
+        slides.push({ ...baseSlide, ...overrides });
+      } else {
+        slides.push(baseSlide);
+      }
+    });
+
+    if (missing.length > 0) {
+      console.warn('[Registry] Missing slides in custom course:', missing);
+    }
+
+    return {
+      title: courseData.title || 'Custom Course',
+      slides,
+      sections: courseData.sections || [],
+      metadata: { custom: true },
+    };
+  },
+
   enrichLegacySlides(legacySlides) {
     // Build a reverse map: registry slide → its ID, keyed by title+type
     const reverseMap = {};

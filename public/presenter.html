@@ -288,65 +288,125 @@
       }
     }
 
-    // --- Create New Session (two-step: course picker → setup) ---
+    // --- Create New Session (course picker with custom courses) ---
     const DEFAULT_COURSE_ID = 'ai-primer-full';
+    let customCourses = [];
+    let selectedCustomCourseId = null;
 
-    function showCoursePickerOrCreate() {
-      // If no registry or only one course, skip picker
-      if (typeof SlideRegistry === 'undefined') {
-        createNewSession(null, 'en');
-        return;
-      }
+    async function showCoursePickerOrCreate() {
+      selectedCustomCourseId = null;
 
-      const courses = SlideRegistry.listCourses();
-      const defaultCourse = courses[0] || { id: null, languages: ['en'] };
-      const defaultLangs = defaultCourse.languages || ['en'];
+      // Fetch custom courses from server
+      try {
+        const res = await fetch(`${serverUrl}/api/courses?presenter_id=${currentUser?.id || ''}`);
+        if (res.ok) customCourses = await res.json();
+      } catch (e) { customCourses = []; }
 
-      // Skip picker only if one course AND one language
-      if (courses.length <= 1 && defaultLangs.length <= 1) {
-        createNewSession(defaultCourse.id, 'en');
-        return;
-      }
+      const builtInCourses = (typeof SlideRegistry !== 'undefined') ? SlideRegistry.listCourses() : [];
 
-      // Show course/language picker
       const app = document.getElementById('app');
-      const showCourseDropdown = courses.length > 1;
-      const courseOptions = courses.map(c =>
-        `<option value="${c.id}">${c.title} (${c.slideCount} slides)</option>`
-      ).join('');
-
       app.innerHTML = `
         <button class="setup-back" onclick="showDashboard()">← Dashboard</button>
-        <div class="setup-screen" id="course-picker">
+        <div class="setup-screen" id="course-picker" style="justify-content:flex-start;padding-top:60px;">
           <img src="assets/AIA_Logo_White.svg" alt="AI Accelerator" style="width:80px;margin-bottom:24px;">
           <h1 style="font-family:var(--font-family);font-weight:var(--fw-bold);font-size:1.4rem;">Create New Session</h1>
-          <div style="margin:24px 0;width:100%;max-width:320px;${showCourseDropdown ? '' : 'display:none;'}">
-            <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Course</label>
-            <select id="course-select" onchange="updateLanguageOptions()" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-size:0.95rem;appearance:auto;">
-              ${courseOptions}
-            </select>
-          </div>
-          <div style="margin-bottom:32px;width:100%;max-width:320px;">
+          <p style="opacity:0.4;font-size:0.85rem;margin-bottom:32px;">Choose a course to present</p>
+
+          <div style="width:100%;max-width:480px;" id="course-cards"></div>
+
+          <div style="margin-top:24px;width:100%;max-width:480px;">
             <label style="display:block;font-size:0.8rem;opacity:0.5;margin-bottom:6px;text-align:left;">Language</label>
             <select id="language-select" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-size:0.95rem;appearance:auto;">
               <option value="en">English</option>
             </select>
           </div>
-          <button class="btn btn--primary" onclick="confirmCourseSelection()">Create Session</button>
+
+          <div style="display:flex;gap:12px;margin-top:24px;">
+            <button class="btn btn--primary" id="startSessionBtn" onclick="confirmCourseSelection()">Create Session</button>
+          </div>
+
+          <div style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);width:100%;max-width:480px;text-align:center;">
+            <p style="font-size:0.8rem;opacity:0.4;margin-bottom:12px;">Or build a custom course</p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+              <a href="compose.html" class="btn btn--secondary" style="text-decoration:none;font-size:0.8rem;">+ New Custom Course</a>
+              <a href="compose.html?duplicate=ai-primer-full" class="btn btn--secondary" style="text-decoration:none;font-size:0.8rem;">Duplicate Default</a>
+            </div>
+          </div>
         </div>
       `;
 
+      renderCourseCards(builtInCourses);
+      updateLanguageOptions();
+    }
+
+    function renderCourseCards(builtInCourses) {
+      const container = document.getElementById('course-cards');
+      if (!container) return;
+
+      let html = '';
+
+      // Built-in courses
+      builtInCourses.forEach(c => {
+        html += `
+          <div class="session-card" style="cursor:pointer;margin-bottom:8px;${!selectedCustomCourseId && c.id === DEFAULT_COURSE_ID ? 'border-color:var(--bright-turquoise);' : ''}"
+               onclick="selectCourse('${c.id}', null)" id="card-${c.id}">
+            <div class="session-card__info">
+              <span style="font-weight:600;font-size:0.95rem;">${c.title}</span>
+              <div class="session-card__meta">${c.slideCount} slides · ${c.metadata?.duration || '~90 min'}</div>
+            </div>
+            <span class="session-card__badge badge--active">Default</span>
+          </div>`;
+      });
+
+      // Custom courses
+      if (customCourses.length > 0) {
+        html += '<div style="margin-top:16px;font-size:0.75rem;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Custom Courses</div>';
+        customCourses.forEach(c => {
+          const slideCount = Array.isArray(c.slides) ? c.slides.length : 0;
+          const selected = selectedCustomCourseId === c.id;
+          html += `
+            <div class="session-card" style="cursor:pointer;margin-bottom:8px;${selected ? 'border-color:var(--bright-turquoise);' : ''}"
+                 onclick="selectCourse(null, '${c.id}')" id="card-custom-${c.id}">
+              <div class="session-card__info">
+                <span style="font-weight:600;font-size:0.95rem;">${c.title}</span>
+                <div class="session-card__meta">${slideCount} slides · Custom</div>
+              </div>
+              <div class="session-card__actions">
+                <a href="compose.html?id=${c.id}" class="session-card__btn session-card__btn--secondary" style="text-decoration:none;" onclick="event.stopPropagation()">Edit</a>
+              </div>
+            </div>`;
+        });
+      }
+
+      container.innerHTML = html;
+    }
+
+    function selectCourse(builtInId, customId) {
+      selectedCustomCourseId = customId || null;
+      // Update visual selection
+      document.querySelectorAll('#course-cards .session-card').forEach(el => {
+        el.style.borderColor = 'rgba(255,255,255,0.08)';
+      });
+      if (customId) {
+        const el = document.getElementById(`card-custom-${customId}`);
+        if (el) el.style.borderColor = 'var(--bright-turquoise)';
+      } else if (builtInId) {
+        const el = document.getElementById(`card-${builtInId}`);
+        if (el) el.style.borderColor = 'var(--bright-turquoise)';
+      }
       updateLanguageOptions();
     }
 
     function updateLanguageOptions() {
-      const courseId = document.getElementById('course-select')?.value;
       const langSelect = document.getElementById('language-select');
-      if (!langSelect || !courseId) return;
+      if (!langSelect) return;
 
-      const languages = (typeof SlideRegistry !== 'undefined' && SlideRegistry.getAvailableLanguages)
-        ? SlideRegistry.getAvailableLanguages(courseId)
-        : ['en'];
+      let languages = ['en'];
+      if (!selectedCustomCourseId) {
+        languages = (typeof SlideRegistry !== 'undefined' && SlideRegistry.getAvailableLanguages)
+          ? SlideRegistry.getAvailableLanguages(DEFAULT_COURSE_ID)
+          : ['en'];
+      }
 
       langSelect.innerHTML = languages.map(code =>
         `<option value="${code}">${LANGUAGE_NAMES[code] || code}</option>`
@@ -354,20 +414,32 @@
     }
 
     function confirmCourseSelection() {
-      const courseId = document.getElementById('course-select')?.value || DEFAULT_COURSE_ID;
       const language = document.getElementById('language-select')?.value || 'en';
-      createNewSession(courseId, language);
+      if (selectedCustomCourseId) {
+        createNewSession(null, language, selectedCustomCourseId);
+      } else {
+        createNewSession(DEFAULT_COURSE_ID, language);
+      }
     }
 
-    async function createNewSession(courseId, language) {
+    async function createNewSession(courseId, language, customCourseId) {
       try {
         courseId = courseId || DEFAULT_COURSE_ID;
         language = language || 'en';
 
-        // Resolve slide count from registry or legacy
+        // Resolve slide count
         let slideCount = AI_PRIMER_SLIDES.length;
 
-        if (typeof SlideRegistry !== 'undefined') {
+        if (customCourseId) {
+          // Custom course — fetch slide count from server
+          try {
+            const ccRes = await fetch(`${serverUrl}/api/courses/${customCourseId}`);
+            if (ccRes.ok) {
+              const ccData = await ccRes.json();
+              slideCount = Array.isArray(ccData.slides) ? ccData.slides.length : slideCount;
+            }
+          } catch (e) { /* use default count */ }
+        } else if (typeof SlideRegistry !== 'undefined') {
           const course = SlideRegistry.getCourse(courseId);
           if (course) {
             slideCount = course.slides.length;
@@ -385,7 +457,8 @@
             title: 'AI Primer',
             presenterName: currentUser?.full_name || 'Presenter',
             slideCount,
-            courseId,
+            courseId: customCourseId ? null : courseId,
+            customCourseId: customCourseId || null,
             language,
           }),
         });
@@ -475,12 +548,14 @@
       const app = document.getElementById('app');
       app.innerHTML = '';
 
-      // Fetch session data to get courseId and language
+      // Fetch session data to get courseId, customCourseId, and language
+      let sessionCustomCourseId = null;
       try {
         const sessionRes = await fetch(`${serverUrl}/api/sessions/${code}`);
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json();
           activeSessionLanguage = sessionData.language || 'en';
+          sessionCustomCourseId = sessionData.customCourseId || null;
         }
       } catch (e) { /* use default */ }
 
@@ -496,7 +571,10 @@
         },
       };
 
-      if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse(DEFAULT_COURSE_ID)) {
+      if (sessionCustomCourseId) {
+        // Custom course — engine will fetch and resolve it
+        initConfig.customCourseId = sessionCustomCourseId;
+      } else if (typeof SlideRegistry !== 'undefined' && SlideRegistry.getCourse(DEFAULT_COURSE_ID)) {
         initConfig.courseId = DEFAULT_COURSE_ID;
       } else {
         initConfig.slides = AI_PRIMER_SLIDES;

@@ -1506,15 +1506,36 @@
     //            containerId: '...', language: 'en' }
     //
     // Slide resolution priority:
-    //   1. config.courseId → resolve via SlideRegistry.getCourse()
-    //   2. config.slides → use directly (legacy path)
-    //   3. window.AI_PRIMER_SLIDES → final fallback
+    //   1. config.customCourseId → fetch from server, resolve via SlideRegistry.resolveCustomCourse()
+    //   2. config.courseId → resolve via SlideRegistry.getCourse()
+    //   3. config.slides → use directly (legacy path)
+    //   4. window.AI_PRIMER_SLIDES → final fallback
     //
 
     // Load i18n before rendering anything
     await loadI18n(config.language || 'en');
 
-    if (config.courseId && typeof SlideRegistry !== 'undefined') {
+    if (config.customCourseId && typeof SlideRegistry !== 'undefined') {
+      // Custom course: fetch from server API and resolve against registry
+      try {
+        const serverUrl = (typeof CONFIG !== 'undefined' && CONFIG.SERVER_URL) || '';
+        const ccRes = await fetch(`${serverUrl}/api/courses/${config.customCourseId}`);
+        if (ccRes.ok) {
+          const courseData = await ccRes.json();
+          const resolved = SlideRegistry.resolveCustomCourse(courseData);
+          state.slides = resolved.slides;
+          state.customCourseId = config.customCourseId;
+          state.courseMeta = { title: resolved.title, sections: resolved.sections, metadata: resolved.metadata };
+          console.log(`[Engine] Loaded custom course '${resolved.title}' with ${resolved.slides.length} slides`);
+        } else {
+          console.warn(`[Engine] Custom course '${config.customCourseId}' fetch failed (${ccRes.status}), falling back`);
+          state.slides = config.slides || window.AI_PRIMER_SLIDES || [];
+        }
+      } catch (err) {
+        console.error('[Engine] Error loading custom course:', err);
+        state.slides = config.slides || window.AI_PRIMER_SLIDES || [];
+      }
+    } else if (config.courseId && typeof SlideRegistry !== 'undefined') {
       const course = SlideRegistry.getCourse(config.courseId);
       if (course) {
         state.slides = course.slides;

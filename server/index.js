@@ -108,6 +108,7 @@ async function loadActiveSessions() {
         currentSlide: s.current_slide,
         status: s.status,
         courseId: s.course_id || null,
+        customCourseId: s.custom_course_id || null,
         language: s.language || 'en',
         revealedSlides: {},
         createdAt: s.created_at,
@@ -210,6 +211,7 @@ app.get('/api/sessions', async (req, res) => {
       currentSlide: s.current_slide,
       status: s.status,
       courseId: s.course_id || null,
+      customCourseId: s.custom_course_id || null,
       language: s.language || 'en',
       createdAt: s.created_at,
       startedAt: s.started_at,
@@ -227,7 +229,7 @@ app.get('/api/sessions', async (req, res) => {
 
 // Create session
 app.post('/api/sessions', async (req, res) => {
-  const { title, presenterName, slideCount, courseId, language } = req.body;
+  const { title, presenterName, slideCount, courseId, language, customCourseId } = req.body;
   let code = generateCode();
   while (sessionCache[code]) code = generateCode();
 
@@ -240,6 +242,7 @@ app.post('/api/sessions', async (req, res) => {
     current_slide: 0,
     status: 'active',
     course_id: courseId || null,
+    custom_course_id: customCourseId || null,
     language: language || 'en',
   };
 
@@ -264,6 +267,7 @@ app.post('/api/sessions', async (req, res) => {
     presenterName: session.presenter_name,
     slideCount: session.slide_count,
     courseId: session.course_id,
+    customCourseId: session.custom_course_id,
     language: session.language || 'en',
     revealedSlides: {},
     currentSlide: 0,
@@ -427,6 +431,85 @@ app.delete('/api/sessions/:code', async (req, res) => {
     }
   }
 
+  res.json({ ok: true });
+});
+
+// --- Custom Course API ---
+
+// List custom courses (optionally filter by presenter_id)
+app.get('/api/courses', async (req, res) => {
+  if (!SUPABASE_KEY) return res.json([]);
+
+  const presenterId = req.query.presenter_id;
+  let filters = 'order=updated_at.desc';
+  if (presenterId) filters += `&presenter_id=eq.${presenterId}`;
+
+  const { data, error } = await db.select('custom_courses', filters);
+  if (error) return res.status(500).json({ error });
+  res.json(data || []);
+});
+
+// Get a single custom course
+app.get('/api/courses/:id', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(404).json({ error: 'No database' });
+
+  const { data, error } = await db.select('custom_courses', `id=eq.${req.params.id}`);
+  if (error) return res.status(500).json({ error });
+  if (!data || !data.length) return res.status(404).json({ error: 'Course not found' });
+  res.json(data[0]);
+});
+
+// Create custom course
+app.post('/api/courses', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
+
+  const { title, description, presenterId, slides, sections, language } = req.body;
+  if (!title || !presenterId) return res.status(400).json({ error: 'title and presenterId are required' });
+
+  const course = {
+    title,
+    description: description || '',
+    presenter_id: presenterId,
+    slides: slides || [],
+    sections: sections || [],
+    language: language || 'en',
+  };
+
+  const { data, error } = await db.insert('custom_courses', course);
+  if (error) return res.status(500).json({ error });
+  res.json(data?.[0] || course);
+});
+
+// Update custom course
+app.put('/api/courses/:id', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
+
+  const updates = {};
+  if (req.body.title !== undefined) updates.title = req.body.title;
+  if (req.body.description !== undefined) updates.description = req.body.description;
+  if (req.body.slides !== undefined) updates.slides = req.body.slides;
+  if (req.body.sections !== undefined) updates.sections = req.body.sections;
+  if (req.body.language !== undefined) updates.language = req.body.language;
+
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
+
+  const { error } = await db.update('custom_courses', `id=eq.${req.params.id}`, updates);
+  if (error) return res.status(500).json({ error });
+
+  // Fetch updated record
+  const { data } = await db.select('custom_courses', `id=eq.${req.params.id}`);
+  res.json(data?.[0] || { id: req.params.id, ...updates });
+});
+
+// Delete custom course
+app.delete('/api/courses/:id', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
+
+  // Clear custom_course_id from any sessions referencing this course
+  await db.update('sessions', `custom_course_id=eq.${req.params.id}`, { custom_course_id: null });
+
+  const { error } = await db.delete('custom_courses', `id=eq.${req.params.id}`);
+  if (error) return res.status(500).json({ error });
   res.json({ ok: true });
 });
 

@@ -181,6 +181,38 @@ const SECTION_1_FOUNDATION = [
     notes: `The FOMO call-out should be matter-of-fact, not preachy. You've seen this pattern. You're naming it, not judging it. The question reframe at the end is the real payload of this whole module — it's the mindset shift. Pause after the callout. Let people sit with the reframe. This changes how they think about the problem.`,
   },
 
+  // ── 1.5  AI Adoption Journey Interactive ─────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'FOUNDATION',
+    title: 'Explore: The AI Adoption Journey',
+    subtitle: 'See the S-curve adoption progression across your organisation.',
+    graphic: {
+      id: 'ai-adoption-journey',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive S-curve adoption model. Participants explore the adoption journey with stages: innovators, early adopters, early majority, late majority, laggards. See how different adoption curves play out over time. Debrief: "Where is your organisation on this curve? Which group are you part of?"`,
+  },
+
+  // ── 1.6  AI Adoption Matrix Interactive ────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'FOUNDATION',
+    title: 'Explore: Adoption Matrix',
+    subtitle: 'Map adoption across capability levels and business functions.',
+    graphic: {
+      id: 'ai-adoption-matrix',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive adoption matrix showing AI capabilities mapped against different business functions and maturity levels. See where your organisation can apply AI. Debrief: "Which function is furthest ahead? Which needs attention? Where should you focus next?"`,
+  },
+
   // ── Foundation: Pulse Check ──────────────────
   {
     type: 'content',

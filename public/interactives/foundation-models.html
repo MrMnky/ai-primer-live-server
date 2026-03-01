@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundation Models — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+  --acc-green: #007A5E;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:24px; }
+
+.header { text-align:center; margin-bottom:16px; max-width:900px; }
+.header h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+.header .subtitle { font-size:0.8rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { color:var(--turquoise); font-style:normal; font-weight:600; }
+
+.explorer { width:100%; max-width:920px; display:flex; gap:16px; flex:1; min-height:0; overflow:hidden; }
+
+/* Left: ecosystem tree */
+.tree-col { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; overflow-y:auto; min-height:0; }
+.tree-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--slate); margin-bottom:16px; }
+
+/* Foundation base */
+.foundation-base { background:linear-gradient(135deg, rgba(0,177,255,0.08), rgba(0,255,188,0.06)); border:1.5px solid rgba(0,177,255,0.25); border-radius:12px; padding:14px 16px; margin-bottom:16px; cursor:pointer; transition:all 0.3s; }
+.foundation-base:hover { border-color:var(--dodger); background:linear-gradient(135deg, rgba(0,177,255,0.15), rgba(0,255,188,0.1)); }
+.foundation-base.active { border-color:var(--dodger); box-shadow:0 0 16px rgba(0,177,255,0.15); }
+.fb-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.fb-label { font-size:0.85rem; font-weight:700; }
+.fb-tag { font-size:0.55rem; background:rgba(0,177,255,0.15); color:var(--dodger); padding:2px 8px; border-radius:10px; font-weight:600; }
+.fb-desc { font-size:0.72rem; color:var(--slate); line-height:1.5; }
+
+/* Branches */
+.branch-group { margin-left:20px; border-left:2px solid rgba(255,255,255,0.08); padding-left:16px; }
+.branch-group .branch-header { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
+.branch-header::before { content:''; width:12px; height:2px; background:rgba(255,255,255,0.15); margin-left:-17px; }
+.model-cards { display:flex; flex-direction:column; gap:6px; }
+.model-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 14px; cursor:pointer; transition:all 0.25s; display:flex; align-items:center; gap:10px; }
+.model-card:hover { border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.07); }
+.model-card.active { border-color:var(--turquoise); background:rgba(0,255,188,0.06); }
+.model-card .m-icon { font-size:1.1rem; flex-shrink:0; }
+.model-card .m-info { flex:1; }
+.model-card .m-name { font-size:0.75rem; font-weight:600; }
+.model-card .m-maker { font-size:0.6rem; color:var(--slate); }
+.model-card .m-arrow { color:var(--slate); font-size:0.7rem; opacity:0.5; }
+
+/* Right: detail panel */
+.detail-col { width:340px; display:flex; flex-direction:column; gap:12px; }
+
+.detail-card { background:var(--white); border-radius:12px; color:var(--gable); flex:1; display:flex; flex-direction:column; overflow:hidden; transition:all 0.3s; }
+.detail-header { padding:16px 18px; border-bottom:1px solid #E2E8F0; }
+.detail-header .d-tag { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-bottom:4px; }
+.detail-header .d-name { font-size:1.05rem; font-weight:700; }
+.detail-header .d-maker { font-size:0.72rem; color:#718096; }
+.detail-body { flex:1; padding:16px 18px; overflow-y:auto; }
+
+.detail-section { margin-bottom:16px; }
+.detail-section:last-child { margin-bottom:0; }
+.detail-section .ds-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--cerulean); font-weight:600; margin-bottom:6px; }
+.detail-section .ds-text { font-size:0.75rem; line-height:1.65; color:#4A5568; }
+.detail-section .ds-text strong { color:var(--gable); }
+
+.stat-row { display:flex; gap:10px; margin-bottom:12px; }
+.stat-pill { flex:1; background:#F7FAFC; border-radius:8px; padding:8px 10px; text-align:center; }
+.stat-pill .sp-val { font-size:0.9rem; font-weight:700; color:var(--gable); }
+.stat-pill .sp-label { font-size:0.55rem; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px; }
+
+.use-cases { display:flex; flex-wrap:wrap; gap:6px; }
+.use-tag { background:#EDF2F7; border-radius:6px; padding:4px 10px; font-size:0.65rem; color:#4A5568; }
+
+.key-box { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; }
+.key-box h3 { font-size:0.7rem; font-weight:700; color:var(--turquoise); margin-bottom:6px; }
+.key-box p { font-size:0.72rem; color:var(--cloud); line-height:1.6; }
+.key-box p strong { color:var(--white); }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+  /* ─── MOBILE RESPONSIVENESS ─── */
+  @media (max-width: 900px) {
+    body { padding: 16px; }
+    .header { margin-bottom: 12px; }
+    .header h1 { font-size: 1.25rem; }
+    .header .subtitle { font-size: 0.75rem; }
+    .explorer { gap: 12px; }
+    .tree-col { padding: 16px; }
+    .detail-col { width: 300px; }
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 12px; height: auto; overflow-y: auto; }
+    .header { margin-bottom: 10px; }
+    .header h1 { font-size: 1.1rem; margin-bottom: 4px; }
+    .header .subtitle { font-size: 0.7rem; }
+    .explorer { flex-direction: column; gap: 10px; max-width: 100%; }
+    .tree-col { padding: 12px; flex: none; max-height: 300px; order: 2; }
+    .detail-col { width: 100%; order: 1; gap: 10px; }
+    .detail-card { border-radius: 10px; }
+    .tree-label { font-size: 0.6rem; margin-bottom: 10px; }
+    .branch-group { margin-left: 16px; padding-left: 12px; }
+    .model-card { padding: 8px 10px; }
+    .model-card .m-icon { font-size: 0.95rem; }
+    .model-card .m-name { font-size: 0.7rem; }
+    .model-card .m-maker { font-size: 0.55rem; }
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 8px; }
+    .header { margin-bottom: 8px; }
+    .header h1 { font-size: 0.95rem; letter-spacing: 0; }
+    .header .subtitle { font-size: 0.65rem; line-height: 1.4; }
+    .explorer { gap: 8px; }
+    .tree-col { padding: 10px; max-height: 250px; }
+    .detail-col { gap: 8px; }
+    .detail-header { padding: 12px 14px; }
+    .detail-header .d-name { font-size: 0.9rem; }
+    .detail-header .d-maker { font-size: 0.65rem; }
+    .detail-body { padding: 12px 14px; }
+    .detail-section { margin-bottom: 12px; }
+    .detail-section .ds-label { font-size: 0.55rem; }
+    .detail-section .ds-text { font-size: 0.7rem; }
+    .stat-pill .sp-val { font-size: 0.8rem; }
+    .stat-pill .sp-label { font-size: 0.5rem; }
+    .key-box { padding: 12px; }
+    .key-box h3 { font-size: 0.65rem; }
+    .key-box p { font-size: 0.65rem; }
+    .use-tag { font-size: 0.6rem; padding: 3px 8px; }
+    .foundation-base { padding: 10px 12px; margin-bottom: 10px; }
+    .fb-label { font-size: 0.75rem; }
+    .fb-desc { font-size: 0.65rem; }
+    .tour-tip { max-width: 90vw; padding: 12px 14px 10px; }
+    .tour-title { font-size: 11px; }
+    .tour-desc { font-size: 10px; }
+    .tour-step-num { font-size: 8px; }
+  }
+
+  @media (max-width: 320px) {
+    body { padding: 4px; }
+    .header { margin-bottom: 6px; }
+    .header h1 { font-size: 0.85rem; }
+    .header .subtitle { font-size: 0.6rem; }
+    .tree-col { max-height: 200px; padding: 8px; }
+    .explorer { gap: 4px; }
+    .detail-col { gap: 4px; }
+    .branch-header { font-size: 0.55rem; }
+    .fb-tag { font-size: 0.5rem; padding: 1px 6px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Foundation Model Ecosystem</h1>
+  <div class="subtitle">One massive model, many specialised applications. <em>Foundation models are the base layer everything else is built on.</em></div>
+</div>
+
+<div class="explorer">
+  <div class="tree-col">
+    <div class="tree-label">Model Family Tree</div>
+
+    <div class="foundation-base" id="fbBase" onclick="selectItem('foundation')">
+      <div class="fb-top">
+        <span class="fb-label">🏗️ Foundation Model</span>
+        <span class="fb-tag">BASE LAYER</span>
+      </div>
+      <div class="fb-desc">Trained on massive datasets to understand language, images, code, and reasoning. The general-purpose engine that powers everything below.</div>
+    </div>
+
+    <div class="branch-group">
+      <div class="branch-header">Large Language Models</div>
+      <div class="model-cards">
+        <div class="model-card" onclick="selectItem('gpt4')"><span class="m-icon">🟢</span><div class="m-info"><div class="m-name">GPT-4o</div><div class="m-maker">OpenAI</div></div><span class="m-arrow">→</span></div>
+        <div class="model-card" onclick="selectItem('claude')"><span class="m-icon">🟠</span><div class="m-info"><div class="m-name">Claude Sonnet</div><div class="m-maker">Anthropic</div></div><span class="m-arrow">→</span></div>
+        <div class="model-card" onclick="selectItem('gemini')"><span class="m-icon">🔵</span><div class="m-info"><div class="m-name">Gemini 2.0</div><div class="m-maker">Google DeepMind</div></div><span class="m-arrow">→</span></div>
+        <div class="model-card" onclick="selectItem('llama')"><span class="m-icon">🟣</span><div class="m-info"><div class="m-name">Llama 3</div><div class="m-maker">Meta (open source)</div></div><span class="m-arrow">→</span></div>
+      </div>
+
+      <div class="branch-header">Image &amp; Multimodal</div>
+      <div class="model-cards">
+        <div class="model-card" onclick="selectItem('dalle')"><span class="m-icon">🎨</span><div class="m-info"><div class="m-name">DALL·E 3</div><div class="m-maker">OpenAI</div></div><span class="m-arrow">→</span></div>
+        <div class="model-card" onclick="selectItem('midjourney')"><span class="m-icon">🖼️</span><div class="m-info"><div class="m-name">Midjourney v6</div><div class="m-maker">Midjourney</div></div><span class="m-arrow">→</span></div>
+      </div>
+
+      <div class="branch-header">Specialised &amp; Fine-tuned</div>
+      <div class="model-cards">
+        <div class="model-card" onclick="selectItem('codegen')"><span class="m-icon">💻</span><div class="m-info"><div class="m-name">Code Generation</div><div class="m-maker">Copilot, Cursor, etc.</div></div><span class="m-arrow">→</span></div>
+        <div class="model-card" onclick="selectItem('embed')"><span class="m-icon">🔗</span><div class="m-info"><div class="m-name">Embedding Models</div><div class="m-maker">For RAG &amp; search</div></div><span class="m-arrow">→</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-col">
+    <div class="detail-card" id="detailCard">
+      <div class="detail-header" id="detailHeader">
+        <div class="d-tag" id="dTag" style="color:var(--cerulean)">SELECT A MODEL</div>
+        <div class="d-name" id="dName">Explore the Ecosystem</div>
+        <div class="d-maker" id="dMaker">Click any model or the foundation layer to learn more</div>
+      </div>
+      <div class="detail-body" id="detailBody">
+        <div class="detail-section">
+          <div class="ds-label">How It Works</div>
+          <div class="ds-text">Foundation models are trained on enormous datasets — sometimes trillions of words — to build a general understanding of language, logic, and the world. Think of it like giving someone a university education in everything simultaneously. The foundation model itself is never used directly by end users. Instead, it's <strong>fine-tuned, prompted, or augmented</strong> to create the products you actually interact with (ChatGPT, Claude, Gemini, etc.).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-box" id="keyBox">
+      <h3>Why This Matters</h3>
+      <p>Understanding the ecosystem helps you make better decisions: <strong>which model for which task</strong>, when to use off-the-shelf vs fine-tuned, and why "AI" isn't one thing — it's a stack of capabilities you can mix and match.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+// ═══════════════════════════════════════
+// POSTMESSAGE PROTOCOL INTEGRATION
+// ═══════════════════════════════════════
+(function() {
+  // Flag to track if graphic is ready
+  let graphicReady = false;
+
+  // Send GRAPHIC_READY message when DOM is loaded
+  function sendGraphicReady() {
+    if (!graphicReady && window.parent) {
+      try {
+        window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+        graphicReady = true;
+        console.log('[Graphic] GRAPHIC_READY sent to parent');
+      } catch (e) {
+        console.warn('[Graphic] Could not send GRAPHIC_READY:', e);
+      }
+    }
+  }
+
+  // Listen for incoming messages from parent
+  window.addEventListener('message', function(event) {
+    try {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      if (data.type === 'RESET') {
+        console.log('[Graphic] RESET command received');
+        resetGraphicState();
+      }
+    } catch (e) {
+      console.warn('[Graphic] Error handling message:', e);
+    }
+  });
+
+  // Reset graphic to initial state
+  function resetGraphicState() {
+    selectItem('foundation');
+    endTour();
+    document.getElementById('tourReplay').classList.remove('vis');
+    sendInteractionLog('RESET');
+  }
+
+  // Send interaction log to parent
+  function sendInteractionLog(action, data) {
+    if (window.parent) {
+      try {
+        window.parent.postMessage({
+          type: 'LOG_INTERACTION',
+          action: action,
+          timestamp: new Date().toISOString(),
+          data: data || {}
+        }, '*');
+      } catch (e) {
+        console.warn('[Graphic] Could not send LOG_INTERACTION:', e);
+      }
+    }
+  }
+
+  // Expose global function for interaction logging
+  window.logGraphicInteraction = function(action, data) {
+    console.log('[Graphic] User interaction:', action, data);
+    sendInteractionLog(action, data);
+  };
+
+  // Send GRAPHIC_READY when document is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', sendGraphicReady);
+  } else {
+    sendGraphicReady();
+  }
+
+  // Also send on window load
+  window.addEventListener('load', sendGraphicReady);
+})();
+
+// ═══════════════════════════════════════
+// CORE GRAPHIC LOGIC
+// ═══════════════════════════════════════
+const ITEMS = {
+  foundation: {
+    tag:"Foundation Layer", name:"Foundation Model", maker:"The base of everything",
+    stats:[{val:"Trillions",label:"Training tokens"},{val:"Months",label:"To train"},{val:"$100M+",label:"Training cost"}],
+    desc:"A foundation model is a massive neural network trained on a broad dataset to develop general capabilities. It learns language, reasoning, factual knowledge, and pattern recognition — but it's not tuned for any specific task.",
+    analogy:"Think of it as a <strong>university graduate with encyclopaedic knowledge</strong> but no job title yet. They know a lot about everything, but haven't specialised. Fine-tuning is like giving them professional training for a specific role.",
+    useCases:["General reasoning","Language understanding","Pattern recognition","Knowledge recall"],
+    keyInsight:"Foundation models are the <strong>most important shift in AI</strong> because they're general-purpose. Before foundation models, every AI system was purpose-built (fraud detection, translation, etc.). Now one base model can be adapted to thousands of tasks."
+  },
+  gpt4: {
+    tag:"Large Language Model", name:"GPT-4o", maker:"OpenAI",
+    stats:[{val:"~1.8T",label:"Parameters"},{val:"128K",label:"Context window"},{val:"$20/mo",label:"ChatGPT Plus"}],
+    desc:"OpenAI's flagship multimodal model. Handles text, images, and audio. Known for strong general reasoning and creative tasks. Powers ChatGPT, the most widely used AI product globally.",
+    analogy:"The <strong>all-rounder</strong>. Like a strong generalist consultant — good at nearly everything, deeply integrated into the Microsoft ecosystem (Copilot, Azure, Office).",
+    useCases:["Content creation","Analysis","Code generation","Image understanding","Conversation"],
+    keyInsight:"GPT-4o's strength is its <strong>ecosystem integration</strong>. It's built into Office 365, GitHub, Bing, and thousands of apps via API. If you're a Microsoft shop, it's the path of least resistance."
+  },
+  claude: {
+    tag:"Large Language Model", name:"Claude Sonnet 4.5", maker:"Anthropic",
+    stats:[{val:"~1T+",label:"Parameters"},{val:"200K",label:"Context window"},{val:"$20/mo",label:"Claude Pro"}],
+    desc:"Anthropic's flagship model. Known for exceptional instruction-following, nuanced reasoning, and handling very long documents. Built with a focus on safety and reliability.",
+    analogy:"The <strong>thoughtful analyst</strong>. Claude excels at careful, nuanced work — long document analysis, structured reasoning, and following complex multi-step instructions precisely.",
+    useCases:["Document analysis","Research","Coding","Complex reasoning","Long-form writing"],
+    keyInsight:"Claude's differentiator is its <strong>200K token context window</strong> — it can process entire books, codebases, or months of correspondence in a single prompt. For enterprise document work and RAG, this is transformative."
+  },
+  gemini: {
+    tag:"Large Language Model", name:"Gemini 2.0", maker:"Google DeepMind",
+    stats:[{val:"~1T+",label:"Parameters"},{val:"1M",label:"Context window"},{val:"$20/mo",label:"Gemini Advanced"}],
+    desc:"Google's frontier model with the industry's largest context window. Natively multimodal — processes text, images, video, and audio together. Deeply integrated with Google Workspace.",
+    analogy:"The <strong>Google-native powerhouse</strong>. If your organisation runs on Google Workspace, Gemini is built to work with your Drive, Gmail, Calendar, and Docs seamlessly.",
+    useCases:["Video understanding","Google Workspace integration","Research","Multimodal tasks","Code"],
+    keyInsight:"Gemini's <strong>1 million token context window</strong> is its headline feature — you can feed it an entire codebase or hours of video. Google integration means it can search your Drive and email natively."
+  },
+  llama: {
+    tag:"Open Source Model", name:"Llama 3", maker:"Meta",
+    stats:[{val:"8B–405B",label:"Parameter range"},{val:"128K",label:"Context window"},{val:"Free",label:"Open source"}],
+    desc:"Meta's open-source model family. Available in sizes from 8B to 405B parameters. Can be downloaded, fine-tuned, and deployed privately — no data leaves your infrastructure.",
+    analogy:"The <strong>DIY kit</strong>. Unlike commercial models, Llama gives you the raw materials. You can customise it completely, run it on your own servers, and keep all data private.",
+    useCases:["Private deployment","Custom fine-tuning","On-premise AI","Research","Cost-sensitive applications"],
+    keyInsight:"Open source matters because <strong>some organisations can't send data to external APIs</strong> — regulatory, security, or competitive reasons. Llama lets you run powerful AI entirely within your own infrastructure."
+  },
+  dalle: {
+    tag:"Image Generation", name:"DALL·E 3", maker:"OpenAI",
+    stats:[{val:"1024²",label:"Max resolution"},{val:"~15s",label:"Generation time"},{val:"$0.04",label:"Per image (API)"}],
+    desc:"Text-to-image generation model integrated into ChatGPT. Generates images from natural language descriptions. Strong at following detailed prompts and maintaining text in images.",
+    analogy:"An <strong>on-demand illustrator</strong> who works from written briefs. Describe what you want — from product mockups to presentation graphics — and get a custom image in seconds.",
+    useCases:["Marketing visuals","Presentation graphics","Product mockups","Concept art","Social media content"],
+    keyInsight:"Image generation is <strong>not about replacing designers</strong> — it's about speed of iteration. A marketing team can generate 20 concept variations in minutes, then brief a designer on the best direction."
+  },
+  midjourney: {
+    tag:"Image Generation", name:"Midjourney v6", maker:"Midjourney",
+    stats:[{val:"1024²+",label:"Resolution"},{val:"~30s",label:"Generation time"},{val:"$10/mo",label:"Basic plan"}],
+    desc:"Specialised image generation model known for exceptional aesthetic quality. Particularly strong at photorealistic imagery, artistic styles, and commercial-grade visuals.",
+    analogy:"The <strong>art director</strong>. Where DALL·E follows instructions precisely, Midjourney tends to produce more visually striking results with less specific prompting — it has strong aesthetic opinions.",
+    useCases:["High-quality visuals","Brand imagery","Artistic content","Photorealistic scenes","Advertising"],
+    keyInsight:"Midjourney demonstrates a key principle: <strong>specialisation beats generalisation for quality</strong>. By focusing purely on image generation (not text, code, or reasoning), it achieves aesthetic quality that general-purpose models can't match."
+  },
+  codegen: {
+    tag:"Specialised Application", name:"Code Generation", maker:"Built on foundation models",
+    stats:[{val:"40%",label:"Code auto-completed"},{val:"55%",label:"Faster development"},{val:"$19/mo",label:"GitHub Copilot"}],
+    desc:"Foundation models fine-tuned specifically for writing, debugging, and explaining code. GitHub Copilot, Cursor, and similar tools are the most widely adopted AI coding assistants.",
+    analogy:"A <strong>pair programmer</strong> who has read every public code repository on Earth. It can autocomplete functions, explain code, spot bugs, and write tests — but it works best when guided by an experienced developer.",
+    useCases:["Code completion","Bug detection","Code review","Documentation","Test generation"],
+    keyInsight:"Code generation is the <strong>most mature AI application in enterprise</strong>. Developer tools show measurable productivity gains (25-55% faster), making them the easiest AI investment to justify with data."
+  },
+  embed: {
+    tag:"Specialised Application", name:"Embedding Models", maker:"The backbone of RAG",
+    stats:[{val:"1536",label:"Vector dimensions"},{val:"<100ms",label:"Encode time"},{val:"$0.0001",label:"Per 1K tokens"}],
+    desc:"Models that convert text into numerical vectors (embeddings) — capturing meaning, not just keywords. These power semantic search and RAG systems by finding documents that are conceptually similar to a query.",
+    analogy:"A <strong>librarian who understands meaning</strong>. Traditional search matches keywords ('quarterly revenue'). Embedding models understand that 'Q4 sales performance' means the same thing — even though no words overlap.",
+    useCases:["RAG / retrieval","Semantic search","Document clustering","Recommendation systems","Duplicate detection"],
+    keyInsight:"Embedding models are <strong>invisible but essential</strong>. Every RAG system depends on them. When you ask an AI about your documents, it's the embedding model that finds the right passages — the LLM just reads and summarises what the embedder retrieved."
+  }
+};
+
+function selectItem(key) {
+  const item = ITEMS[key];
+  if (!item) return;
+
+  // Log interaction
+  window.logGraphicInteraction('SELECT_MODEL', { modelKey: key, modelName: item.name });
+
+  // Highlight active card
+  document.querySelectorAll('.model-card, .foundation-base').forEach(el => el.classList.remove('active'));
+  if (key === 'foundation') document.getElementById('fbBase').classList.add('active');
+  else {
+    document.querySelectorAll('.model-card').forEach(el => {
+      if (el.querySelector('.m-name')?.textContent === item.name) el.classList.add('active');
+    });
+  }
+
+  // Update detail panel
+  document.getElementById('dTag').textContent = item.tag;
+  document.getElementById('dName').textContent = item.name;
+  document.getElementById('dMaker').textContent = item.maker;
+
+  let bodyHTML = '';
+  if (item.stats) {
+    bodyHTML += '<div class="stat-row">' + item.stats.map(s =>
+      `<div class="stat-pill"><div class="sp-val">${s.val}</div><div class="sp-label">${s.label}</div></div>`
+    ).join('') + '</div>';
+  }
+  bodyHTML += `<div class="detail-section"><div class="ds-label">What Is It</div><div class="ds-text">${item.desc}</div></div>`;
+  bodyHTML += `<div class="detail-section"><div class="ds-label">Think of It As…</div><div class="ds-text">${item.analogy}</div></div>`;
+  if (item.useCases) {
+    bodyHTML += `<div class="detail-section"><div class="ds-label">Key Use Cases</div><div class="use-cases">${item.useCases.map(u => `<span class="use-tag">${u}</span>`).join('')}</div></div>`;
+  }
+
+  document.getElementById('detailBody').innerHTML = bodyHTML;
+  document.getElementById('keyBox').innerHTML = `<h3>Why This Matters</h3><p>${item.keyInsight}</p>`;
+}
+
+// Select foundation by default
+selectItem('foundation');
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.foundation-base, .base, [class*=foundation]') || document.querySelector('.tree'),
+    title: 'The foundation model',
+    desc: 'Start here — the base model trained on massive data. Click to see its capabilities before specialisation.', pad: 8 },
+  { target: () => document.querySelector('.model-card, .branch, [class*=model-card]') || document.querySelector('.branches'),
+    title: 'Explore specialisations',
+    desc: 'Click any model card to see how the foundation model gets fine-tuned for different tasks — language, vision, code, and more.', pad: 6 },
+  { target: () => document.querySelector('.detail-panel, .detail, .info, [class*=detail]') || document.querySelector('.right, aside'),
+    title: 'Model details',
+    desc: 'The detail panel shows stats, use cases, and how each specialisation builds on the foundation.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  window.logGraphicInteraction('TOUR_STARTED', {});
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  window.logGraphicInteraction('TOUR_STEP', { step: tourStep + 1, totalSteps: TOUR_STEPS.length });
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  window.logGraphicInteraction('TOUR_ENDED', {});
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Image Generation Works — Scratch Card</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gable-green: #1B2F3C;
+            --turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet-red: #FF5F5F;
+            --white: #FFFFFF;
+            --cloud: #D4DFE6;
+            --slate: #8FA4B3;
+            --dark-slate: #6B7F8F;
+            --border-dark: #0F1B26;
+            --noise-purple: #7C5FCD;
+            --noise-blue: #4A7FBF;
+            --noise-teal: #3FA895;
+            --noise-pink: #D946A6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--gable-green);
+            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            font-weight: 300;
+            color: var(--slate);
+        }
+
+        /* Prompt Selector */
+        .prompt-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .prompt-button {
+            padding: 10px 16px;
+            border: 2px solid var(--slate);
+            border-radius: 24px;
+            background: transparent;
+            color: var(--slate);
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .prompt-button:hover {
+            border-color: var(--dodger-blue);
+            color: var(--dodger-blue);
+        }
+
+        .prompt-button.active {
+            background: var(--dodger-blue);
+            border-color: var(--dodger-blue);
+            color: var(--gable-green);
+            font-weight: 600;
+        }
+
+        /* Canvas Container */
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            min-height: 0;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1;
+            background: var(--gable-green);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: none;
+            touch-action: none;
+        }
+
+        #revealCanvas {
+            z-index: 1;
+        }
+
+        #noiseCanvas {
+            z-index: 2;
+        }
+
+        /* Scratch Indicator */
+        .scratch-indicator {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--turquoise);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            box-shadow: 0 0 12px rgba(0, 255, 188, 0.3);
+        }
+
+        /* Educational Callout */
+        .callout {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(27, 47, 60, 0.95);
+            border-left: 4px solid var(--dodger-blue);
+            padding: 14px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 300;
+            color: var(--cloud);
+            line-height: 1.6;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            max-width: 300px;
+            backdrop-filter: blur(8px);
+        }
+
+        .callout.visible {
+            opacity: 1;
+        }
+
+        .callout strong {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 400px;
+            height: 6px;
+            background: rgba(139, 164, 179, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--dodger-blue), var(--turquoise));
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 3px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dodger-blue);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--dodger-blue);
+            color: var(--gable-green);
+        }
+
+        .btn-primary:hover {
+            background: var(--turquoise);
+            box-shadow: 0 8px 24px rgba(0, 255, 188, 0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--slate);
+            color: var(--slate);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--white);
+            color: var(--white);
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--slate);
+            font-weight: 300;
+            padding-top: 12px;
+            border-top: 1px solid rgba(139, 164, 179, 0.2);
+        }
+
+        .footer-left {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        /* Pulse animation for initial prompt */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Particle effect */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            font-size: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+                gap: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 12px;
+            }
+
+            .canvas-container {
+                max-width: 100%;
+            }
+
+            .callout {
+                font-size: 11px;
+                padding: 12px 14px;
+                max-width: 100%;
+                bottom: 16px;
+                left: 16px;
+                right: 16px;
+            }
+
+            .footer {
+                font-size: 10px;
+                gap: 8px;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .footer-left, .footer-right {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .prompt-button {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+
+            .header p {
+                font-size: 11px;
+            }
+
+            .prompt-selector {
+                gap: 8px;
+            }
+
+            .prompt-button {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+
+            .btn {
+                padding: 6px 14px;
+                font-size: 10px;
+            }
+
+            .progress-text {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>How Image Generation Works</h1>
+            <p>Scratch to reveal — experience diffusion in action</p>
+        </div>
+
+        <div class="prompt-selector">
+            <button class="prompt-button active" data-prompt="house">A red house on a green hill</button>
+            <button class="prompt-button" data-prompt="cat">A cat on a bookshelf</button>
+            <button class="prompt-button" data-prompt="sunset">A sunset over the ocean</button>
+            <button class="prompt-button" data-prompt="skyline">A city skyline at night</button>
+        </div>
+
+        <div class="canvas-wrapper">
+            <div class="canvas-container">
+                <canvas id="revealCanvas"></canvas>
+                <canvas id="noiseCanvas"></canvas>
+                <div class="scratch-indicator"></div>
+                <div class="callout"></div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Noise removed: <span id="percentage">0</span>%</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="resetBtn">New Card</button>
+            <button class="btn btn-secondary" id="revealBtn">Reveal All</button>
+        </div>
+
+        <div class="footer">
+            <div class="footer-left">
+                <span>AI Accelerator</span>
+                <span>—</span>
+                <span>AI Primer</span>
+            </div>
+            <div class="footer-right">aiaccelerator.uk</div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // PostMessage Protocol Integration
+        // ================================================================
+
+        // Listen for messages from parent window
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'RESET') {
+                reset();
+                logInteraction('reset_external', {
+                    source: 'parent_window',
+                    timestamp: Date.now()
+                });
+            }
+        });
+
+        // Send GRAPHIC_READY message when initialized
+        function notifyGraphicReady() {
+            window.parent.postMessage({
+                type: 'GRAPHIC_READY',
+                graphicId: 'image-generation-v2',
+                timestamp: Date.now()
+            }, '*');
+        }
+
+        // Log interactions to parent if needed
+        function logInteraction(action, data) {
+            window.parent.postMessage({
+                type: 'LOG_INTERACTION',
+                graphicId: 'image-generation-v2',
+                action: action,
+                data: data,
+                timestamp: Date.now()
+            }, '*');
+        }
+
+        // ================================================================
+        // Configuration
+        // ================================================================
+
+        const CONFIG = {
+            canvasSize: 512,
+            eraseRadius: 30,
+            noiseColors: ['#7C5FCD', '#4A7FBF', '#3FA895', '#D946A6', '#FF5F5F', '#00B1FF'],
+            pixelSampleRate: 10,
+            touchTarget: 44,
+        };
+
+        const SCENES = {
+            house: {
+                title: 'A red house on a green hill',
+                draw: drawHouse,
+            },
+            cat: {
+                title: 'A cat on a bookshelf',
+                draw: drawCat,
+            },
+            sunset: {
+                title: 'A sunset over the ocean',
+                draw: drawSunset,
+            },
+            skyline: {
+                title: 'A city skyline at night',
+                draw: drawSkyline,
+            },
+        };
+
+        const CALLOUTS = [
+            {
+                threshold: 0,
+                text: '<strong>Step 1:</strong> The AI starts with pure random noise — like TV static. The image is in there, but hidden.',
+            },
+            {
+                threshold: 25,
+                text: '<strong>Step 2:</strong> Large shapes emerge first. The model figures out the broad composition — where sky meets ground, where objects are.',
+            },
+            {
+                threshold: 50,
+                text: '<strong>Step 3:</strong> Details sharpen. Colours solidify. Edges become defined. Each step removes a little more noise.',
+            },
+            {
+                threshold: 75,
+                text: '<strong>Step 4:</strong> Final refinement. Fine details, textures, and small elements appear. The noise is gone — the image is complete.',
+            },
+        ];
+
+        // State
+        let state = {
+            currentPrompt: 'house',
+            noiseRemoved: 0,
+            isScratching: false,
+            hasStartedScratching: false,
+            currentCalloutThreshold: -1,
+        };
+
+        // DOM Elements
+        const revealCanvas = document.getElementById('revealCanvas');
+        const noiseCanvas = document.getElementById('noiseCanvas');
+        const progressFill = document.querySelector('.progress-fill');
+        const percentageText = document.getElementById('percentage');
+        const calloutEl = document.querySelector('.callout');
+        const scratchIndicator = document.querySelector('.scratch-indicator');
+        const resetBtn = document.getElementById('resetBtn');
+        const revealBtn = document.getElementById('revealBtn');
+        const promptButtons = document.querySelectorAll('.prompt-button');
+
+        const revealCtx = revealCanvas.getContext('2d');
+        const noiseCtx = noiseCanvas.getContext('2d');
+
+        // Initialize
+        function init() {
+            resizeCanvases();
+            drawRevealImage();
+            generateNoise();
+            attachEventListeners();
+            showInitialPrompt();
+            notifyGraphicReady();
+        }
+
+        function resizeCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = revealCanvas.parentElement.getBoundingClientRect();
+            const size = Math.min(rect.width, rect.height);
+
+            revealCanvas.width = size * dpr;
+            revealCanvas.height = size * dpr;
+            noiseCanvas.width = size * dpr;
+            noiseCanvas.height = size * dpr;
+
+            revealCtx.scale(dpr, dpr);
+            noiseCtx.scale(dpr, dpr);
+
+            revealCanvas.style.width = `${size}px`;
+            revealCanvas.style.height = `${size}px`;
+            noiseCanvas.style.width = `${size}px`;
+            noiseCanvas.style.height = `${size}px`;
+        }
+
+        function drawRevealImage() {
+            const canvasSize = revealCanvas.offsetWidth;
+            revealCtx.fillStyle = '#1B2F3C';
+            revealCtx.fillRect(0, 0, canvasSize, canvasSize);
+            SCENES[state.currentPrompt].draw(revealCtx, canvasSize);
+        }
+
+        function generateNoise() {
+            const canvasSize = noiseCanvas.offsetWidth;
+            const imageData = noiseCtx.createImageData(canvasSize, canvasSize);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const color = CONFIG.noiseColors[Math.floor(Math.random() * CONFIG.noiseColors.length)];
+                const [r, g, b] = hexToRgb(color);
+                const brightness = Math.random() * 0.5 + 0.4;
+
+                data[i] = r * brightness;
+                data[i + 1] = g * brightness;
+                data[i + 2] = b * brightness;
+                data[i + 3] = 200 + Math.random() * 55;
+            }
+
+            noiseCtx.putImageData(imageData, 0, 0);
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16),
+            ] : [0, 0, 0];
+        }
+
+        // Scratch mechanic
+        function erase(x, y) {
+            const canvasSize = noiseCanvas.offsetWidth;
+            const dpr = window.devicePixelRatio || 1;
+            const radius = CONFIG.eraseRadius * dpr;
+
+            noiseCtx.globalCompositeOperation = 'destination-out';
+            noiseCtx.beginPath();
+            noiseCtx.arc(x * dpr, y * dpr, radius, 0, Math.PI * 2);
+            noiseCtx.fill();
+            noiseCtx.globalCompositeOperation = 'source-over';
+
+            updateProgress();
+            createParticles(x, y);
+        }
+
+        function updateProgress() {
+            const canvasSize = revealCanvas.offsetWidth;
+            const imageData = noiseCtx.getImageData(0, 0, noiseCanvas.width, noiseCanvas.height);
+            const data = imageData.data;
+
+            let transparentPixels = 0;
+            const sampleRate = CONFIG.pixelSampleRate;
+
+            for (let i = 3; i < data.length; i += 4 * sampleRate) {
+                if (data[i] < 50) {
+                    transparentPixels++;
+                }
+            }
+
+            const totalSamples = (canvasSize * canvasSize) / (sampleRate * sampleRate);
+            state.noiseRemoved = Math.round((transparentPixels / totalSamples) * 100);
+
+            percentageText.textContent = state.noiseRemoved;
+            progressFill.style.width = `${state.noiseRemoved}%`;
+
+            updateCallout();
+        }
+
+        function updateCallout() {
+            const currentThreshold = Math.floor(state.noiseRemoved / 25) * 25;
+
+            if (currentThreshold !== state.currentCalloutThreshold) {
+                state.currentCalloutThreshold = currentThreshold;
+                const callout = CALLOUTS.find(c => c.threshold === currentThreshold);
+
+                if (callout) {
+                    calloutEl.innerHTML = callout.text;
+                    calloutEl.classList.add('visible');
+                }
+            }
+        }
+
+        function createParticles(x, y) {
+            const particleCount = 3;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = '✨';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const canvasContainer = document.querySelector('.canvas-container');
+                canvasContainer.appendChild(particle);
+
+                const vx = (Math.random() - 0.5) * 6;
+                const vy = (Math.random() - 0.5) * 6 - 2;
+                let px = x;
+                let py = y;
+                let life = 1;
+
+                const animate = () => {
+                    px += vx;
+                    py += vy;
+                    life -= 0.03;
+
+                    particle.style.transform = `translate(${px}px, ${py}px) scale(${life})`;
+                    particle.style.opacity = life;
+
+                    if (life > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                };
+
+                animate();
+            }
+        }
+
+        // Event listeners
+        function attachEventListeners() {
+            // Scratch events
+            noiseCanvas.addEventListener('pointerdown', handlePointerDown);
+            noiseCanvas.addEventListener('pointermove', handlePointerMove);
+            noiseCanvas.addEventListener('pointerup', handlePointerUp);
+            noiseCanvas.addEventListener('pointerleave', handlePointerUp);
+
+            // Buttons
+            resetBtn.addEventListener('click', reset);
+            revealBtn.addEventListener('click', revealAll);
+
+            // Prompt selection
+            promptButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    promptButtons.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    state.currentPrompt = e.target.dataset.prompt;
+                    logInteraction('prompt_selected', { prompt: state.currentPrompt });
+                    reset();
+                });
+            });
+
+            // Responsive
+            window.addEventListener('resize', () => {
+                resizeCanvases();
+                drawRevealImage();
+                generateNoise();
+            });
+        }
+
+        function handlePointerDown(e) {
+            state.isScratching = true;
+            state.hasStartedScratching = true;
+            scratchIndicator.style.opacity = '1';
+            const rect = noiseCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            erase(x, y);
+            updateIndicator(x, y);
+            logInteraction('scratch_start', { noiseRemoved: state.noiseRemoved });
+        }
+
+        function handlePointerMove(e) {
+            if (!state.isScratching) return;
+
+            const rect = noiseCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            erase(x, y);
+            updateIndicator(x, y);
+        }
+
+        function handlePointerUp() {
+            state.isScratching = false;
+            scratchIndicator.style.opacity = '0';
+            if (state.hasStartedScratching && state.noiseRemoved > 0) {
+                logInteraction('scratch_stop', { noiseRemoved: state.noiseRemoved });
+            }
+        }
+
+        function updateIndicator(x, y) {
+            scratchIndicator.style.left = `${x - 25}px`;
+            scratchIndicator.style.top = `${y - 25}px`;
+        }
+
+        function showInitialPrompt() {
+            if (!state.hasStartedScratching) {
+                scratchIndicator.classList.add('pulse');
+                scratchIndicator.style.opacity = '0.6';
+
+                setTimeout(() => {
+                    if (!state.hasStartedScratching) {
+                        scratchIndicator.classList.remove('pulse');
+                        scratchIndicator.style.opacity = '0';
+                    }
+                }, 4000);
+            }
+        }
+
+        function reset() {
+            state.noiseRemoved = 0;
+            state.currentCalloutThreshold = -1;
+            state.hasStartedScratching = false;
+            calloutEl.classList.remove('visible');
+            percentageText.textContent = '0';
+            progressFill.style.width = '0%';
+            drawRevealImage();
+            generateNoise();
+            showInitialPrompt();
+        }
+
+        function revealAll() {
+            noiseCtx.clearRect(0, 0, noiseCanvas.width, noiseCanvas.height);
+            state.noiseRemoved = 100;
+            percentageText.textContent = '100';
+            progressFill.style.width = '100%';
+            updateCallout();
+            logInteraction('reveal_all', { noiseRemoved: 100 });
+        }
+
+        // Scene drawing functions
+        function drawHouse(ctx, size) {
+            // Sky
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, size);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Sun
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(size * 0.8, size * 0.15, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hill
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.moveTo(0, size * 0.6);
+            ctx.quadraticCurveTo(size * 0.5, size * 0.3, size, size * 0.6);
+            ctx.lineTo(size, size);
+            ctx.lineTo(0, size);
+            ctx.fill();
+
+            // House base
+            ctx.fillStyle = '#C41E3A';
+            ctx.fillRect(size * 0.35, size * 0.45, size * 0.3, size * 0.25);
+
+            // Roof
+            ctx.fillStyle = '#8B0000';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.35, size * 0.45);
+            ctx.lineTo(size * 0.5, size * 0.25);
+            ctx.lineTo(size * 0.65, size * 0.45);
+            ctx.fill();
+
+            // Door
+            ctx.fillStyle = '#6B4423';
+            ctx.fillRect(size * 0.44, size * 0.55, size * 0.12, size * 0.15);
+
+            // Door knob
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(size * 0.54, size * 0.625, size * 0.015, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Windows
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(size * 0.38, size * 0.5, size * 0.08, size * 0.08);
+            ctx.fillRect(size * 0.54, size * 0.5, size * 0.08, size * 0.08);
+
+            // Window panes
+            ctx.strokeStyle = '#1B2F3C';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.42, size * 0.5);
+            ctx.lineTo(size * 0.42, size * 0.58);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.38, size * 0.54);
+            ctx.lineTo(size * 0.46, size * 0.54);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.58, size * 0.5);
+            ctx.lineTo(size * 0.58, size * 0.58);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.54, size * 0.54);
+            ctx.lineTo(size * 0.62, size * 0.54);
+            ctx.stroke();
+        }
+
+        function drawCat(ctx, size) {
+            // Bookshelf background
+            const shelfGradient = ctx.createLinearGradient(0, 0, size, size);
+            shelfGradient.addColorStop(0, '#2C3E50');
+            shelfGradient.addColorStop(1, '#1B2F3C');
+            ctx.fillStyle = shelfGradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Shelf wood
+            ctx.fillStyle = '#8B6F47';
+            ctx.fillRect(0, size * 0.5, size, size * 0.08);
+
+            // Books on shelf
+            const bookColors = ['#C41E3A', '#1E90FF', '#FFD700', '#2ECC71', '#FF8C00'];
+            let bookX = size * 0.1;
+            bookColors.forEach((color, i) => {
+                ctx.fillStyle = color;
+                const bookWidth = size * 0.12;
+                const bookHeight = size * 0.35;
+                ctx.fillRect(bookX, size * 0.15, bookWidth, bookHeight);
+                bookX += bookWidth + size * 0.02;
+            });
+
+            // Cat body
+            ctx.fillStyle = '#FF8C42';
+            ctx.beginPath();
+            ctx.ellipse(size * 0.5, size * 0.55, size * 0.12, size * 0.1, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cat head
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.38, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cat ears
+            ctx.beginPath();
+            ctx.moveTo(size * 0.42, size * 0.32);
+            ctx.lineTo(size * 0.38, size * 0.2);
+            ctx.lineTo(size * 0.45, size * 0.28);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.58, size * 0.32);
+            ctx.lineTo(size * 0.62, size * 0.2);
+            ctx.lineTo(size * 0.55, size * 0.28);
+            ctx.fill();
+
+            // Inner ears
+            ctx.fillStyle = '#FFB347';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.44, size * 0.3);
+            ctx.lineTo(size * 0.41, size * 0.24);
+            ctx.lineTo(size * 0.47, size * 0.28);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.56, size * 0.3);
+            ctx.lineTo(size * 0.59, size * 0.24);
+            ctx.lineTo(size * 0.53, size * 0.28);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#1B2F3C';
+            ctx.beginPath();
+            ctx.arc(size * 0.45, size * 0.36, size * 0.015, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(size * 0.55, size * 0.36, size * 0.015, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose
+            ctx.fillStyle = '#FF69B4';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.42, size * 0.01, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Whiskers
+            ctx.strokeStyle = '#1B2F3C';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.4, size * 0.4);
+            ctx.lineTo(size * 0.25, size * 0.38);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.6, size * 0.4);
+            ctx.lineTo(size * 0.75, size * 0.38);
+            ctx.stroke();
+
+            // Tail
+            ctx.strokeStyle = '#FF8C42';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.quadraticCurveTo(size * 0.65, size * 0.45, size * 0.7, size * 0.3);
+            ctx.stroke();
+        }
+
+        function drawSunset(ctx, size) {
+            // Gradient sky
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, size * 0.7);
+            skyGradient.addColorStop(0, '#2C1F47');
+            skyGradient.addColorStop(0.3, '#553366');
+            skyGradient.addColorStop(0.5, '#FF9933');
+            skyGradient.addColorStop(0.8, '#FFCC00');
+            skyGradient.addColorStop(1, '#FF9933');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, size, size * 0.7);
+
+            // Ocean
+            ctx.fillStyle = '#0F4C75';
+            ctx.fillRect(0, size * 0.65, size, size * 0.35);
+
+            // Sun
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.55, size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun glow
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.55, size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Water reflection
+            const reflectionGradient = ctx.createLinearGradient(0, size * 0.65, 0, size);
+            reflectionGradient.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+            reflectionGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = reflectionGradient;
+            ctx.fillRect(0, size * 0.65, size, size * 0.35);
+
+            // Waves
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, size * (0.7 + i * 0.05));
+                ctx.lineTo(size, size * (0.7 + i * 0.05));
+                ctx.stroke();
+            }
+        }
+
+        function drawSkyline(ctx, size) {
+            // Night sky
+            ctx.fillStyle = '#0A1628';
+            ctx.fillRect(0, 0, size, size);
+
+            // Stars
+            ctx.fillStyle = '#FFFFFF';
+            for (let i = 0; i < 40; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size * 0.6;
+                const radius = Math.random() * 1.5;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Buildings
+            const buildingData = [
+                { x: 0.05, width: 0.1, height: 0.5, color: '#2C4563' },
+                { x: 0.2, width: 0.12, height: 0.65, color: '#1E3A5F' },
+                { x: 0.38, width: 0.08, height: 0.45, color: '#355A7E' },
+                { x: 0.52, width: 0.15, height: 0.7, color: '#2C4563' },
+                { x: 0.72, width: 0.1, height: 0.55, color: '#1E3A5F' },
+                { x: 0.85, width: 0.12, height: 0.6, color: '#355A7E' },
+            ];
+
+            buildingData.forEach(building => {
+                ctx.fillStyle = building.color;
+                ctx.fillRect(
+                    size * building.x,
+                    size * (1 - building.height),
+                    size * building.width,
+                    size * building.height
+                );
+
+                // Windows
+                ctx.fillStyle = '#FFD700';
+                const windowSize = size * 0.02;
+                const gap = size * 0.025;
+                for (let row = 0; row < Math.floor(building.height / 0.08); row++) {
+                    for (let col = 0; col < Math.floor(building.width / 0.08); col++) {
+                        if (Math.random() > 0.3) {
+                            ctx.fillRect(
+                                size * building.x + col * gap + size * 0.005,
+                                size * (1 - building.height) + row * gap + size * 0.005,
+                                windowSize,
+                                windowSize
+                            );
+                        }
+                    }
+                }
+            });
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

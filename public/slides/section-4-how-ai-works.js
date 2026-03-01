@@ -83,6 +83,22 @@ const SECTION_4_HOW_AI_WORKS = [
     notes: `Interactive tokeniser. Participants type text and see it split into tokens in real time. Try these: "unhappy" → 2 tokens. "antidisestablishmentarianism" → many tokens. An emoji → multiple tokens. Debrief: "Notice how the model doesn't see words the way you do? That's why token limits matter."`,
   },
 
+  // ── 4.2c  Chat Window Interactive ────────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: Chat Window Simulator',
+    subtitle: 'See exactly what happens each time you send a message.',
+    graphic: {
+      id: 'chat-window',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive chat simulation. Type a message and see the full pipeline: system prompt loading, conversation history bundling, message processing, and response generation. Shows the conversation window filling up over multiple turns. Debrief: "Notice how the full history goes in each time? That's why fresh chats help."`,
+  },
+
   // ── 4.3  Chat Window ─────────────────────────
   {
     type: 'content',
@@ -123,6 +139,22 @@ const SECTION_4_HOW_AI_WORKS = [
   },
 
   // ── 4.4  Context Window ──────────────────────
+  // ── 4.4b  Context Window Interactive ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: Context Window Explorer',
+    subtitle: 'Drag items into the window and watch how token usage changes.',
+    graphic: {
+      id: 'context-window-v2',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive context window tool. Participants drag documents, messages, and context into a window bucket and see real-time token count. Experiment with different combinations. See where the window fills up. Debrief: "What's the minimum context you actually need for your task?"`,
+  },
+
   {
     type: 'content',
     theme: 'dark',
@@ -218,6 +250,38 @@ const SECTION_4_HOW_AI_WORKS = [
       preload: true,
     },
     notes: `Interactive reasoning quiz. Participants face challenges designed to trip up System 1 thinking — both their own and the AI's. Builds intuition for when to activate System 2 deliberately. Debrief: "Which questions caught you out? Those are the same ones that catch AI out — unless you prompt for careful reasoning."`,
+  },
+
+  // ── 4.5c  Image Generation Process ────────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Explore: How AI Generates Images',
+    subtitle: 'Step-by-step scratch-to-reveal of the image generation process.',
+    graphic: {
+      id: 'image-generation-v2',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive image generation visualiser. Participants see the step-by-step process: text encoding, noise generation, iterative refinement, diffusion process. Watch an image emerge from noise. Debrief: "This is completely different from language models — completely different mechanism. Why that matters: different risks, different strengths."`,
+  },
+
+  // ── 4.6  Transcription Technique ──────────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'HOW AI WORKS',
+    title: 'Try it: Transcription Pipeline',
+    subtitle: 'See how voice becomes structured notes and actionable insights.',
+    graphic: {
+      id: 'transcription',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive transcription workflow. Participants see audio input → transcription → summarisation → structured notes. Shows how AI captures thinking and turns it into assets. Debrief: "What meetings or thinking sessions could you record and transcribe?"`,
   },
 
   // ── How AI Works: Quick Check ────────────────

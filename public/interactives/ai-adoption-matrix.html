@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Guide to AI Adoption — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --gable-mid: #1e3545;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --seapink: #EFACA8;
+    --red: #FF5F5F;
+    --chicago: #575756;
+    --greenpea: #226B4D;
+    --accessible-accent: #007A5E;
+    --white: #FFFFFF;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--gable);
+  }
+
+  body {
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 12px;
+    position: relative;
+  }
+  .page-header .label {
+    font-size: 10px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--turquoise);
+    margin-bottom: 12px;
+  }
+  .page-header h1 {
+    font-size: clamp(26px, 4vw, 42px); font-weight: 700;
+    line-height: 1.15; margin-bottom: 8px;
+  }
+  .page-header h1 span { color: var(--dodger); }
+  .page-header .subtitle {
+    font-size: clamp(13px, 1.8vw, 16px); font-weight: 300;
+    color: rgba(255,255,255,0.5); max-width: 640px;
+    margin: 0 auto; line-height: 1.5;
+  }
+
+  /* ── S-CURVE MINI ── */
+  .curve-bar {
+    max-width: 1100px; margin: 0 auto;
+    padding: 20px 32px 0;
+    position: relative;
+  }
+  .curve-bar svg { width: 100%; height: auto; display: block; }
+
+  /* ── JOURNEY LABELS (above grid) ── */
+  .journey-labels {
+    display: grid;
+    grid-template-columns: 180px repeat(3, 1fr);
+    max-width: 1100px; margin: 0 auto;
+    padding: 24px 32px 0;
+    gap: 8px;
+  }
+  .journey-labels .spacer { }
+  .journey-label {
+    text-align: center; padding: 14px 8px;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+  }
+  .journey-label .stage-name {
+    font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .journey-label .stage-desc {
+    font-size: 10px; font-weight: 300;
+    color: rgba(255,255,255,0.4); margin-top: 2px;
+  }
+  .journey-label .stage-invest {
+    font-size: 9px; font-weight: 500;
+    margin-top: 4px; opacity: 0.6;
+  }
+  .jl-learn {
+    background: rgba(0,177,255,0.08);
+    border-bottom: 2px solid rgba(0,177,255,0.3);
+  }
+  .jl-learn .stage-name { color: var(--dodger); }
+  .jl-learn .stage-invest { color: var(--dodger); }
+
+  .jl-accelerate {
+    background: rgba(0,255,188,0.06);
+    border-bottom: 2px solid rgba(0,255,188,0.25);
+  }
+  .jl-accelerate .stage-name { color: var(--turquoise); }
+  .jl-accelerate .stage-invest { color: var(--turquoise); }
+
+  .jl-transform {
+    background: rgba(92,213,255,0.06);
+    border-bottom: 2px solid rgba(92,213,255,0.25);
+  }
+  .jl-transform .stage-name { color: var(--malibu); }
+  .jl-transform .stage-invest { color: var(--malibu); }
+
+  /* ── MATRIX GRID ── */
+  .matrix {
+    display: grid;
+    grid-template-columns: 180px repeat(3, 1fr);
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 32px;
+    gap: 8px;
+  }
+
+  /* Row labels */
+  .row-label {
+    display: flex; flex-direction: column;
+    justify-content: center; padding: 16px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border-left: 3px solid rgba(255,255,255,0.08);
+    min-height: 120px;
+  }
+  .row-label .mode-icon {
+    font-size: 18px; margin-bottom: 6px; opacity: 0.7;
+  }
+  .row-label .mode-name {
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(255,255,255,0.7);
+  }
+  .row-label .mode-desc {
+    font-size: 9px; font-weight: 300;
+    color: rgba(255,255,255,0.3); margin-top: 4px; line-height: 1.4;
+  }
+
+  /* Matrix cells */
+  .cell {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 14px;
+    min-height: 120px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+    transform: translateY(-1px);
+  }
+
+  /* Service pills inside cells */
+  .service-pill {
+    display: inline-flex; align-items: center;
+    padding: 6px 12px; margin: 3px;
+    border-radius: 8px;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    position: relative;
+  }
+  .service-pill:hover {
+    transform: scale(1.03);
+    z-index: 5;
+  }
+
+  /* Pill colours by journey stage */
+  .pill-learn {
+    background: rgba(0,177,255,0.1);
+    color: var(--malibu);
+    border-color: rgba(0,177,255,0.15);
+  }
+  .pill-learn:hover {
+    background: rgba(0,177,255,0.2);
+    border-color: rgba(0,177,255,0.4);
+  }
+  .pill-accelerate {
+    background: rgba(0,255,188,0.08);
+    color: var(--turquoise);
+    border-color: rgba(0,255,188,0.12);
+  }
+  .pill-accelerate:hover {
+    background: rgba(0,255,188,0.15);
+    border-color: rgba(0,255,188,0.35);
+  }
+  .pill-transform {
+    background: rgba(92,213,255,0.08);
+    color: var(--malibu);
+    border-color: rgba(92,213,255,0.12);
+  }
+  .pill-transform:hover {
+    background: rgba(92,213,255,0.15);
+    border-color: rgba(92,213,255,0.35);
+  }
+
+  .pill-price {
+    font-size: 9px; font-weight: 400;
+    opacity: 0.5; margin-left: 6px;
+  }
+
+  /* Flagship indicator */
+  .pill-flagship {
+    position: relative;
+  }
+  .pill-flagship::before {
+    content: '★';
+    font-size: 8px; margin-right: 4px;
+    opacity: 0.6;
+  }
+
+  /* ── DETAIL PANEL (overlay) ── */
+  .detail-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    background: rgba(15,25,33,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.2s ease;
+  }
+  .detail-overlay.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .detail-card {
+    background: rgba(27,47,60,0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 36px 40px;
+    max-width: 520px; width: 100%;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; color: rgba(255,255,255,0.3);
+    font-size: 22px; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; transition: all 0.15s;
+    font-family: 'Poppins', sans-serif;
+  }
+  .detail-close:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.05); }
+
+  .detail-tier {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .detail-tier.learn { color: var(--dodger); }
+  .detail-tier.accelerate { color: var(--turquoise); }
+  .detail-tier.transform { color: var(--malibu); }
+
+  .detail-mode {
+    font-size: 9px; font-weight: 500; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(255,255,255,0.3);
+    margin-bottom: 12px;
+  }
+
+  .detail-name {
+    font-size: 22px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .detail-price {
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .detail-price.learn { color: var(--dodger); }
+  .detail-price.accelerate { color: var(--turquoise); }
+  .detail-price.transform { color: var(--malibu); }
+
+  .detail-desc {
+    font-size: 14px; font-weight: 300; line-height: 1.65;
+    color: rgba(255,255,255,0.65); margin-bottom: 20px;
+  }
+
+  .detail-section-title {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35);
+    margin-bottom: 8px;
+  }
+
+  .detail-outcomes {
+    margin-bottom: 20px;
+  }
+  .detail-outcomes li {
+    font-size: 12px; font-weight: 400;
+    color: rgba(255,255,255,0.55); line-height: 1.7;
+    padding-left: 16px; position: relative; list-style: none;
+  }
+  .detail-outcomes li::before {
+    content: '→'; position: absolute; left: 0;
+    font-weight: 600; opacity: 0.5;
+  }
+
+  .detail-who {
+    font-size: 12px; font-weight: 400;
+    color: rgba(255,255,255,0.45); line-height: 1.6;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border-left: 3px solid rgba(255,255,255,0.08);
+  }
+  .detail-who strong {
+    font-weight: 600; color: rgba(255,255,255,0.6);
+  }
+
+  /* ── PLATFORM LAYER ── */
+  .platform-layer {
+    max-width: 1100px; margin: 16px auto 0;
+    padding: 0 32px;
+  }
+  .platform-bar {
+    background: linear-gradient(135deg, rgba(0,255,188,0.06), rgba(0,177,255,0.06));
+    border: 1px solid rgba(0,255,188,0.12);
+    border-radius: 12px;
+    padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .platform-bar:hover {
+    background: linear-gradient(135deg, rgba(0,255,188,0.1), rgba(0,177,255,0.1));
+    border-color: rgba(0,255,188,0.25);
+  }
+  .platform-bar::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--dodger), var(--turquoise), var(--malibu));
+    opacity: 0.4;
+  }
+
+  .platform-left { flex: 1; }
+  .platform-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--turquoise);
+    margin-bottom: 4px;
+  }
+  .platform-name {
+    font-size: 16px; font-weight: 600;
+  }
+  .platform-desc {
+    font-size: 11px; font-weight: 300;
+    color: rgba(255,255,255,0.4); margin-top: 4px; line-height: 1.5;
+  }
+
+  .platform-stats {
+    display: flex; gap: 24px; flex-shrink: 0;
+  }
+  .platform-stat {
+    text-align: center;
+  }
+  .platform-stat .num {
+    font-size: 22px; font-weight: 700; color: var(--turquoise);
+    line-height: 1;
+  }
+  .platform-stat .unit {
+    font-size: 9px; font-weight: 400;
+    color: rgba(255,255,255,0.35); margin-top: 2px;
+  }
+
+  /* ── KEY FRAMEWORKS ── */
+  .frameworks-row {
+    max-width: 1100px; margin: 20px auto 0;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .fw-chip {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .fw-chip:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .fw-chip h4 {
+    font-size: 12px; font-weight: 600; color: var(--dodger);
+    margin-bottom: 3px;
+  }
+  .fw-chip p {
+    font-size: 10px; font-weight: 300;
+    color: rgba(255,255,255,0.35); line-height: 1.5;
+  }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    text-align: center; padding: 40px 24px 32px;
+    margin-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .page-footer .tagline {
+    font-size: 18px; font-weight: 600; margin-bottom: 6px;
+    color: rgba(255,255,255,0.7);
+  }
+  .page-footer .tagline span { color: var(--turquoise); }
+  .page-footer p {
+    font-size: 11px; color: rgba(255,255,255,0.25);
+  }
+  .page-footer a {
+    color: var(--dodger); text-decoration: none;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .journey-labels, .matrix {
+      grid-template-columns: 1fr;
+    }
+    .journey-labels .spacer { display: none; }
+    .journey-labels {
+      display: flex; gap: 6px; overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .journey-label { min-width: 140px; flex-shrink: 0; border-radius: 10px; }
+    .matrix {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .row-label {
+      border-left: none; border-bottom: 2px solid rgba(255,255,255,0.06);
+      border-radius: 10px 10px 0 0;
+      min-height: auto; padding: 12px 14px;
+    }
+    .cell { min-height: auto; }
+    .platform-bar { flex-direction: column; text-align: center; }
+    .platform-stats { justify-content: center; }
+    .detail-card { padding: 28px 24px; }
+  }
+
+  /* ── MOBILE RESPONSIVENESS (320px+) ── */
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 32px 16px 8px;
+    }
+    .page-header h1 {
+      font-size: clamp(22px, 5vw, 32px);
+    }
+    .page-header p {
+      font-size: 13px;
+      max-width: 100%;
+      padding: 0 8px;
+    }
+    .matrix-container {
+      padding: 24px 12px;
+    }
+    .journey-label {
+      font-size: 11px;
+      padding: 8px 10px;
+    }
+    .row-label {
+      font-size: 12px;
+      padding: 10px 8px;
+    }
+    .cell {
+      padding: 10px 8px;
+      font-size: 11px;
+      min-height: 60px;
+    }
+    .service-pill {
+      padding: 6px 8px;
+      font-size: 10px;
+      border-radius: 6px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-header {
+      padding: 24px 12px 6px;
+    }
+    .page-header .label {
+      font-size: 9px;
+      letter-spacing: 2px;
+    }
+    .page-header h1 {
+      font-size: clamp(18px, 6vw, 28px);
+      margin-bottom: 4px;
+    }
+    .page-header p {
+      font-size: 12px;
+      padding: 0;
+    }
+    .matrix-container {
+      padding: 16px 8px;
+    }
+    .journey-label {
+      font-size: 10px;
+      padding: 6px 8px;
+      min-width: 110px;
+    }
+    .row-label {
+      font-size: 11px;
+      padding: 8px 6px;
+      min-width: 100px;
+    }
+    .cell {
+      padding: 8px 6px;
+      font-size: 10px;
+      min-height: 50px;
+    }
+    .service-pill {
+      padding: 5px 6px;
+      font-size: 9px;
+      border-radius: 4px;
+    }
+    .platform-bar {
+      padding: 16px 8px;
+      flex-direction: column;
+      text-align: center;
+    }
+    .platform-bar h3 {
+      font-size: 13px;
+    }
+    .platform-stats {
+      justify-content: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .detail-overlay .detail-panel {
+      margin: 16px;
+      max-height: calc(100vh - 32px);
+      padding: 20px 16px;
+    }
+    .detail-title {
+      font-size: 20px;
+    }
+  }
+
+  @media (max-width: 320px) {
+    .page-header {
+      padding: 16px 8px 4px;
+    }
+    .page-header h1 {
+      font-size: 16px;
+      line-height: 1.2;
+    }
+    .page-header p {
+      font-size: 11px;
+    }
+    .matrix-container {
+      padding: 12px 4px;
+    }
+    .service-pill {
+      padding: 4px 4px;
+      font-size: 8px;
+      min-width: auto;
+      flex: 1 1 auto;
+    }
+    .platform-bar h3 {
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="page-header">
+  <div class="label">AI Accelerator</div>
+  <h1>Your Guide to <span>AI Adoption</span></h1>
+  <p>Every organisation's AI journey is unique, but the path is structured. Find where you are, see what you need, and understand how we get you there.</p>
+</div>
+
+<!-- ── DUAL S-CURVE: Acceleration Effect ── -->
+<div class="curve-bar">
+  <svg viewBox="0 0 1000 160" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00B1FF" />
+        <stop offset="45%" stop-color="#00FFBC" />
+        <stop offset="100%" stop-color="#5CD5FF" />
+      </linearGradient>
+      <linearGradient id="curveGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00B1FF" stop-opacity="0.12" />
+        <stop offset="45%" stop-color="#00FFBC" stop-opacity="0.12" />
+        <stop offset="100%" stop-color="#5CD5FF" stop-opacity="0.12" />
+      </linearGradient>
+      <!-- Shaded area between curves -->
+      <linearGradient id="areaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00B1FF" stop-opacity="0.06" />
+        <stop offset="40%" stop-color="#00FFBC" stop-opacity="0.1" />
+        <stop offset="70%" stop-color="#00FFBC" stop-opacity="0.06" />
+        <stop offset="100%" stop-color="#5CD5FF" stop-opacity="0.03" />
+      </linearGradient>
+    </defs>
+
+    <!-- Zone backgrounds -->
+    <rect x="20" y="10" width="300" height="125" rx="4" fill="rgba(0,177,255,0.025)" />
+    <rect x="330" y="10" width="340" height="125" rx="4" fill="rgba(0,255,188,0.02)" />
+    <rect x="680" y="10" width="300" height="125" rx="4" fill="rgba(92,213,255,0.02)" />
+
+    <!-- ACCELERATION AREA (shaded gap between the two curves) -->
+    <!-- This polygon traces the accelerated curve forward, then the standard curve backward -->
+    <path d="
+      M 40,130
+      C 100,128 140,124 220,108
+      C 300,88 340,55 420,35
+      C 500,15 560,10 640,9
+      C 720,8 800,7 960,6
+      L 960,8
+      C 900,9 820,12 740,16
+      C 660,22 600,30 520,52
+      C 440,78 400,105 320,118
+      C 240,128 180,130 120,132
+      L 40,135
+      Z
+    " fill="url(#areaGrad)" />
+
+    <!-- Acceleration annotation arrow -->
+    <line x1="440" y1="38" x2="440" y2="76" stroke="rgba(0,255,188,0.25)" stroke-width="1" stroke-dasharray="3 3" />
+    <polygon points="436,76 440,83 444,76" fill="rgba(0,255,188,0.2)" />
+    <text x="460" y="63" fill="rgba(0,255,188,0.35)" font-family="Poppins,sans-serif" font-size="8" font-weight="600" letter-spacing="0.5">ACCELERATION</text>
+    <text x="460" y="73" fill="rgba(0,255,188,0.25)" font-family="Poppins,sans-serif" font-size="7" font-weight="300">GAP</text>
+
+    <!-- STANDARD CURVE (slow, unguided — red/coral, dashed) -->
+    <path d="M 40,135 C 120,132 180,130 280,120 C 380,105 420,78 520,52 C 620,30 680,22 760,16 C 840,12 900,9 960,8" fill="none" stroke="#FF5F5F" stroke-width="1.8" stroke-dasharray="8 6" stroke-linecap="round" opacity="0.4" />
+
+    <!-- Standard curve label -->
+    <text x="850" y="18" fill="rgba(255,95,95,0.35)" font-family="Poppins,sans-serif" font-size="7" font-weight="500">Standard adoption</text>
+
+    <!-- ACCELERATED CURVE (with AIA — bright gradient) -->
+    <!-- Glow -->
+    <path d="M 40,130 C 100,128 140,124 220,108 C 300,88 340,55 420,35 C 500,15 560,10 640,9 C 720,8 800,7 960,6" fill="none" stroke="url(#curveGlow)" stroke-width="14" stroke-linecap="round" />
+
+    <!-- Main curve -->
+    <path d="M 40,130 C 100,128 140,124 220,108 C 300,88 340,55 420,35 C 500,15 560,10 640,9 C 720,8 800,7 960,6" fill="none" stroke="url(#curveGrad)" stroke-width="2.5" stroke-linecap="round" />
+
+    <!-- Animated dash overlay -->
+    <path d="M 40,130 C 100,128 140,124 220,108 C 300,88 340,55 420,35 C 500,15 560,10 640,9 C 720,8 800,7 960,6" fill="none" stroke="white" stroke-width="1" stroke-dasharray="4 12" stroke-linecap="round" opacity="0.1">
+      <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="2s" repeatCount="indefinite" />
+    </path>
+
+    <!-- Accelerated curve label -->
+    <text x="780" y="130" fill="rgba(0,255,188,0.35)" font-family="Poppins,sans-serif" font-size="7" font-weight="600">With AI Accelerator</text>
+
+    <!-- Stage dots (on accelerated curve) -->
+    <circle cx="80" cy="129" r="3" fill="#00B1FF" opacity="0.5" />
+    <circle cx="170" cy="118" r="3" fill="#00B1FF" opacity="0.5" />
+    <circle cx="275" cy="94" r="3" fill="#00B1FF" opacity="0.5" />
+    <circle cx="380" cy="48" r="3" fill="#00FFBC" opacity="0.6" />
+    <circle cx="460" cy="24" r="3" fill="#00FFBC" opacity="0.6" />
+    <circle cx="550" cy="12" r="3" fill="#00FFBC" opacity="0.6" />
+    <circle cx="680" cy="8" r="3" fill="#5CD5FF" opacity="0.5" />
+    <circle cx="820" cy="7" r="3" fill="#5CD5FF" opacity="0.5" />
+    <circle cx="950" cy="6" r="3" fill="#5CD5FF" opacity="0.5" />
+
+    <!-- Y-axis label -->
+    <text x="12" y="75" fill="rgba(255,255,255,0.08)" font-family="Poppins,sans-serif" font-size="7" font-weight="600" text-anchor="middle" letter-spacing="1.5" transform="rotate(-90,12,75)">AI MATURITY</text>
+
+    <!-- X-axis label -->
+    <text x="500" y="155" fill="rgba(255,255,255,0.08)" font-family="Poppins,sans-serif" font-size="7" font-weight="600" text-anchor="middle" letter-spacing="1.5">TIME</text>
+
+    <!-- Zone labels -->
+    <text x="170" y="148" fill="rgba(0,177,255,0.18)" font-family="Poppins,sans-serif" font-size="8" font-weight="700" text-anchor="middle" letter-spacing="2">LEARN</text>
+    <text x="500" y="148" fill="rgba(0,255,188,0.15)" font-family="Poppins,sans-serif" font-size="8" font-weight="700" text-anchor="middle" letter-spacing="2">ACCELERATE</text>
+    <text x="830" y="148" fill="rgba(92,213,255,0.15)" font-family="Poppins,sans-serif" font-size="8" font-weight="700" text-anchor="middle" letter-spacing="2">TRANSFORM</text>
+  </svg>
+</div>
+
+<!-- ── JOURNEY STAGE LABELS ── -->
+<div class="journey-labels">
+  <div class="spacer"></div>
+  <div class="journey-label jl-learn">
+    <div class="stage-name">Learn</div>
+    <div class="stage-desc">Build the Foundation</div>
+    <div class="stage-invest">£3,500 – £15,000</div>
+  </div>
+  <div class="journey-label jl-accelerate">
+    <div class="stage-name">Accelerate</div>
+    <div class="stage-desc">Build Capability Fast</div>
+    <div class="stage-invest">£6,000 – £40,000</div>
+  </div>
+  <div class="journey-label jl-transform">
+    <div class="stage-name">Transform</div>
+    <div class="stage-desc">Embed &amp; Scale</div>
+    <div class="stage-invest">£8,000 – £25,000+/mo</div>
+  </div>
+</div>
+
+<!-- ── THE MATRIX ── -->
+<div class="matrix" id="matrix">
+
+  <!-- ROW 1: Structured Learning -->
+  <div class="row-label">
+    <div class="mode-icon" style="color:var(--dodger);">▸</div>
+    <div class="mode-name">Structured Learning</div>
+    <div class="mode-desc">Workshops, courses &amp; facilitated sessions that build shared knowledge</div>
+  </div>
+  <div class="cell" data-col="learn">
+    <span class="service-pill pill-learn" data-service="primer">AI Primer Workshop <span class="pill-price">£3,500</span></span>
+    <span class="service-pill pill-learn" data-service="briefing">Executive Briefing <span class="pill-price">£3,500</span></span>
+    <span class="service-pill pill-learn" data-service="vision">Vision Workshop <span class="pill-price">£4,500</span></span>
+    <span class="service-pill pill-learn" data-service="cpd">Online CPD Course <span class="pill-price">~£199/seat</span></span>
+  </div>
+  <div class="cell" data-col="accelerate">
+    <span class="service-pill pill-accelerate" data-service="copilot">Copilot Training <span class="pill-price">£3k–£8k</span></span>
+    <span class="service-pill pill-accelerate" data-service="enablement">Enablement Programme <span class="pill-price">£20,000</span></span>
+  </div>
+  <div class="cell" data-col="transform">
+    <span class="service-pill pill-transform" data-service="opmodel">Operating Model Design</span>
+    <span class="service-pill pill-transform" data-service="ttt">Train-the-Trainer Certification</span>
+  </div>
+
+  <!-- ROW 2: Experiential -->
+  <div class="row-label">
+    <div class="mode-icon" style="color:var(--turquoise);">◆</div>
+    <div class="mode-name">Experiential</div>
+    <div class="mode-desc">Hands-on, immersive sessions with real tools on real problems</div>
+  </div>
+  <div class="cell" data-col="learn">
+    <span class="service-pill pill-learn" data-service="usecase">Use Case Discovery <span class="pill-price">£3,500</span></span>
+    <span class="service-pill pill-learn" data-service="pilot">Pilot Design Workshop <span class="pill-price">£3,500</span></span>
+  </div>
+  <div class="cell" data-col="accelerate">
+    <span class="service-pill pill-accelerate pill-flagship" data-service="lab">AI Adoption Lab <span class="pill-price">£825/pp</span></span>
+    <span class="service-pill pill-accelerate" data-service="hackathon">Hackathons &amp; Sprints</span>
+    <span class="service-pill pill-accelerate" data-service="prototype">Prototype Sessions</span>
+  </div>
+  <div class="cell" data-col="transform">
+    <span class="service-pill pill-transform" data-service="enterprise-consulting">Enterprise Consulting</span>
+  </div>
+
+  <!-- ROW 3: Point of Need -->
+  <div class="row-label">
+    <div class="mode-icon" style="color:var(--malibu);">⟡</div>
+    <div class="mode-name">Point of Need</div>
+    <div class="mode-desc">Just-in-time support when teams are stuck or making decisions</div>
+  </div>
+  <div class="cell" data-col="learn">
+    <span class="service-pill pill-learn" data-service="nudges">5-Minute Nudges</span>
+    <span class="service-pill pill-learn" data-service="resources">Self-Paced Resources</span>
+  </div>
+  <div class="cell" data-col="accelerate">
+    <span class="service-pill pill-accelerate" data-service="coaching">1:1 Coaching</span>
+    <span class="service-pill pill-accelerate" data-service="support">Support Channels</span>
+    <span class="service-pill pill-accelerate" data-service="pods">Specialist Pods</span>
+  </div>
+  <div class="cell" data-col="transform">
+    <span class="service-pill pill-transform pill-flagship" data-service="caio">Fractional CAIO <span class="pill-price">£2k–£5k/mo</span></span>
+    <span class="service-pill pill-transform pill-flagship" data-service="managed">Managed AI Service <span class="pill-price">£8k–£25k+/mo</span></span>
+  </div>
+
+  <!-- ROW 4: Community -->
+  <div class="row-label">
+    <div class="mode-icon" style="color:var(--meadow);">◎</div>
+    <div class="mode-name">Community</div>
+    <div class="mode-desc">Peer momentum, champions, and culture shift that makes it stick</div>
+  </div>
+  <div class="cell" data-col="learn">
+    <span class="service-pill pill-learn" data-service="multibiz">Multi-Business Workshops</span>
+    <span class="service-pill pill-learn" data-service="peerintro">Peer Introductions</span>
+  </div>
+  <div class="cell" data-col="accelerate">
+    <span class="service-pill pill-accelerate pill-flagship" data-service="champions">AI Champions Programme</span>
+    <span class="service-pill pill-accelerate" data-service="showandtell">Show &amp; Tell Sessions</span>
+    <span class="service-pill pill-accelerate" data-service="competitions">Challenges &amp; Competitions</span>
+  </div>
+  <div class="cell" data-col="transform">
+    <span class="service-pill pill-transform" data-service="network">Self-Sustaining Network</span>
+    <span class="service-pill pill-transform" data-service="community-access">Online Community</span>
+  </div>
+</div>
+
+<!-- ── PLATFORM LAYER: AI Adoption Framework ── -->
+<div class="platform-layer">
+  <div class="platform-bar" data-service="framework">
+    <div class="platform-left">
+      <div class="platform-label">Platform Layer — Runs Beneath Everything</div>
+      <div class="platform-name">AI Adoption Framework</div>
+      <div class="platform-desc">Continuously updated Notion toolkit: use case library, prompt patterns, governance templates, measurement tools. The engine that powers every engagement and becomes your AI Hub.</div>
+    </div>
+    <div class="platform-stats">
+      <div class="platform-stat">
+        <div class="num">1,000<span style="font-size:12px;font-weight:300;opacity:0.5;">+</span></div>
+        <div class="unit">use cases</div>
+      </div>
+      <div class="platform-stat">
+        <div class="num">4</div>
+        <div class="unit">databases</div>
+      </div>
+      <div class="platform-stat">
+        <div class="num">∞</div>
+        <div class="unit">updates</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── KEY FRAMEWORKS ── -->
+<div class="frameworks-row">
+  <div class="fw-chip">
+    <h4>AI Fluency Model</h4>
+    <p>Literacy → Fluency → Expertise. Maps directly to Learn → Accelerate → Transform.</p>
+  </div>
+  <div class="fw-chip">
+    <h4>The 4 Ds</h4>
+    <p>Delegation · Description · Discernment · Diligence. The competency framework.</p>
+  </div>
+  <div class="fw-chip">
+    <h4>Raise the Floor / Ceiling</h4>
+    <p>Foundation for everyone. Advanced capability for those ready. You need both.</p>
+  </div>
+  <div class="fw-chip">
+    <h4>Leadership → Lab → Crowd</h4>
+    <p>Three-layer enterprise model. The flywheel that makes adoption self-sustaining.</p>
+  </div>
+  <div class="fw-chip">
+    <h4>Intent + Context + Constraints</h4>
+    <p>The three elements in every effective prompt. Master the three, abandon the formula.</p>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="page-footer">
+  <div class="tagline">From curiosity to capability to <span>culture</span>.</div>
+  <p>© <a href="https://aiaccelerator.uk">AI Accelerator</a> — AI fluency is judgement, not knowledge.</p>
+</div>
+
+<!-- ── DETAIL OVERLAY ── -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-card">
+    <button class="detail-close" id="detailClose">×</button>
+    <div class="detail-tier" id="detTier"></div>
+    <div class="detail-mode" id="detMode"></div>
+    <div class="detail-name" id="detName"></div>
+    <div class="detail-price" id="detPrice"></div>
+    <div class="detail-desc" id="detDesc"></div>
+    <div class="detail-section-title">KEY OUTCOMES</div>
+    <ul class="detail-outcomes" id="detOutcomes"></ul>
+    <div class="detail-section-title" style="margin-top:16px;">WHO IT'S FOR</div>
+    <div class="detail-who" id="detWho"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── POSTMESSAGE PROTOCOL INTEGRATION ──
+  const graphicState = {
+    ready: false,
+    interactionCount: 0
+  };
+
+  function broadcastGraphicReady() {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'GRAPHIC_READY', timestamp: Date.now() }, '*');
+    }
+    graphicState.ready = true;
+  }
+
+  function logInteraction(action, details) {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'LOG_INTERACTION',
+        action: action,
+        details: details,
+        timestamp: Date.now(),
+        interactionCount: ++graphicState.interactionCount
+      }, '*');
+    }
+  }
+
+  function resetGraphicState() {
+    graphicState.interactionCount = 0;
+    document.querySelectorAll('.detail-overlay').forEach(overlay => {
+      overlay.classList.remove('active');
+    });
+    document.body.style.overflow = '';
+  }
+
+  // Listen for incoming postMessage events
+  window.addEventListener('message', function(e) {
+    if (e.data && typeof e.data === 'object') {
+      switch(e.data.type) {
+        case 'RESET':
+          resetGraphicState();
+          break;
+        case 'LOG_ENABLE':
+          graphicState.loggingEnabled = true;
+          break;
+        case 'LOG_DISABLE':
+          graphicState.loggingEnabled = false;
+          break;
+      }
+    }
+  }, false);
+
+
+
+  // ── SERVICE DATA ──
+  const services = {
+    // LEARN — Structured
+    primer: {
+      name: 'AI Primer Workshop',
+      tier: 'learn', mode: 'Structured Learning',
+      price: '£3,500',
+      desc: 'Interactive, CPD-certified half-day workshop that builds a shared AI foundation. Your team leaves with practical prompting skills they can use the same afternoon. Demystifies AI, reduces fear, and creates the shared language needed for everything that follows.',
+      outcomes: ['Shared AI vocabulary across the team', 'Practical prompting skills (Intent + Context + Constraints)', 'Confidence to experiment safely', 'CPD certification for participants'],
+      who: 'Teams of 10–30 with little or no structured AI experience. The most common starting point for organisations at the beginning of their journey.'
+    },
+    briefing: {
+      name: 'AI Executive Briefing',
+      tier: 'learn', mode: 'Structured Learning',
+      price: '£3,500',
+      desc: 'A strategic reset for senior leaders. Not a technology briefing — a business briefing. Covers what AI means for your sector, where the opportunities are, and what a structured adoption path looks like. Designed to give leadership the clarity to sponsor a programme confidently.',
+      outcomes: ['Strategic clarity on AI opportunity', 'Sector-specific examples and evidence', 'Shared leadership language', 'Clear mandate for next steps'],
+      who: 'C-suite, board members, and senior leadership teams who need to make decisions about AI investment but lack the context to do so confidently.'
+    },
+    vision: {
+      name: 'AI Vision Workshop',
+      tier: 'learn', mode: 'Structured Learning',
+      price: '£4,500',
+      desc: 'Executive-level facilitated session that defines your AI north star. Aligns the leadership team around a shared vision, identifies strategic priorities, and creates the mandate that unlocks everything downstream.',
+      outcomes: ['Documented AI vision and strategic priorities', 'Leadership alignment on direction', 'Permission structure for experimentation', 'Roadmap for the next 6–12 months'],
+      who: 'Senior leadership teams (6–12 people) ready to define their AI ambition. Often follows an Executive Briefing or AI Primer.'
+    },
+    cpd: {
+      name: 'Online CPD Course',
+      tier: 'learn', mode: 'Structured Learning',
+      price: '~£199 per seat',
+      desc: 'Self-paced online version of the AI Primer, built for scale. Covers the same foundations — AI fundamentals, practical prompting, ethical use — at a price point that works for rolling out across entire organisations. CPD-certified.',
+      outcomes: ['Scalable baseline training', 'CPD certification', 'Self-paced flexibility', 'Consistent foundation across teams'],
+      who: 'Organisations wanting to train 50+ people at a manageable cost. Ideal as a complement to in-person workshops or as a standalone for distributed teams.'
+    },
+
+    // LEARN — Experiential
+    usecase: {
+      name: 'AI Use Case Discovery',
+      tier: 'learn', mode: 'Experiential',
+      price: '£3,500',
+      desc: 'Structured half-day workshop that moves teams from "AI could be useful" to "here are our top 5–8 opportunities, prioritised by impact and feasibility." Uses the 4-Bucket Model to ensure you solve the right problems in the right order.',
+      outcomes: ['5–8 validated use cases with build-ready specs', 'Prioritisation by impact and feasibility', 'Clear next steps for each opportunity', 'Team alignment on where to start'],
+      who: 'Teams that have done some AI learning and are ready to identify real business applications. Works best with 8–20 participants from cross-functional roles.'
+    },
+    pilot: {
+      name: 'Pilot Design Workshop',
+      tier: 'learn', mode: 'Experiential',
+      price: '£3,500',
+      desc: 'Takes your top use cases from discovery and designs structured pilots. Each pilot gets a clear scope, success criteria, timeline, risk assessment, and measurement plan. The bridge between "we have ideas" and "we have a plan."',
+      outcomes: ['Pilot specifications with scope and success criteria', 'Risk assessments and mitigation plans', 'Timeline and resource requirements', 'Measurement framework for proving ROI'],
+      who: 'Organisations with identified use cases ready to move into controlled experimentation. Natural follow-on from Use Case Discovery.'
+    },
+
+    // LEARN — Point of Need
+    nudges: {
+      name: '5-Minute Nudges',
+      tier: 'learn', mode: 'Point of Need',
+      price: 'Included',
+      desc: 'Micro-learning moments embedded into the working day. Short tips, prompts, and techniques delivered through channels your team already uses. Keeps AI top-of-mind without pulling people out of their workflow.',
+      outcomes: ['Continuous AI awareness', 'Practical tips in context', 'Low-friction learning', 'Momentum between workshops'],
+      who: 'All team members during and after the Learn phase. Designed to maintain momentum between structured sessions.'
+    },
+    resources: {
+      name: 'Self-Paced Resources',
+      tier: 'learn', mode: 'Point of Need',
+      price: 'Included with Framework',
+      desc: 'Curated guides, prompt templates, and reference materials available on demand through the AI Adoption Framework. When someone gets stuck, they have somewhere to go before asking for help.',
+      outcomes: ['On-demand reference materials', 'Prompt templates and patterns', 'Reduced dependency on trainers', 'Self-service troubleshooting'],
+      who: 'Anyone in the organisation who wants to learn at their own pace or needs a quick reference while working with AI tools.'
+    },
+
+    // LEARN — Community
+    multibiz: {
+      name: 'Multi-Business Workshops',
+      tier: 'learn', mode: 'Community',
+      price: 'Varies',
+      desc: 'Cross-organisation sessions where multiple businesses learn together. Shared experiences accelerate learning. Peer connections create a support network beyond the workshop room.',
+      outcomes: ['Cross-industry peer learning', 'Broader perspective on AI applications', 'Network of practitioners', 'Shared problem-solving'],
+      who: 'Organisations that benefit from learning alongside peers. Often facilitated through industry bodies, accelerator programmes, or portfolio companies.'
+    },
+    peerintro: {
+      name: 'Peer Introductions',
+      tier: 'learn', mode: 'Community',
+      price: 'Included',
+      desc: 'We connect you with organisations at a similar stage. Real conversations with people who\'ve faced the same challenges. No theory — just honest experience sharing.',
+      outcomes: ['Peer connections and support network', 'Real-world insight from similar organisations', 'Reduced isolation in the AI journey', 'Confidence through shared experience'],
+      who: 'Leaders and champions who want to learn from others at a similar stage. Particularly valuable for first-movers within their sector.'
+    },
+
+    // ACCELERATE — Structured
+    copilot: {
+      name: 'Copilot Training',
+      tier: 'accelerate', mode: 'Structured Learning',
+      price: '£3,000 – £8,000',
+      desc: 'Specialist training for Microsoft 365 Copilot, GitHub Copilot, or other enterprise AI tools. Goes beyond the basics — teaches the mental models and workflow patterns that turn expensive licenses into genuine productivity gains.',
+      outcomes: ['Tool-specific expertise and workflow mastery', 'Best practices for enterprise AI tools', 'Measured productivity improvements', 'Internal champions for tool adoption'],
+      who: 'Organisations that have invested in enterprise AI tools but aren\'t seeing the expected return. Typically 10–30 participants per session.'
+    },
+    enablement: {
+      name: 'AI Enablement Programme',
+      tier: 'accelerate', mode: 'Structured Learning',
+      price: '£20,000',
+      desc: 'Six-week intensive programme combining workshops, Labs, coaching, and documentation. Moves the entire organisation — not just a pilot team — through the Accelerate phase. Builds playbooks, governance, champions, and measurable results.',
+      outcomes: ['Organisation-wide capability uplift', 'Documented processes and playbooks', 'Trained AI champions', 'Governance framework in place', 'Measurable ROI evidence'],
+      who: 'Mid-sized organisations (50–200 staff) ready for structured adoption. Requires executive sponsorship and a 6-week commitment.'
+    },
+
+    // ACCELERATE — Experiential
+    lab: {
+      name: 'AI Adoption Lab',
+      tier: 'accelerate', mode: 'Experiential',
+      price: '£825/person (open) · £6,000+ (private)',
+      desc: 'Our flagship experiential product. A full day of hands-on work with real AI tools on real business problems. Participants leave with working prototypes, not just notes. This is where muscle memory forms — the bridge between knowing and doing.',
+      outcomes: ['Working AI prototypes built during the session', 'Practical muscle memory with AI tools', 'Confidence to experiment independently', 'Peer connections and ongoing support', 'Clear next steps for implementation'],
+      who: 'Individuals and teams who\'ve done the learning and need hands-on experience. Open cohorts for individuals; private sessions for teams of 8–25.'
+    },
+    hackathon: {
+      name: 'Hackathons & Sprints',
+      tier: 'accelerate', mode: 'Experiential',
+      price: 'Custom',
+      desc: 'Intensive, time-boxed sessions where teams tackle real business challenges with AI. Competitive energy drives innovation. Multiple teams, real problems, real prototypes — all in a single day.',
+      outcomes: ['Multiple working prototypes', 'Cross-functional collaboration', 'Rapid innovation culture', 'Identified internal talent and champions'],
+      who: 'Organisations with 3+ teams ready to compete and collaborate. Works best when leadership is present to champion winning ideas.'
+    },
+    prototype: {
+      name: 'Prototype Sessions',
+      tier: 'accelerate', mode: 'Experiential',
+      price: 'Custom',
+      desc: 'Focused build sessions that take specific use cases from concept to working prototype. Expert guidance through the build process, with your team doing the work so capability transfers immediately.',
+      outcomes: ['Production-ready prototypes', 'Capability transfer to your team', 'Documented build patterns', 'Proof points for broader rollout'],
+      who: 'Teams with validated use cases ready to build. Typically 3–8 people working on 1–3 specific use cases.'
+    },
+
+    // ACCELERATE — Point of Need
+    coaching: {
+      name: '1:1 Coaching',
+      tier: 'accelerate', mode: 'Point of Need',
+      price: 'Custom',
+      desc: 'Personalised AI coaching for key individuals — typically AI champions, team leads, or specialists. Regular sessions focused on their specific challenges, tools, and goals.',
+      outcomes: ['Personalised capability development', 'Faster problem-solving', 'Tailored to individual role and tools', 'Ongoing accountability and support'],
+      who: 'AI champions, team leads, and specialists who need deeper, individualised support beyond group sessions.'
+    },
+    support: {
+      name: 'Support Channels',
+      tier: 'accelerate', mode: 'Point of Need',
+      price: 'Included with programmes',
+      desc: 'Dedicated Slack or Teams channels with expert access. When your team hits a wall, they get an answer in hours, not weeks. Prevents bad habits forming and keeps momentum through the messy middle.',
+      outcomes: ['Rapid expert responses', 'Prevented bad practice patterns', 'Maintained adoption momentum', 'Real-time problem-solving'],
+      who: 'Teams actively implementing AI who need responsive expert support alongside their day-to-day work.'
+    },
+    pods: {
+      name: 'Specialist Support Pods',
+      tier: 'accelerate', mode: 'Point of Need',
+      price: 'Custom',
+      desc: 'Dedicated specialist teams assigned to specific workstreams. Deeper than ad-hoc support — your pod knows your context, your tools, and your challenges. They become an extension of your team.',
+      outcomes: ['Deep contextual understanding', 'Proactive guidance and risk management', 'Faster iteration on complex use cases', 'Knowledge transfer throughout the engagement'],
+      who: 'Enterprise teams running multiple AI workstreams simultaneously. Typically part of a managed service engagement.'
+    },
+
+    // ACCELERATE — Community
+    champions: {
+      name: 'AI Champions Programme',
+      tier: 'accelerate', mode: 'Community',
+      price: 'Included with Enablement',
+      desc: 'Train 3–15 internal AI champions who become your capability multipliers. They run peer sessions, support their teams, and build momentum that doesn\'t depend on us being in the room. The real measure of adoption is what happens when we leave.',
+      outcomes: ['3–15 trained internal AI champions', 'Peer learning sessions running independently', 'Distributed AI capability across the organisation', 'Self-sustaining adoption momentum'],
+      who: 'Organisations scaling AI adoption who want internal capability that outlasts any external engagement. Champions are typically enthusiastic practitioners with credibility in their teams.'
+    },
+    showandtell: {
+      name: 'Show & Tell Sessions',
+      tier: 'accelerate', mode: 'Community',
+      price: 'Included',
+      desc: 'Regular sessions where teams share what they\'ve built, what worked, and what didn\'t. Normalises experimentation. Creates internal case studies. Builds the "this is how we work now" culture shift.',
+      outcomes: ['Normalised experimentation culture', 'Internal case studies and evidence', 'Cross-team inspiration', 'Visible leadership support for AI'],
+      who: 'All teams during the Accelerate phase. Works best when leadership attends and champions the successes.'
+    },
+    competitions: {
+      name: 'Challenges & Competitions',
+      tier: 'accelerate', mode: 'Community',
+      price: 'Custom',
+      desc: 'Structured competitions that turn adoption into a team sport. Weekly challenges, leaderboards, prizes. Drives engagement among the 60% who aren\'t early adopters but will follow when it looks fun and achievable.',
+      outcomes: ['Broad engagement beyond early adopters', 'Gamified learning momentum', 'Identified hidden talent', 'Peer pressure towards adoption'],
+      who: 'Organisations looking to accelerate adoption beyond the willing early adopters. Best combined with champions who facilitate and encourage participation.'
+    },
+
+    // TRANSFORM — Structured
+    opmodel: {
+      name: 'AI Operating Model Design',
+      tier: 'transform', mode: 'Structured Learning',
+      price: 'Enterprise pricing',
+      desc: 'Enterprise-grade transformation design. Defines how AI is embedded into your processes, decisions, and culture. Uses the Leadership → Lab → Crowd model to create a self-reinforcing operating system. AI is designed in, not bolted on.',
+      outcomes: ['Documented AI operating model', 'Leadership, Lab, and Crowd layers defined', 'Governance and measurement frameworks', 'Roadmap for self-sustaining capability'],
+      who: 'Enterprise organisations (100+ staff) with executive mandate and board-level sponsorship. Typically follows successful Accelerate-phase work.'
+    },
+    ttt: {
+      name: 'Train-the-Trainer Certification',
+      tier: 'transform', mode: 'Structured Learning',
+      price: 'Custom',
+      desc: 'Certify internal trainers to deliver AI Accelerator methodology independently. Quality-controlled scaling without headcount growth. Certified trainers use the Framework to maintain consistent, up-to-date content.',
+      outcomes: ['Certified internal AI trainers', 'Consistent delivery quality', 'Scaled training without external dependency', 'Ongoing certification and quality control'],
+      who: 'Large organisations wanting to build permanent internal training capability, and affiliate partners licensing the methodology.'
+    },
+
+    // TRANSFORM — Experiential
+    'enterprise-consulting': {
+      name: 'Enterprise Consulting',
+      tier: 'transform', mode: 'Experiential',
+      price: 'Bespoke',
+      desc: 'Strategic consulting engagements tailored to enterprise complexity. Deep embedded work with senior teams, combining advisory, delivery, and knowledge transfer. Like Virgin Red — we become part of the team, then make ourselves unnecessary.',
+      outcomes: ['Bespoke AI strategy and implementation', 'Embedded expert capability', 'Knowledge transfer to internal teams', 'Measurable business transformation'],
+      who: 'Enterprise organisations (200+ staff) with complex AI transformation needs. Multi-month engagements with senior-level sponsorship.'
+    },
+
+    // TRANSFORM — Point of Need
+    caio: {
+      name: 'Fractional CAIO',
+      tier: 'transform', mode: 'Point of Need',
+      price: '£2,000 – £5,000/month',
+      desc: 'Chief AI Officer-level strategic guidance without the full-time salary. Keeps your AI strategy sharp, governance evolving, and investment aligned with business outcomes. Quarterly reviews, board-ready reporting, and continuous strategic steer.',
+      outcomes: ['Ongoing strategic AI leadership', 'Board-ready reporting and metrics', 'Governance that evolves with technology', 'Aligned AI investment decisions'],
+      who: 'Organisations that have built AI capability and need ongoing strategic leadership but aren\'t ready for a full-time CAIO hire.'
+    },
+    managed: {
+      name: 'Managed AI Service',
+      tier: 'transform', mode: 'Point of Need',
+      price: '£8,000 – £25,000+/month',
+      desc: 'Comprehensive, ongoing AI partnership. Combines strategic advisory, embedded delivery, champion support, governance, and continuous learning into a monthly retainer. The full operating model, managed for you until your team can run it independently.',
+      outcomes: ['Complete AI programme management', 'Embedded delivery and support', 'Continuous capability development', 'Measurable business impact reporting', 'Gradual handover to internal teams'],
+      who: 'Enterprise organisations (100–4,000+ staff) committed to AI-native transformation. 6–18 month engagements with executive sponsorship.'
+    },
+
+    // TRANSFORM — Community
+    network: {
+      name: 'Self-Sustaining Champions Network',
+      tier: 'transform', mode: 'Community',
+      price: 'Outcome of programme',
+      desc: 'The endgame. A self-running internal network of AI champions who teach, coach, and inspire their peers without external support. Regular meetups, shared learning, continuous improvement — all driven internally. You don\'t need us anymore.',
+      outcomes: ['Fully internal AI capability network', 'Self-sustaining peer learning', 'Continuous improvement culture', 'Zero dependency on external support'],
+      who: 'The natural evolution of organisations that have completed the Transform phase. The sign that cultural shift has actually happened.'
+    },
+    'community-access': {
+      name: 'Online Community Access',
+      tier: 'transform', mode: 'Community',
+      price: 'Included with Framework',
+      desc: 'Access to the AI Accelerator practitioner community. Cross-organisation networking, shared resources, regular events, and direct access to the AIA team. Keeps your champions connected and your practice evolving.',
+      outcomes: ['Cross-industry networking', 'Continuous learning from peers', 'Access to new research and tools', 'Direct line to AIA expertise'],
+      who: 'AI champions, practitioners, and leaders who want ongoing connection beyond their organisation\'s walls.'
+    },
+
+    // PLATFORM
+    framework: {
+      name: 'AI Adoption Framework',
+      tier: 'accelerate', mode: 'Platform Layer',
+      price: '£200 – £2,000/month (subscription)',
+      desc: 'The platform that powers everything. A continuously updated Notion workspace with 1,000+ validated use cases, prompt libraries, governance templates, measurement tools, and deployment playbooks. It\'s simultaneously our core IP, our primary recurring revenue product, and the backbone of every engagement we deliver. Tool-agnostic — teaches thinking, not button-pressing.',
+      outcomes: ['1,000+ searchable, validated use cases by sector and function', 'Prompt design patterns and context block templates', 'Governance frameworks and risk assessment tools', 'Skills mapping aligned to Turing Institute competencies', 'Continuous monthly updates as AI evolves'],
+      who: 'Every client, at every stage. SMEs use it as a self-service toolkit. Enterprise clients use it as their AI Hub. Champions use it to teach. Affiliates use it to deliver.'
+    }
+  };
+
+  // ── DETAIL PANEL ──
+  const overlay = document.getElementById('detailOverlay');
+  const closeBtn = document.getElementById('detailClose');
+
+  function showDetail(key) {
+    const s = services[key];
+    if (!s) return;
+
+    document.getElementById('detTier').textContent = s.tier.charAt(0).toUpperCase() + s.tier.slice(1);
+    document.getElementById('detTier').className = 'detail-tier ' + s.tier;
+    document.getElementById('detMode').textContent = s.mode;
+    document.getElementById('detName').textContent = s.name;
+    document.getElementById('detPrice').textContent = s.price;
+    document.getElementById('detPrice').className = 'detail-price ' + s.tier;
+    document.getElementById('detDesc').textContent = s.desc;
+
+    const outList = document.getElementById('detOutcomes');
+    outList.innerHTML = '';
+    s.outcomes.forEach(o => {
+      const li = document.createElement('li');
+      li.textContent = o;
+      outList.appendChild(li);
+    });
+
+    document.getElementById('detWho').innerHTML = '<strong>Who it\'s for:</strong> ' + s.who;
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideDetail() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Attach click handlers to all pills
+  document.querySelectorAll('.service-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const key = pill.dataset.service;
+      if (key) {
+        logInteraction('service_pill_click', { serviceKey: key, name: services[key]?.name || key });
+        showDetail(key);
+      }
+    });
+  });
+
+  // Platform bar
+  document.querySelector('.platform-bar').addEventListener('click', () => {
+    logInteraction('platform_bar_click', { service: 'framework' });
+    showDetail('framework');
+  });
+
+  // Close
+  closeBtn.addEventListener('click', () => {
+    logInteraction('detail_close');
+    hideDetail();
+  });
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) hideDetail();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideDetail();
+  });
+
+  // ── CELL HOVER GLOW ──
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.addEventListener('mouseenter', () => {
+      const col = cell.dataset.col;
+      if (col === 'learn') cell.style.borderColor = 'rgba(0,177,255,0.2)';
+      else if (col === 'accelerate') cell.style.borderColor = 'rgba(0,255,188,0.15)';
+      else if (col === 'transform') cell.style.borderColor = 'rgba(92,213,255,0.15)';
+    });
+    cell.addEventListener('mouseleave', () => {
+      cell.style.borderColor = 'rgba(255,255,255,0.05)';
+    });
+  });
+
+
+  // Broadcast ready state after initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', broadcastGraphicReady);
+  } else {
+    broadcastGraphicReady();
+  }
+
+})();
+</script>
+</body>
+</html>

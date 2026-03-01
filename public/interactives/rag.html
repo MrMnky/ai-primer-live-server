@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG — Retrieval Augmented Generation — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C; --gable-light: #243d4e;
+    --turquoise: #00FFBC; --dodger: #00B1FF; --cerulean: #0084B2;
+    --malibu: #5CD5FF; --meadow: #17CE95; --cornflower: #6161FF;
+    --moonraker: #C5B6F1; --seapink: #EFACA8; --chicago: #575756;
+    --greenpea: #226B4D; --bittersweet: #FF5F5F; --white: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; overflow:hidden; -webkit-font-smoothing:antialiased; }
+
+  .layout { width:100vw; height:100vh; padding:28px 40px 20px; display:flex; flex-direction:column; }
+
+  @media (max-width: 768px) {
+    .layout { padding:20px 24px 16px; }
+  }
+  @media (max-width: 480px) {
+    .layout { padding:16px 16px 12px; }
+  }
+
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-shrink:0; }
+  .header h1 { font-size:28px; font-weight:700; line-height:1.15; }
+  .header h1 span { color:var(--cerulean); }
+  .header .sub { font-size:13px; font-weight:400; opacity:0.5; margin-top:2px; }
+
+  @media (max-width: 768px) {
+    .header h1 { font-size:22px; }
+    .header .sub { font-size:11px; }
+  }
+  @media (max-width: 480px) {
+    .header h1 { font-size:18px; }
+    .header .sub { font-size:10px; }
+  }
+
+  .scenarios { display:flex; gap:8px; margin-bottom:12px; flex-shrink:0; flex-wrap:wrap; }
+  .sc-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:var(--white); font-family:'Poppins',sans-serif; font-size:11px; font-weight:400; padding:6px 16px; border-radius:7px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+  .sc-btn:hover { background:rgba(255,255,255,0.08); }
+  .sc-btn.active { background:var(--cerulean); border-color:var(--cerulean); font-weight:600; }
+
+  @media (max-width: 480px) {
+    .sc-btn { font-size:10px; padding:5px 12px; }
+  }
+
+  /* ─── MAIN AREA ─── */
+  .main-area { flex:1; min-height:0; position:relative; }
+  .view-panel { position:absolute; inset:0; transition:opacity 0.35s, visibility 0.35s; }
+  .view-panel.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+
+  /* ═══ SCENARIO VIEW (existing pipeline) ═══ */
+  .pipeline { height:100%; display:grid; grid-template-columns:240px 1fr 300px; gap:20px; min-height:0; }
+
+  @media (max-width: 1024px) {
+    .pipeline { grid-template-columns:200px 1fr 250px; gap:16px; }
+  }
+  @media (max-width: 768px) {
+    .pipeline { grid-template-columns:1fr; gap:12px; }
+  }
+  @media (max-width: 480px) {
+    .pipeline { grid-template-columns:1fr; gap:8px; }
+  }
+
+  .doc-library { display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+  .lib-label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.35; margin-bottom:6px; }
+  .doc-item {
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
+    border-radius:8px; padding:10px 12px;
+    transition:all 0.4s; cursor:default;
+  }
+  .doc-item .doc-icon { font-size:14px; margin-right:8px; }
+  .doc-item .doc-name { font-size:11px; font-weight:500; }
+  .doc-item .doc-type { font-size:9px; opacity:0.35; margin-top:2px; }
+  .doc-item.searched { border-color:rgba(0,177,255,0.3); background:rgba(0,177,255,0.06); }
+  .doc-item.matched { border-color:rgba(0,255,188,0.3); background:rgba(0,255,188,0.06); box-shadow:0 0 12px rgba(0,255,188,0.08); }
+  .doc-item.dimmed { opacity:0.2; }
+
+  @media (max-width: 768px) {
+    .doc-item { padding:8px 10px; font-size:10px; }
+    .doc-item .doc-icon { font-size:12px; }
+    .doc-item .doc-name { font-size:10px; }
+    .doc-item .doc-type { font-size:8px; }
+  }
+
+  .flow-center { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; position:relative; }
+
+  .flow-step {
+    width:100%; background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:10px; padding:14px 18px;
+    text-align:center; opacity:0; transform:translateY(10px);
+    transition:all 0.4s;
+  }
+  .flow-step.visible { opacity:1; transform:translateY(0); }
+  .flow-step.active { border-color:rgba(0,132,178,0.4); background:rgba(0,132,178,0.08); }
+
+  .flow-step-label { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+  .flow-step-label.blue { color:var(--cerulean); }
+  .flow-step-label.green { color:var(--meadow); }
+  .flow-step-label.purple { color:var(--cornflower); }
+
+  .flow-step-content { font-size:12px; line-height:1.5; opacity:0.65; }
+  .flow-step-content strong { opacity:1; }
+  .flow-step-content .chunk {
+    display:inline-block; background:rgba(0,255,188,0.1);
+    border:1px solid rgba(0,255,188,0.2); border-radius:4px;
+    padding:2px 8px; margin:2px; font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--turquoise);
+  }
+
+  @media (max-width: 480px) {
+    .flow-step-label { font-size:9px; }
+    .flow-step-content { font-size:11px; }
+    .flow-step-content .chunk { font-size:9px; padding:2px 6px; margin:2px; }
+  }
+
+  .flow-arrow { font-size:16px; opacity:0.15; transition:all 0.3s; }
+  .flow-arrow.lit { opacity:0.5; color:var(--dodger); }
+
+  .response-panel { display:flex; flex-direction:column; gap:10px; }
+  .resp-label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.35; margin-bottom:4px; }
+
+  .resp-box {
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
+    border-radius:10px; padding:14px 16px;
+    font-size:12px; line-height:1.65; opacity:0.7;
+    transition:all 0.4s; flex:1; overflow-y:auto;
+  }
+  .resp-box.without { border-left:3px solid var(--bittersweet); }
+  .resp-box.with { border-left:3px solid var(--meadow); }
+  .resp-box .resp-tag {
+    font-size:9px; font-weight:600; letter-spacing:1.5px;
+    text-transform:uppercase; margin-bottom:8px;
+  }
+  .resp-box.without .resp-tag { color:var(--bittersweet); }
+  .resp-box.with .resp-tag { color:var(--meadow); }
+  .resp-box .source-ref {
+    display:inline; font-size:10px; color:var(--meadow);
+    background:rgba(23,206,149,0.1); border-radius:3px;
+    padding:1px 6px;
+  }
+
+  @media (max-width: 480px) {
+    .resp-box { padding:10px 12px; font-size:11px; }
+    .resp-box .resp-tag { font-size:8px; margin-bottom:6px; }
+  }
+
+  .insight-box {
+    background:rgba(0,132,178,0.06); border:1px solid rgba(0,132,178,0.15);
+    border-left:4px solid var(--cerulean);
+    border-radius:0 10px 10px 0; padding:12px 14px;
+    font-size:11px; line-height:1.6; opacity:0.6;
+  }
+  .insight-box strong { color:var(--cerulean); opacity:1; }
+
+  @media (max-width: 480px) {
+    .insight-box { font-size:10px; padding:10px 12px; }
+  }
+
+  /* ═══ DIAGRAM VIEW (new architecture visual) ═══ */
+  .diagram-view {
+    height:100%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    position:relative; overflow:auto;
+  }
+  .diagram-canvas {
+    position:relative; width:900px; max-width:100%; height:420px;
+  }
+
+  @media (max-width: 1024px) {
+    .diagram-canvas { width:700px; height:350px; }
+  }
+  @media (max-width: 768px) {
+    .diagram-canvas { width:100%; height:auto; aspect-ratio:900/420; }
+  }
+  @media (max-width: 480px) {
+    .diagram-canvas { width:100%; height:auto; aspect-ratio:900/420; }
+  }
+
+  /* Nodes */
+  .d-node {
+    position:absolute; border-radius:12px; padding:14px 18px;
+    text-align:center; transition:all 0.5s ease;
+    opacity:0; transform:scale(0.85);
+  }
+  .d-node.visible { opacity:1; transform:scale(1); }
+  .d-node.active { box-shadow:0 0 24px rgba(0,177,255,0.2); }
+
+  .d-node-icon { font-size:28px; margin-bottom:6px; }
+  .d-node-name { font-size:11px; font-weight:600; line-height:1.3; }
+  .d-node-detail { font-size:9px; opacity:0.45; line-height:1.35; margin-top:3px; }
+
+  .d-node.user {
+    background:rgba(92,213,255,0.08); border:1px solid rgba(92,213,255,0.25);
+    top:160px; left:0; width:130px;
+  }
+  .d-node.retriever {
+    background:rgba(0,132,178,0.1); border:1px solid rgba(0,132,178,0.3);
+    top:20px; left:280px; width:160px;
+  }
+  .d-node.doclib {
+    background:rgba(0,255,188,0.06); border:1px solid rgba(0,255,188,0.2);
+    top:20px; right:100px; width:180px;
+  }
+  .d-node.context-node {
+    background:rgba(0,255,188,0.08); border:1px solid rgba(0,255,188,0.25);
+    top:180px; left:340px; width:160px;
+  }
+  .d-node.llm {
+    background:rgba(97,97,255,0.1); border:2px solid rgba(97,97,255,0.3);
+    top:300px; left:280px; width:180px;
+  }
+  .d-node.response-node {
+    background:rgba(23,206,149,0.08); border:1px solid rgba(23,206,149,0.25);
+    top:300px; right:60px; width:160px;
+  }
+
+  @media (max-width: 768px) {
+    .d-node { padding:10px 12px; }
+    .d-node-icon { font-size:20px; }
+    .d-node-name { font-size:9px; }
+    .d-node-detail { font-size:8px; }
+  }
+
+  /* SVG arrows */
+  .diagram-svg {
+    position:absolute; inset:0; pointer-events:none;
+  }
+  .d-arrow {
+    fill:none; stroke-width:2; stroke-linecap:round;
+    stroke-dasharray:200; stroke-dashoffset:200;
+    transition:stroke-dashoffset 0.8s ease;
+  }
+  .d-arrow.visible { stroke-dashoffset:0; }
+  .d-arrow.query-path { stroke:var(--malibu); }
+  .d-arrow.retrieve-path { stroke:var(--cerulean); }
+  .d-arrow.context-path { stroke:var(--meadow); }
+  .d-arrow.generate-path { stroke:var(--cornflower); }
+  .d-arrow.response-path { stroke:var(--meadow); }
+  .d-arrow.direct-path { stroke:var(--malibu); opacity:0.5; }
+
+  /* Arrow labels */
+  .d-label {
+    position:absolute; font-size:9px; font-weight:600;
+    letter-spacing:0.8px; text-transform:uppercase;
+    opacity:0; transition:opacity 0.4s;
+    white-space:nowrap;
+  }
+  .d-label.visible { opacity:0.5; }
+
+  /* Data packets (animated dots along arrows) */
+  .d-packet {
+    position:absolute; width:8px; height:8px;
+    border-radius:50%; opacity:0;
+    transition:opacity 0.3s;
+  }
+  .d-packet.visible { opacity:1; }
+
+  /* Diagram insight */
+  .diagram-insight {
+    margin-top:16px; max-width:700px; text-align:center;
+    font-size:11px; opacity:0; line-height:1.6;
+    transition:opacity 0.4s; padding:0 20px;
+  }
+  .diagram-insight.visible { opacity:0.5; }
+  .diagram-insight strong { opacity:1; color:var(--cerulean); }
+
+  @media (max-width: 768px) {
+    .diagram-insight { max-width:100%; font-size:10px; }
+  }
+
+  /* ─── FOOTER ─── */
+  .footer { flex-shrink:0; display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; gap:10px; }
+  .footer-left { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .step-btn { background:var(--cerulean); border:none; color:var(--white); font-family:'Poppins',sans-serif; font-size:12px; font-weight:600; padding:8px 22px; border-radius:7px; cursor:pointer; transition:all 0.2s; }
+  .step-btn:hover:not(:disabled) { background:var(--dodger); }
+  .step-btn:disabled { opacity:0.3; cursor:not-allowed; }
+  .step-btn.sec { background:rgba(255,255,255,0.06); font-weight:400; font-size:11px; padding:7px 16px; }
+  .step-btn.sec:hover { background:rgba(255,255,255,0.12); }
+  .hint { font-size:11px; opacity:0.3; }
+  .wm { font-size:10px; opacity:0.2; }
+
+  @media (max-width: 480px) {
+    .step-btn { font-size:11px; padding:6px 16px; }
+    .step-btn.sec { font-size:10px; padding:5px 12px; }
+    .hint { font-size:10px; }
+    .wm { font-size:9px; }
+  }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="header">
+    <div>
+      <h1><span>RAG</span> — Retrieval Augmented Generation</h1>
+      <div class="sub">Giving AI access to your documents so it can answer with real data, not guesswork</div>
+    </div>
+  </div>
+  <div class="scenarios" id="scenarios"></div>
+
+  <div class="main-area">
+    <!-- ═══ SCENARIO VIEW ═══ -->
+    <div class="view-panel" id="scenarioView">
+      <div class="pipeline">
+        <div class="doc-library">
+          <div class="lib-label">📁 Document library</div>
+          <div id="docList"></div>
+        </div>
+        <div class="flow-center" id="flowCenter"></div>
+        <div class="response-panel" id="responsePanel">
+          <div class="resp-label">AI responses</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DIAGRAM VIEW ═══ -->
+    <div class="view-panel hidden" id="diagramView">
+      <div class="diagram-view">
+        <div class="diagram-canvas" id="diagramCanvas">
+          <svg class="diagram-svg" id="diagramSvg" viewBox="0 0 900 420" preserveAspectRatio="xMidYMid meet">
+            <!-- Arrow: User → Retriever (query goes up) -->
+            <path class="d-arrow query-path" id="arrowQueryRetriever"
+                  d="M 130,195 C 180,195 220,60 280,55" />
+            <!-- Arrow: User → LLM (query goes down) -->
+            <path class="d-arrow direct-path" id="arrowQueryLLM"
+                  d="M 130,210 C 180,260 220,340 280,340" />
+            <!-- Arrow: Retriever → Doc library (search) -->
+            <path class="d-arrow retrieve-path" id="arrowRetrieverDocs"
+                  d="M 440,55 L 620,55" />
+            <!-- Arrow: Doc library → Context (chunks return) -->
+            <path class="d-arrow context-path" id="arrowDocsContext"
+                  d="M 680,100 C 680,140 520,160 500,200" />
+            <!-- Arrow: Context → LLM (augmented prompt) -->
+            <path class="d-arrow context-path" id="arrowContextLLM"
+                  d="M 420,250 C 400,280 380,310 370,300" />
+            <!-- Arrow: LLM → Response -->
+            <path class="d-arrow response-path" id="arrowLLMResponse"
+                  d="M 460,345 C 520,345 580,345 640,345" />
+          </svg>
+
+          <div class="d-node user" id="dUser">
+            <div class="d-node-icon">💬</div>
+            <div class="d-node-name">User query</div>
+            <div class="d-node-detail">"What's our remote<br>working policy?"</div>
+          </div>
+
+          <div class="d-node retriever" id="dRetriever">
+            <div class="d-node-icon">🔎</div>
+            <div class="d-node-name">Retriever</div>
+            <div class="d-node-detail">Searches for relevant<br>documents &amp; passages</div>
+          </div>
+
+          <div class="d-node doclib" id="dDoclib">
+            <div class="d-node-icon">📚</div>
+            <div class="d-node-name">Document library</div>
+            <div class="d-node-detail">PDFs, emails, wikis,<br>databases, Notion pages</div>
+          </div>
+
+          <div class="d-node context-node" id="dContext">
+            <div class="d-node-icon">📋</div>
+            <div class="d-node-name">Retrieved context</div>
+            <div class="d-node-detail">Relevant chunks<br>injected into prompt</div>
+          </div>
+
+          <div class="d-node llm" id="dLLM">
+            <div class="d-node-icon">🧠</div>
+            <div class="d-node-name">LLM (AI model)</div>
+            <div class="d-node-detail">Generates answer using<br>query + retrieved context</div>
+          </div>
+
+          <div class="d-node response-node" id="dResponse">
+            <div class="d-node-icon">✨</div>
+            <div class="d-node-name">Grounded response</div>
+            <div class="d-node-detail">Accurate, cited,<br>based on your data</div>
+          </div>
+
+          <!-- Arrow labels -->
+          <div class="d-label" id="lblQuery" style="top:120px;left:155px;color:var(--malibu)">Query</div>
+          <div class="d-label" id="lblSearch" style="top:36px;left:520px;color:var(--cerulean)">Search</div>
+          <div class="d-label" id="lblChunks" style="top:140px;right:155px;color:var(--meadow)">Chunks</div>
+          <div class="d-label" id="lblAugment" style="top:260px;left:365px;color:var(--meadow)">Augment</div>
+          <div class="d-label" id="lblGenerate" style="top:322px;left:550px;color:var(--meadow)">Generate</div>
+        </div>
+
+        <div class="diagram-insight" id="diagramInsight">
+          <strong>The key insight:</strong> RAG doesn't change the AI model — it changes what the model sees. The same frozen model produces completely different answers depending on whether relevant documents are injected into the prompt. The retriever is the bridge between your data and the AI's reasoning.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">
+      <button class="step-btn" id="nextBtn" onclick="nextStep()">Next Step</button>
+      <button class="step-btn sec" id="resetBtn" onclick="resetDemo()" style="display:none">Reset</button>
+      <span class="hint" id="hint">Click Next to walk through the RAG pipeline</span>
+    </div>
+    <span class="wm">© aiaccelerator.uk</span>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   POSTMESSAGE PROTOCOL
+   ═══════════════════════════════════════════ */
+
+/**
+ * Sends a message to the parent frame indicating the graphic is ready.
+ * This signals to the embedding parent (e.g., an iframe container) that
+ * the graphic is fully initialized and can accept commands.
+ */
+function sendGraphicReady() {
+  try {
+    window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+  } catch (e) {
+    console.debug('PostMessage GRAPHIC_READY failed (running standalone):', e.message);
+  }
+}
+
+/**
+ * Sends an interaction event to the parent frame.
+ * Used to log user interactions for analytics or parent tracking.
+ *
+ * @param {string} action - The user action (e.g., 'next_step', 'scenario_selected')
+ * @param {object} data - Additional data about the interaction
+ */
+function logInteraction(action, data) {
+  try {
+    window.parent.postMessage({
+      type: 'LOG_INTERACTION',
+      action: action,
+      data: data,
+      timestamp: new Date().toISOString()
+    }, '*');
+  } catch (e) {
+    console.debug('PostMessage LOG_INTERACTION failed:', e.message);
+  }
+}
+
+/**
+ * Listen for incoming messages from the parent frame.
+ * Supports RESET command to reset the graphic state.
+ */
+window.addEventListener('message', function(e) {
+  if (!e.data || typeof e.data !== 'object') return;
+
+  if (e.data.type === 'RESET') {
+    // Reset the graphic to its initial state
+    pickDiagram();
+    logInteraction('reset_received', { source: 'parent' });
+  }
+});
+
+/* ═══════════════════════════════════════════
+   SCENARIOS (existing)
+   ═══════════════════════════════════════════ */
+const SCENARIOS = [
+  {
+    name: '📋 HR policy question',
+    query: 'What is our policy on remote working?',
+    docs: [
+      { icon:'📄', name:'Employee Handbook 2024', type:'PDF · 84 pages', relevant:true },
+      { icon:'📊', name:'Q3 Sales Report', type:'Excel · 12 sheets', relevant:false },
+      { icon:'📄', name:'Remote Working Policy v3', type:'Word · 6 pages', relevant:true },
+      { icon:'📧', name:'CEO Update - Jan 2025', type:'Email thread', relevant:false },
+      { icon:'📄', name:'IT Security Guidelines', type:'PDF · 22 pages', relevant:false },
+      { icon:'📝', name:'Team Meeting Notes', type:'Notion page', relevant:false },
+    ],
+    chunks: [
+      '"Employees may work remotely up to 3 days per week, subject to manager approval…"',
+      '"Remote workers must maintain core hours of 10:00–15:00 GMT and be available on Slack…"',
+    ],
+    withRAG: 'Based on your company\'s Remote Working Policy (v3), employees can work remotely <span class="source-ref">up to 3 days per week</span> with manager approval. Core hours are <span class="source-ref">10:00–15:00 GMT</span>, and you must be available on Slack during these times. The policy was last updated in September 2024.',
+    withoutRAG: 'Generally, many companies allow remote working arrangements. A typical policy might include 2-3 days of remote work per week, with some core hours requirements. I\'d recommend checking with your HR department for the specific details of your organisation\'s policy.',
+    insight: '<strong>95% of enterprise AI projects use RAG.</strong> Without it, the AI can only give generic answers based on training data. With RAG, it retrieves your actual documents and grounds its response in real information. The key difference: citations and specificity vs vague generalisations.',
+  },
+  {
+    name: '💰 Financial question',
+    query: 'What was our revenue growth last quarter?',
+    docs: [
+      { icon:'📊', name:'Q4 2024 Board Pack', type:'PowerPoint · 45 slides', relevant:true },
+      { icon:'📄', name:'Annual Report 2024', type:'PDF · 120 pages', relevant:true },
+      { icon:'📧', name:'CFO Weekly Update', type:'Email thread', relevant:false },
+      { icon:'📊', name:'Revenue Dashboard', type:'Looker embed', relevant:false },
+      { icon:'📄', name:'Employee Handbook', type:'PDF · 84 pages', relevant:false },
+      { icon:'📝', name:'Strategy Away Day Notes', type:'Notion page', relevant:false },
+    ],
+    chunks: [
+      '"Q4 2024 revenue: £4.2M (up 18% QoQ). Full year: £14.1M…"',
+      '"Growth driven by Enterprise segment (+31%) offsetting SME decline (−4%)…"',
+    ],
+    withRAG: 'According to your Q4 2024 Board Pack, revenue grew <span class="source-ref">18% quarter-on-quarter to £4.2M</span>. Full-year revenue was £14.1M. Growth was primarily driven by the <span class="source-ref">Enterprise segment (+31%)</span>, which offset a small decline in SME (−4%).',
+    withoutRAG: 'I don\'t have access to your company\'s financial data, so I can\'t provide specific revenue figures. Revenue growth varies significantly by industry and company size. I\'d suggest checking your latest quarterly report or asking your finance team.',
+    insight: '<strong>RAG doesn\'t change the model — it changes the input.</strong> The same AI model produces completely different answers depending on whether it has access to your documents. The model is the same; the context is what matters. This is why RAG is the most common enterprise AI pattern.',
+  },
+];
+
+let currentMode = 'diagram'; // 'diagram' or scenario index
+let currentScenario = 0;
+let step = 0;
+const maxSteps = 5;
+let diagStep = 0;
+let diagTimer = null;
+const DIAG_MAX = 6;
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+function init() {
+  const row = document.getElementById('scenarios');
+  let html = '<button class="sc-btn active" onclick="pickDiagram()">🔄 How it works</button>';
+  html += SCENARIOS.map((s, i) =>
+    `<button class="sc-btn" onclick="pickScenario(${i})">${s.name}</button>`
+  ).join('');
+  row.innerHTML = html;
+  pickDiagram();
+
+  // Signal to parent that graphic is ready
+  sendGraphicReady();
+}
+
+/* ═══════════════════════════════════════════
+   MODE SWITCHING
+   ═══════════════════════════════════════════ */
+function setActiveTab(idx) {
+  // idx: -1 = diagram, 0+ = scenario
+  document.querySelectorAll('.sc-btn').forEach((b, i) =>
+    b.classList.toggle('active', i === idx + 1));
+}
+
+function pickDiagram() {
+  currentMode = 'diagram';
+  setActiveTab(-1);
+  if (diagTimer) { clearTimeout(diagTimer); diagTimer = null; }
+  diagStep = 0;
+
+  document.getElementById('scenarioView').classList.add('hidden');
+  document.getElementById('diagramView').classList.remove('hidden');
+
+  // Reset diagram
+  document.querySelectorAll('.d-node').forEach(n => n.classList.remove('visible','active'));
+  document.querySelectorAll('.d-arrow').forEach(a => a.classList.remove('visible'));
+  document.querySelectorAll('.d-label').forEach(l => l.classList.remove('visible'));
+  document.getElementById('diagramInsight').classList.remove('visible');
+
+  const btn = document.getElementById('nextBtn');
+  btn.style.display = '';
+  btn.disabled = false;
+  btn.textContent = '▶ Animate';
+  btn.onclick = animateDiagram;
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('hint').textContent = 'Press Animate to see how knowledge flows through the RAG pipeline';
+
+  logInteraction('view_switched', { mode: 'diagram' });
+}
+
+function pickScenario(idx) {
+  currentMode = 'scenario';
+  currentScenario = idx;
+  setActiveTab(idx);
+  if (diagTimer) { clearTimeout(diagTimer); diagTimer = null; }
+
+  document.getElementById('diagramView').classList.add('hidden');
+  document.getElementById('scenarioView').classList.remove('hidden');
+
+  resetDemo();
+  logInteraction('scenario_selected', { scenario_index: idx, scenario_name: SCENARIOS[idx].name });
+}
+
+/* ═══════════════════════════════════════════
+   DIAGRAM ANIMATION
+   ═══════════════════════════════════════════ */
+function animateDiagram() {
+  diagStep = 0;
+  // Reset
+  document.querySelectorAll('.d-node').forEach(n => n.classList.remove('visible','active'));
+  document.querySelectorAll('.d-arrow').forEach(a => a.classList.remove('visible'));
+  document.querySelectorAll('.d-label').forEach(l => l.classList.remove('visible'));
+  document.getElementById('diagramInsight').classList.remove('visible');
+
+  const btn = document.getElementById('nextBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Playing…';
+
+  function step() {
+    diagStep++;
+    const hint = document.getElementById('hint');
+
+    if (diagStep === 1) {
+      // User node appears
+      document.getElementById('dUser').classList.add('visible','active');
+      hint.textContent = 'The user asks a question that needs company-specific data';
+    }
+    else if (diagStep === 2) {
+      // Query goes to retriever AND to LLM simultaneously
+      document.getElementById('dUser').classList.remove('active');
+      document.getElementById('dRetriever').classList.add('visible','active');
+      document.getElementById('arrowQueryRetriever').classList.add('visible');
+      document.getElementById('arrowQueryLLM').classList.add('visible');
+      document.getElementById('dLLM').classList.add('visible');
+      document.getElementById('lblQuery').classList.add('visible');
+      hint.textContent = 'The query is sent to both the retriever and the LLM simultaneously';
+    }
+    else if (diagStep === 3) {
+      // Retriever searches doc library
+      document.getElementById('dRetriever').classList.remove('active');
+      document.getElementById('dDoclib').classList.add('visible','active');
+      document.getElementById('arrowRetrieverDocs').classList.add('visible');
+      document.getElementById('lblSearch').classList.add('visible');
+      hint.textContent = 'The retriever searches your document library — PDFs, emails, wikis, databases';
+    }
+    else if (diagStep === 4) {
+      // Chunks flow back to context
+      document.getElementById('dDoclib').classList.remove('active');
+      document.getElementById('dContext').classList.add('visible','active');
+      document.getElementById('arrowDocsContext').classList.add('visible');
+      document.getElementById('lblChunks').classList.add('visible');
+      hint.textContent = 'Relevant passages are extracted and assembled into context chunks';
+    }
+    else if (diagStep === 5) {
+      // Context augments the LLM prompt
+      document.getElementById('dContext').classList.remove('active');
+      document.getElementById('dLLM').classList.add('active');
+      document.getElementById('arrowContextLLM').classList.add('visible');
+      document.getElementById('lblAugment').classList.add('visible');
+      hint.textContent = 'The retrieved context is injected into the prompt — the LLM now has your data';
+    }
+    else if (diagStep === 6) {
+      // LLM generates grounded response
+      document.getElementById('dLLM').classList.remove('active');
+      document.getElementById('dResponse').classList.add('visible','active');
+      document.getElementById('arrowLLMResponse').classList.add('visible');
+      document.getElementById('lblGenerate').classList.add('visible');
+      document.getElementById('diagramInsight').classList.add('visible');
+      hint.textContent = 'The AI produces a grounded, cited response based on your actual documents';
+
+      // Done
+      const btn = document.getElementById('nextBtn');
+      btn.disabled = false;
+      btn.textContent = '↺ Replay';
+      btn.onclick = animateDiagram;
+      logInteraction('diagram_animation_completed', { steps: diagStep });
+      return;
+    }
+
+    diagTimer = setTimeout(step, 1400);
+  }
+  step();
+  logInteraction('diagram_animation_started', {});
+}
+
+/* ═══════════════════════════════════════════
+   SCENARIO PIPELINE (existing logic)
+   ═══════════════════════════════════════════ */
+function resetDemo() {
+  step = 0;
+  const sc = SCENARIOS[currentScenario];
+
+  document.getElementById('docList').innerHTML = sc.docs.map((d, i) =>
+    `<div class="doc-item" id="doc${i}"><span class="doc-icon">${d.icon}</span><span class="doc-name">${d.name}</span><div class="doc-type">${d.type}</div></div>`
+  ).join('');
+
+  document.getElementById('flowCenter').innerHTML = '';
+  document.getElementById('responsePanel').innerHTML = '<div class="resp-label">AI responses</div>';
+
+  const btn = document.getElementById('nextBtn');
+  btn.style.display = '';
+  btn.disabled = false;
+  btn.textContent = 'Next Step';
+  btn.onclick = nextStep;
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('hint').textContent = 'Click Next to walk through the RAG pipeline';
+}
+
+function nextStep() {
+  step++;
+  const sc = SCENARIOS[currentScenario];
+  const flow = document.getElementById('flowCenter');
+
+  if (step === 1) {
+    flow.innerHTML = `
+      <div class="flow-step visible active">
+        <div class="flow-step-label blue">Step 1 — Query</div>
+        <div class="flow-step-content"><strong>"${sc.query}"</strong></div>
+      </div>
+    `;
+    document.getElementById('hint').textContent = 'The user asks a question that needs company-specific data';
+  }
+  else if (step === 2) {
+    sc.docs.forEach((d, i) => {
+      const el = document.getElementById('doc' + i);
+      el.classList.add('searched');
+      setTimeout(() => {
+        if (d.relevant) el.classList.add('matched');
+        else { el.classList.remove('searched'); el.classList.add('dimmed'); }
+      }, 400 + i * 100);
+    });
+    flow.innerHTML += `
+      <div class="flow-arrow lit">▼</div>
+      <div class="flow-step visible active">
+        <div class="flow-step-label green">Step 2 — Retrieve</div>
+        <div class="flow-step-content">Search your document library for relevant content. <strong>${sc.docs.filter(d=>d.relevant).length} documents</strong> match the query.</div>
+      </div>
+    `;
+    flow.querySelectorAll('.flow-step')[0].classList.remove('active');
+    document.getElementById('hint').textContent = 'Relevant documents light up green — irrelevant ones are dimmed';
+  }
+  else if (step === 3) {
+    const chunksHtml = sc.chunks.map(c => `<span class="chunk">${c}</span>`).join('<br>');
+    flow.innerHTML += `
+      <div class="flow-arrow lit">▼</div>
+      <div class="flow-step visible active">
+        <div class="flow-step-label purple">Step 3 — Extract chunks</div>
+        <div class="flow-step-content">Pull out the most relevant passages:<br>${chunksHtml}</div>
+      </div>
+    `;
+    flow.querySelectorAll('.flow-step').forEach(s => s.classList.remove('active'));
+    flow.querySelectorAll('.flow-step')[2].classList.add('active');
+    document.getElementById('hint').textContent = 'Specific text chunks are extracted and injected into the AI prompt';
+  }
+  else if (step === 4) {
+    const rp = document.getElementById('responsePanel');
+    rp.innerHTML = `
+      <div class="resp-label">Compare responses</div>
+      <div class="resp-box without">
+        <div class="resp-tag">❌ Without RAG</div>
+        ${sc.withoutRAG}
+      </div>
+      <div class="resp-box with">
+        <div class="resp-tag">✅ With RAG</div>
+        ${sc.withRAG}
+      </div>
+    `;
+    flow.innerHTML += `
+      <div class="flow-arrow lit">▼</div>
+      <div class="flow-step visible active">
+        <div class="flow-step-label blue">Step 4 — Generate</div>
+        <div class="flow-step-content">The AI generates a response <strong>grounded in your actual data</strong></div>
+      </div>
+    `;
+    document.getElementById('hint').textContent = 'Compare: without RAG you get generic advice. With RAG you get specific, cited answers.';
+  }
+  else if (step === 5) {
+    const rp = document.getElementById('responsePanel');
+    rp.innerHTML += `<div class="insight-box">${sc.insight}</div>`;
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('resetBtn').style.display = '';
+    document.getElementById('hint').textContent = 'Select another scenario or reset to try again';
+  }
+
+  if (step >= maxSteps) {
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('resetBtn').style.display = '';
+  }
+
+  logInteraction('step_completed', { scenario: currentScenario, step: step });
+}
+
+init();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.sc-btn, .scenario-btn, [class*=scenario]') || document.querySelector('.scenarios'),
+    title: 'Pick a scenario',
+    desc: 'Choose a question to see how RAG retrieves relevant documents and grounds the AI\'s response in real data.', pad: 8 },
+  { target: () => document.querySelector('.flow-step, .pipeline, [class*=flow]') || document.querySelector('.main-area, main'),
+    title: 'The RAG pipeline',
+    desc: 'Watch each stage: the question gets embedded, matched against documents, and the relevant context is fed to the model.', pad: 6 },
+  { target: () => document.querySelector('.step-btn, .nav-btn, [class*=next]') || document.querySelector('.controls, .footer, footer'),
+    title: 'Step through',
+    desc: 'Use Previous and Next to move through the retrieval process at your own pace.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+  logInteraction('tour_started', {});
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+  logInteraction('tour_ended', { final_step: tourStep });
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

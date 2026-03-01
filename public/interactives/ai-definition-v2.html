@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is AI? — Deterministic vs Probabilistic Thinking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gable-green: #1B2F3C;
+            --turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet-red: #FF5F5F;
+            --cornflower: #6161FF;
+            --white: #FFFFFF;
+            --cloud: #D4DFE6;
+            --slate: #8FA4B3;
+            --deterministic-tint: rgba(0, 177, 255, 0.03);
+            --probabilistic-tint: rgba(23, 206, 149, 0.03);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: var(--gable-green);
+            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            padding: 2rem 2.5rem;
+            text-align: center;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(212, 223, 230, 0.1);
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 0.95rem;
+            color: var(--cloud);
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        /* Scenario Selector Pills */
+        .scenario-selector {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1.5rem 2.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(212, 223, 230, 0.1);
+        }
+
+        .pill {
+            padding: 0.6rem 1.2rem;
+            border-radius: 24px;
+            border: 1px solid rgba(212, 223, 230, 0.3);
+            background: rgba(212, 223, 230, 0.05);
+            color: var(--cloud);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .pill:hover {
+            border-color: var(--dodger-blue);
+            color: var(--dodger-blue);
+            background: rgba(0, 177, 255, 0.1);
+        }
+
+        .pill.active {
+            background: var(--dodger-blue);
+            border-color: var(--dodger-blue);
+            color: var(--gable-green);
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-height: 0;
+        }
+
+        /* Question Box */
+        .question-container {
+            padding: 1.5rem 2.5rem;
+            text-align: center;
+            background: rgba(212, 223, 230, 0.05);
+            border-bottom: 1px solid rgba(212, 223, 230, 0.1);
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: -0.3px;
+        }
+
+        /* Split Screen Container */
+        .split-screen {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Side Base Styles */
+        .side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+            min-width: 0;
+        }
+
+        .side::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .side::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .side::-webkit-scrollbar-thumb {
+            background: rgba(212, 223, 230, 0.2);
+            border-radius: 3px;
+        }
+
+        .side::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 223, 230, 0.4);
+        }
+
+        /* Left Side - Deterministic */
+        .left-side {
+            background: var(--gable-green);
+            background-image: linear-gradient(135deg, var(--deterministic-tint) 0%, transparent 50%);
+            clip-path: polygon(0 0, var(--divider-pos, 50%) 0, var(--divider-pos, 50%) 100%, 0 100%);
+            transition: clip-path 0.05s linear;
+        }
+
+        .left-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--dodger-blue);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .left-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.85rem;
+            color: var(--slate);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .side-content {
+            flex: 1;
+        }
+
+        /* Right Side - Probabilistic */
+        .right-side {
+            background: var(--gable-green);
+            background-image: linear-gradient(225deg, var(--probabilistic-tint) 0%, transparent 50%);
+            clip-path: polygon(var(--divider-pos, 50%) 0, 100% 0, 100% 100%, var(--divider-pos, 50%) 100%);
+            transition: clip-path 0.05s linear;
+        }
+
+        .right-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--meadow-green);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .right-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Divider */
+        .divider {
+            position: absolute;
+            top: 0;
+            left: var(--divider-pos, 50%);
+            width: 3px;
+            height: 100%;
+            background: var(--turquoise);
+            transform: translateX(-50%);
+            z-index: 100;
+            cursor: col-resize;
+            box-shadow: 0 0 20px rgba(0, 255, 188, 0.3);
+        }
+
+        .divider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: var(--turquoise);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gable-green);
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 16px rgba(0, 255, 188, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 101;
+            user-select: none;
+            animation: breathing 3s ease-in-out infinite;
+        }
+
+        @keyframes breathing {
+            0%, 100% {
+                box-shadow: 0 4px 16px rgba(0, 255, 188, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            }
+            50% {
+                box-shadow: 0 6px 24px rgba(0, 255, 188, 0.6), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        /* Content Styles */
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 0.95rem;
+            background: rgba(212, 223, 230, 0.08);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            color: var(--dodger-blue);
+            margin: 0.5rem 0;
+        }
+
+        .formula {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0, 177, 255, 0.05);
+            border-left: 3px solid var(--dodger-blue);
+            border-radius: 4px;
+        }
+
+        .binary-output {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .binary-badge {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .binary-spam {
+            background: var(--bittersweet-red);
+            color: var(--white);
+        }
+
+        .binary-clean {
+            background: var(--meadow-green);
+            color: var(--white);
+        }
+
+        .confidence-spectrum {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(23, 206, 149, 0.08);
+            border-radius: 8px;
+        }
+
+        .confidence-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--meadow-green);
+            min-width: max-content;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 32px;
+            background: rgba(212, 223, 230, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--meadow-green), var(--turquoise));
+            border-radius: 16px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.75rem;
+            color: var(--gable-green);
+            font-weight: 600;
+            font-size: 0.85rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .confidence-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .probability-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .probability-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(212, 223, 230, 0.05);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .probability-option {
+            font-weight: 500;
+        }
+
+        .probability-value {
+            color: var(--meadow-green);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            animation: jitter 2s ease-in-out infinite;
+        }
+
+        @keyframes jitter {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; }
+        }
+
+        .template-box {
+            background: rgba(0, 177, 255, 0.08);
+            border: 1px dashed var(--dodger-blue);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--slate);
+            line-height: 1.8;
+        }
+
+        .generation-output {
+            background: rgba(23, 206, 149, 0.08);
+            padding: 0.75rem;
+            border-left: 3px solid var(--meadow-green);
+            margin: 0.75rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .regenerate-btn {
+            margin-top: 1rem;
+            padding: 0.6rem 1.2rem;
+            background: var(--meadow-green);
+            color: var(--gable-green);
+            border: none;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .regenerate-btn:hover {
+            background: var(--turquoise);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 188, 0.3);
+        }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(212, 223, 230, 0.1);
+            font-size: 0.9rem;
+            color: var(--cloud);
+            line-height: 1.7;
+        }
+
+        .factors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .factor-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(212, 223, 230, 0.03);
+            border-radius: 4px;
+        }
+
+        .factor-strength {
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .factor-high {
+            background: var(--bittersweet-red);
+            color: var(--white);
+        }
+
+        .factor-medium {
+            background: #FFA366;
+            color: var(--white);
+        }
+
+        .factor-low {
+            background: var(--meadow-green);
+            color: var(--white);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 1rem 2.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--slate);
+            border-top: 1px solid rgba(212, 223, 230, 0.1);
+            flex-shrink: 0;
+        }
+
+        .footer-text {
+            margin: 0.25rem 0;
+        }
+
+        .aia-mark {
+            color: var(--turquoise);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .header-subtitle {
+                font-size: 0.85rem;
+            }
+
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .side {
+                padding: 1.5rem;
+            }
+
+            .scenario-selector {
+                padding: 1rem 1.5rem;
+                gap: 0.5rem;
+            }
+
+            .pill {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .left-label, .right-label {
+                font-size: 0.65rem;
+            }
+
+            .side-subtitle {
+                font-size: 0.75rem;
+            }
+
+            .explanation {
+                font-size: 0.85rem;
+            }
+
+            /* On mobile, switch to horizontal split */
+            .split-screen {
+                flex-direction: column;
+            }
+
+            .left-side {
+                clip-path: polygon(0 0, 100% 0, 100% var(--divider-pos, 50%), 0 var(--divider-pos, 50%)) !important;
+            }
+
+            .right-side {
+                clip-path: polygon(0 var(--divider-pos, 50%), 100% var(--divider-pos, 50%), 100% 100%, 0 100%) !important;
+            }
+
+            .divider {
+                width: 100%;
+                height: 3px;
+                top: var(--divider-pos, 50%);
+                left: 0;
+                transform: translateY(-50%);
+                cursor: row-resize;
+            }
+
+            .divider-handle {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        /* Extra small screens (320px and up) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem 1.25rem;
+            }
+
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-subtitle {
+                font-size: 0.75rem;
+            }
+
+            .scenario-selector {
+                padding: 0.75rem 1rem;
+                gap: 0.4rem;
+            }
+
+            .pill {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
+
+            .question-container {
+                padding: 1rem 1.25rem;
+            }
+
+            .question-text {
+                font-size: 0.95rem;
+            }
+
+            .side {
+                padding: 1rem;
+            }
+
+            .left-label, .right-label {
+                font-size: 0.6rem;
+            }
+
+            .left-icon, .right-icon {
+                font-size: 1.4rem;
+            }
+
+            .side-subtitle {
+                font-size: 0.7rem;
+                margin-bottom: 1rem;
+            }
+
+            .formula {
+                font-size: 1.1rem;
+                padding: 0.75rem;
+            }
+
+            .confidence-spectrum {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .confidence-bar {
+                width: 100%;
+            }
+
+            .footer {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.7rem;
+            }
+
+            .footer-text {
+                margin: 0.15rem 0;
+            }
+        }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="header-title">What Is AI?</h1>
+            <p class="header-subtitle">Drag the divider — two ways of thinking about the same problem</p>
+        </div>
+
+        <!-- Scenario Selector -->
+        <div class="scenario-selector" id="scenarioSelector"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Question -->
+            <div class="question-container">
+                <div class="question-text" id="questionText"></div>
+            </div>
+
+            <!-- Split Screen -->
+            <div class="split-screen">
+                <div class="left-side" id="leftSide">
+                    <div class="left-label">⚙️ Deterministic</div>
+                    <div class="side-subtitle">Rules in, exact answer out</div>
+                    <div class="side-content" id="leftContent"></div>
+                </div>
+
+                <div class="divider" id="divider">
+                    <div class="divider-handle">⟨⟩</div>
+                </div>
+
+                <div class="right-side" id="rightSide">
+                    <div class="right-label">🎲 Probabilistic</div>
+                    <div class="side-subtitle">Patterns in, likely answer out</div>
+                    <div class="side-content" id="rightContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-text"><span class="aia-mark">AI Accelerator</span> — Understanding AI Thinking</div>
+            <div class="footer-text">2 Appleby Yard, Design District, London SE10 0BJ</div>
+        </div>
+    </div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+        // ═════════════════════════════════════════════════════════════════════════════
+        // POST MESSAGE PROTOCOL INTEGRATION
+        // ═════════════════════════════════════════════════════════════════════════════
+
+        // Signal to parent frame that graphic is ready
+        function sendReadySignal() {
+            window.parent.postMessage({ type: 'GRAPHIC_READY', graphic: 'ai-definition-v2' }, '*');
+        }
+
+        // Listen for incoming messages from parent frame
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'RESET') {
+                resetGraphic();
+            }
+        });
+
+        // Reset graphic to initial state
+        function resetGraphic() {
+            currentScenario = 0;
+            dividerPos = 50;
+            document.documentElement.style.setProperty('--divider-pos', '50%');
+            loadScenario(0);
+            logInteraction('RESET');
+        }
+
+        // Log user interactions to parent
+        function logInteraction(action, data) {
+            window.parent.postMessage({
+                type: 'LOG_INTERACTION',
+                graphic: 'ai-definition-v2',
+                action: action,
+                timestamp: new Date().toISOString(),
+                data: data || {}
+            }, '*');
+        }
+
+        // ═════════════════════════════════════════════════════════════════════════════
+        // EXISTING SCENARIO DATA
+        // ═════════════════════════════════════════════════════════════════════════════
+
+        // Scenario Data
+        const scenarios = [
+            {
+                id: 'math',
+                label: 'What\'s 2 + 2?',
+                question: 'What\'s 2 + 2?',
+                left: {
+                    mainContent: '<div class="formula">2 + 2 = 4</div>',
+                    explanation: 'The answer is always 4. It follows a fixed mathematical rule. Ask a million times, get 4 every time.'
+                },
+                right: {
+                    mainContent: `
+                        <div class="probability-list">
+                            <div class="probability-item">
+                                <span class="probability-option">"4"</span>
+                                <span class="probability-value">95%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"four"</span>
+                                <span class="probability-value">3%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"The sum is 4"</span>
+                                <span class="probability-value">1.5%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"2+2=4, also expressed..."</span>
+                                <span class="probability-value">0.5%</span>
+                            </div>
+                        </div>
+                    `,
+                    explanation: 'The model predicts the most likely next tokens. "4" is overwhelmingly likely, but it\'s choosing from a probability distribution, not following an arithmetic rule.'
+                }
+            },
+            {
+                id: 'spam',
+                label: 'Is this email spam?',
+                question: 'Is this email spam?',
+                left: {
+                    mainContent: `
+                        <div class="template-box">
+                            IF contains("buy now")<br>
+                            AND sender NOT IN whitelist<br>
+                            → SPAM
+                        </div>
+                        <div class="binary-output">
+                            <div class="binary-badge binary-spam">SPAM ✓</div>
+                        </div>
+                    `,
+                    explanation: 'Traditional spam filters check explicit rules. If the rules match, it\'s spam. Period. No grey area.'
+                },
+                right: {
+                    mainContent: `
+                        <div class="confidence-spectrum">
+                            <span class="confidence-label">87% likely spam</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: 87%"></div>
+                            </div>
+                        </div>
+                        <div class="factors-list">
+                            <div class="factor-item">
+                                <span>Suspicious sender</span>
+                                <span class="factor-strength factor-high">HIGH</span>
+                            </div>
+                            <div class="factor-item">
+                                <span>Urgency language</span>
+                                <span class="factor-strength factor-medium">MEDIUM</span>
+                            </div>
+                            <div class="factor-item">
+                                <span>Link density</span>
+                                <span class="factor-strength factor-high">HIGH</span>
+                            </div>
+                            <div class="factor-item">
+                                <span>Personalisation</span>
+                                <span class="factor-strength factor-low">LOW</span>
+                            </div>
+                        </div>
+                    `,
+                    explanation: 'The AI weighs multiple signals and gives a probability. It\'s never 100% certain — it\'s making its best prediction based on patterns learned from data.'
+                }
+            },
+            {
+                id: 'translate',
+                label: 'Translate "hello" to French',
+                question: 'Translate "hello" to French',
+                left: {
+                    mainContent: `
+                        <div class="mono" style="display: block; font-size: 1.1rem; text-align: center; padding: 1.5rem; background: rgba(0, 177, 255, 0.1); border-left: 3px solid var(--dodger-blue); margin: 1rem 0;">
+                            hello → bonjour
+                        </div>
+                    `,
+                    explanation: 'A lookup table gives one fixed translation. Same input, same output, every time. Simple and predictable.'
+                },
+                right: {
+                    mainContent: `
+                        <div class="probability-list">
+                            <div class="probability-item">
+                                <span class="probability-option">"Bonjour" <span style="color: var(--slate); font-size: 0.85rem;">(formal)</span></span>
+                                <span class="probability-value">40%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"Salut" <span style="color: var(--slate); font-size: 0.85rem;">(casual)</span></span>
+                                <span class="probability-value">35%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"Coucou" <span style="color: var(--slate); font-size: 0.85rem;">(informal)</span></span>
+                                <span class="probability-value">15%</span>
+                            </div>
+                            <div class="probability-item">
+                                <span class="probability-option">"Allô" <span style="color: var(--slate); font-size: 0.85rem;">(on phone)</span></span>
+                                <span class="probability-value">10%</span>
+                            </div>
+                        </div>
+                    `,
+                    explanation: 'The AI considers context, tone, and usage patterns. The "right" translation depends on the situation — and the model samples from multiple plausible options.'
+                }
+            },
+            {
+                id: 'description',
+                label: 'Write a product description',
+                question: 'Write a one-line product description for a coffee maker',
+                left: {
+                    mainContent: `
+                        <div class="template-box">
+                            [Product Name] — [Category]<br>
+                            product by [Brand].<br>
+                            Price: [£X].
+                        </div>
+                    `,
+                    explanation: 'A template fills in blanks with fixed rules. It\'s predictable, consistent, and completely uncreative. Same template, same structure, every time.'
+                },
+                right: {
+                    mainContent: `
+                        <div id="generationContainer">
+                            <div class="generation-output">
+                                <strong>Version 1:</strong> Premium espresso machine that transforms your morning routine with precision brewing and sleek Italian design.
+                            </div>
+                            <div class="generation-output">
+                                <strong>Version 2:</strong> Smart coffee maker with one-touch operation, customisable strength, and a thermal carafe that keeps coffee hot for hours.
+                            </div>
+                            <div class="generation-output">
+                                <strong>Version 3:</strong> Compact, durable coffee maker for busy professionals — café-quality results in under 90 seconds.
+                            </div>
+                        </div>
+                        <button class="regenerate-btn" onclick="regenerateDescriptions()">Regenerate →</button>
+                    `,
+                    explanation: 'Every generation is different. The model samples from a space of plausible descriptions. Temperature controls how creative vs predictable the output is.'
+                }
+            }
+        ];
+
+        let currentScenario = 0;
+        let dividerPos = 50;
+        let isDragging = false;
+        let isMobile = false;
+
+        // Initialize
+        function init() {
+            checkMobile();
+            buildScenarioSelector();
+            loadScenario(0);
+            setupDivider();
+            window.addEventListener('resize', checkMobile);
+
+            // Send ready signal after initialization
+            sendReadySignal();
+        }
+
+        function checkMobile() {
+            isMobile = window.innerWidth < 768;
+        }
+
+        function buildScenarioSelector() {
+            const selector = document.getElementById('scenarioSelector');
+            selector.innerHTML = scenarios.map((s, i) => `
+                <button class="pill ${i === 0 ? 'active' : ''}" onclick="selectScenario(${i})">
+                    ${s.label}
+                </button>
+            `).join('');
+        }
+
+        function selectScenario(index) {
+            logInteraction('SCENARIO_CHANGE', { scenarioId: scenarios[index].id, scenarioIndex: index });
+            loadScenario(index);
+        }
+
+        function loadScenario(index) {
+            currentScenario = index;
+            const scenario = scenarios[index];
+
+            // Update active pill
+            document.querySelectorAll('.pill').forEach((pill, i) => {
+                pill.classList.toggle('active', i === index);
+            });
+
+            // Update question
+            document.getElementById('questionText').textContent = scenario.question;
+
+            // Update left side
+            document.getElementById('leftContent').innerHTML = `
+                ${scenario.left.mainContent}
+                <div class="explanation">${scenario.left.explanation}</div>
+            `;
+
+            // Update right side
+            document.getElementById('rightContent').innerHTML = `
+                ${scenario.right.mainContent}
+                <div class="explanation">${scenario.right.explanation}</div>
+            `;
+
+            // Trigger animation on bars if present
+            setTimeout(() => {
+                document.querySelectorAll('.confidence-fill').forEach(el => {
+                    const width = el.style.width;
+                    el.style.width = '0';
+                    setTimeout(() => {
+                        el.style.width = width;
+                    }, 50);
+                });
+            }, 100);
+        }
+
+        function setupDivider() {
+            const divider = document.getElementById('divider');
+            const splitScreen = document.querySelector('.split-screen');
+
+            function updateDividerPosition(clientX, clientY) {
+                const rect = splitScreen.getBoundingClientRect();
+                let newPos;
+
+                if (isMobile) {
+                    newPos = ((clientY - rect.top) / rect.height) * 100;
+                } else {
+                    newPos = ((clientX - rect.left) / rect.width) * 100;
+                }
+
+                newPos = Math.max(15, Math.min(85, newPos));
+                dividerPos = newPos;
+
+                document.documentElement.style.setProperty('--divider-pos', `${dividerPos}%`);
+                logInteraction('DIVIDER_DRAG', { position: dividerPos });
+            }
+
+            function onMouseDown() {
+                isDragging = true;
+            }
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                updateDividerPosition(e.clientX, e.clientY);
+            }
+
+            function onTouchMove(e) {
+                if (!isDragging) return;
+                const touch = e.touches[0];
+                updateDividerPosition(touch.clientX, touch.clientY);
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+            }
+
+            divider.addEventListener('mousedown', onMouseDown);
+            divider.addEventListener('touchstart', onMouseDown);
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: true });
+
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('touchend', onMouseUp);
+        }
+
+        function regenerateDescriptions() {
+            const descriptions = [
+                'All-in-one coffee solution — brew, grind, and serve in one elegant machine.',
+                'Barista-quality coffee at home with programmable brewing and temperature control.',
+                'Bold, reliable coffee maker built for daily use with customisable brew strength.',
+                'Fast, efficient, and whisper-quiet — perfect for early mornings and busy schedules.',
+                'True coffee lover\'s machine with precision heating and filter-free brewing technology.',
+                'Modern design meets practical functionality — café results, home convenience.'
+            ];
+
+            let outputs = '';
+            for (let i = 1; i <= 3; i++) {
+                const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
+                outputs += `<div class="generation-output"><strong>Version ${i}:</strong> ${randomDesc}</div>`;
+            }
+
+            const container = document.getElementById('generationContainer');
+            if (container) {
+                container.innerHTML = outputs;
+                logInteraction('REGENERATE_DESCRIPTIONS', { count: 3 });
+            }
+        }
+
+        // Initialise on load
+        init();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.pill, .scenario, [class*=pill]') || document.querySelector('.controls'),
+    title: 'Choose a scenario',
+    desc: 'Each scenario shows a different way to think about what AI is — from simple rules to learning systems.', pad: 8 },
+  { target: () => document.querySelector('.divider, [class*=divider]') || document.querySelector('.split, .main'),
+    title: 'Drag to compare',
+    desc: 'Drag the divider left and right to shift between the deterministic and probabilistic views of the same scenario.', pad: 6 },
+  { target: () => document.querySelector('.content, .panel, [class*=content]') || document.querySelector('.left, .right'),
+    title: 'Two perspectives',
+    desc: 'Left shows the traditional rule-based approach. Right shows how AI handles it through learning and probability.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  logInteraction('TOUR_START', {});
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  logInteraction('TOUR_END', { step: tourStep, total: TOUR_STEPS.length });
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

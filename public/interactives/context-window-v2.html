@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Context Window — Interactive Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gable-green: #1B2F3C;
+            --bright-turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet-red: #FF5F5F;
+            --cornflower: #6161FF;
+            --moonraker: #C5B6F1;
+            --malibu: #66D9FF;
+            --seapink: #FF9E9E;
+            --white: #FFFFFF;
+            --cloud: #D4DFE6;
+            --slate: #8FA4B3;
+
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background: var(--gable-green);
+            color: var(--white);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: var(--space-lg) var(--space-xl);
+            border-bottom: 1px solid rgba(212, 223, 230, 0.1);
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--space-xs);
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--slate);
+            font-weight: 300;
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        .main-area {
+            flex: 1;
+            display: flex;
+            gap: var(--space-lg);
+            padding: var(--space-lg) var(--space-xl);
+            min-height: 0;
+        }
+
+        /* ===== LEFT PANEL: PALETTE ===== */
+        .palette-panel {
+            flex: 0 0 35%;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .palette-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--slate);
+            margin-bottom: var(--space-md);
+            letter-spacing: 0.5px;
+        }
+
+        .palette-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            overflow-y: auto;
+            padding-right: var(--space-sm);
+        }
+
+        .palette-items::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .palette-items::-webkit-scrollbar-track {
+            background: rgba(212, 223, 230, 0.05);
+            border-radius: 3px;
+        }
+
+        .palette-items::-webkit-scrollbar-thumb {
+            background: rgba(212, 223, 230, 0.2);
+            border-radius: 3px;
+        }
+
+        .palette-items::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 223, 230, 0.3);
+        }
+
+        .palette-item {
+            padding: var(--space-md);
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            user-select: none;
+            border-left: 3px solid currentColor;
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .palette-item:active {
+            cursor: grabbing;
+        }
+
+        .palette-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 16px rgba(0, 255, 188, 0.1);
+        }
+
+        .palette-item-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .palette-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .palette-item-name {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .palette-item-tokens {
+            font-size: 11px;
+            opacity: 0.75;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Colour variants */
+        .palette-item[data-type="system-prompt"] {
+            background: rgba(97, 97, 255, 0.15);
+            color: var(--cornflower);
+        }
+
+        .palette-item[data-type="user-message"] {
+            background: rgba(0, 177, 255, 0.15);
+            color: var(--dodger-blue);
+        }
+
+        .palette-item[data-type="ai-response"] {
+            background: rgba(23, 206, 149, 0.15);
+            color: var(--meadow-green);
+        }
+
+        .palette-item[data-type="document"] {
+            background: rgba(197, 182, 241, 0.15);
+            color: var(--moonraker);
+        }
+
+        .palette-item[data-type="long-document"] {
+            background: rgba(255, 158, 158, 0.15);
+            color: var(--seapink);
+        }
+
+        .palette-item[data-type="image"] {
+            background: rgba(102, 217, 255, 0.15);
+            color: var(--malibu);
+        }
+
+        .palette-item[data-type="chat-history"] {
+            background: rgba(0, 255, 188, 0.15);
+            color: var(--bright-turquoise);
+        }
+
+        .palette-item[data-type="few-shot"] {
+            background: rgba(255, 95, 95, 0.15);
+            color: var(--bittersweet-red);
+        }
+
+        /* ===== CENTRE PANEL: BUCKET ===== */
+        .bucket-panel {
+            flex: 0 0 35%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .bucket-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--slate);
+            margin-bottom: var(--space-md);
+            letter-spacing: 0.5px;
+            align-self: flex-start;
+        }
+
+        .bucket-container {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            position: relative;
+        }
+
+        .bucket-model-label {
+            font-size: 11px;
+            color: var(--slate);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+        }
+
+        .bucket {
+            position: relative;
+            width: 200px;
+            height: 400px;
+            border: 2px solid rgba(212, 223, 230, 0.3);
+            border-top: none;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            background: rgba(0, 255, 188, 0.05);
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .bucket::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, rgba(212, 223, 230, 0.4), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .bucket-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 255, 188, 0.08);
+            transition: height 0.3s ease;
+            border-top: 2px solid rgba(0, 255, 188, 0.4);
+            pointer-events: none;
+        }
+
+        .bucket-items {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            left: 0;
+            overflow: hidden;
+        }
+
+        .bucket-item {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            opacity: 1;
+            transition: opacity 0.2s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--white);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .bucket-item.spilling {
+            animation: spill 0.5s ease forwards;
+        }
+
+        @keyframes spill {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+        }
+
+        .bucket-item-label {
+            font-size: 10px;
+            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ===== RIGHT PANEL: STATS & CONTROLS ===== */
+        .stats-panel {
+            flex: 0 0 30%;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            min-width: 0;
+        }
+
+        .stats-section {
+            background: rgba(212, 223, 230, 0.05);
+            padding: var(--space-md);
+            border-radius: 12px;
+            border: 1px solid rgba(212, 223, 230, 0.1);
+        }
+
+        .stats-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--slate);
+            margin-bottom: var(--space-md);
+            letter-spacing: 0.5px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: var(--space-md);
+            font-size: 13px;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--slate);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            color: var(--bright-turquoise);
+        }
+
+        .capacity-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(212, 223, 230, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: var(--space-sm);
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--meadow-green), var(--dodger-blue));
+            transition: width 0.3s ease, background 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .capacity-fill.warning {
+            background: linear-gradient(90deg, #FFA500, #FF7F00);
+        }
+
+        .capacity-fill.danger {
+            background: linear-gradient(90deg, var(--bittersweet-red), #FF3333);
+        }
+
+        .model-selector {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .model-button {
+            padding: var(--space-md);
+            background: rgba(212, 223, 230, 0.1);
+            border: 1px solid rgba(212, 223, 230, 0.2);
+            border-radius: 8px;
+            color: var(--cloud);
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .model-button:hover {
+            background: rgba(212, 223, 230, 0.15);
+            border-color: rgba(212, 223, 230, 0.3);
+        }
+
+        .model-button.active {
+            background: rgba(0, 177, 255, 0.2);
+            border-color: var(--dodger-blue);
+            color: var(--dodger-blue);
+        }
+
+        .model-button-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .model-capacity {
+            font-size: 11px;
+            opacity: 0.7;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .callout {
+            background: rgba(0, 255, 188, 0.1);
+            border-left: 3px solid var(--bright-turquoise);
+            padding: var(--space-md);
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--cloud);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .callout.info {
+            background: rgba(97, 97, 255, 0.1);
+            border-left-color: var(--cornflower);
+        }
+
+        .callout.warning {
+            background: rgba(255, 165, 0, 0.1);
+            border-left-color: #FFA500;
+        }
+
+        .callout.danger {
+            background: rgba(255, 95, 95, 0.1);
+            border-left-color: var(--bittersweet-red);
+        }
+
+        .controls {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .btn {
+            flex: 1;
+            padding: var(--space-md);
+            background: rgba(0, 177, 255, 0.2);
+            border: 1px solid var(--dodger-blue);
+            border-radius: 8px;
+            color: var(--dodger-blue);
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: rgba(0, 177, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border-color: rgba(212, 223, 230, 0.3);
+            color: var(--slate);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(212, 223, 230, 0.1);
+            border-color: var(--slate);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: var(--space-md) var(--space-xl);
+            border-top: 1px solid rgba(212, 223, 230, 0.1);
+            font-size: 11px;
+            color: var(--slate);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .footer-brand strong {
+            color: var(--bright-turquoise);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .main-area {
+                flex-direction: column;
+                gap: var(--space-md);
+            }
+
+            .palette-panel,
+            .bucket-panel,
+            .stats-panel {
+                flex: 0 0 auto;
+            }
+
+            .palette-items {
+                max-height: 150px;
+            }
+
+            .bucket {
+                width: 160px;
+                height: 300px;
+            }
+
+            .stats-panel {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-md);
+            }
+
+            .stats-section {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: var(--space-md) var(--space-lg);
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .header p {
+                font-size: 12px;
+            }
+
+            .main-area {
+                padding: var(--space-md) var(--space-lg);
+                gap: var(--space-md);
+            }
+
+            .palette-items {
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: var(--space-sm);
+                padding-bottom: var(--space-sm);
+            }
+
+            .palette-item {
+                flex: 0 0 120px;
+                flex-direction: column;
+                padding: var(--space-sm);
+                text-align: center;
+            }
+
+            .palette-item-icon {
+                font-size: 24px;
+            }
+
+            .palette-item-name {
+                font-size: 11px;
+            }
+
+            .palette-item-tokens {
+                font-size: 10px;
+            }
+
+            .bucket {
+                width: 140px;
+                height: 250px;
+            }
+
+            .stats-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .footer {
+                flex-direction: column;
+                gap: var(--space-sm);
+                text-align: center;
+            }
+        }
+
+        /* Touch interactions */
+        @media (hover: none) {
+            .palette-item::after {
+                content: 'Tap to add';
+                position: absolute;
+                bottom: -20px;
+                font-size: 9px;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+
+
+        @media (max-width: 480px) {
+            .header {
+                padding: var(--space-md) var(--space-md);
+            }
+
+            .header h1 {
+                font-size: 18px;
+                font-weight: 600;
+                letter-spacing: -0.5px;
+            }
+
+            .layout {
+                flex-direction: column;
+                gap: var(--space-md);
+            }
+
+            .palette, .bucket-container, .stats {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .palette-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-sm);
+            }
+
+            .palette-item {
+                padding: var(--space-sm);
+                font-size: 11px;
+            }
+
+            .palette-item-icon {
+                font-size: 16px;
+            }
+
+            .palette-item-tokens {
+                font-size: 9px;
+            }
+
+            .bucket-container {
+                min-height: 300px;
+            }
+
+            .bucket {
+                min-height: 250px;
+            }
+
+            .bucket-item {
+                padding: var(--space-sm);
+                font-size: 11px;
+                gap: var(--space-xs);
+            }
+
+            .stats-item {
+                padding: var(--space-md);
+            }
+
+            .stats-item-label {
+                font-size: 11px;
+            }
+
+            .stats-item-value {
+                font-size: 18px;
+            }
+
+            .model-buttons {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+
+            .model-button {
+                padding: var(--space-sm) var(--space-md);
+                font-size: 11px;
+                flex: 1;
+            }
+
+            .tour-tip {
+                max-width: calc(100vw - 32px);
+            }
+
+            .tour-title {
+                font-size: 14px;
+            }
+
+            .tour-desc {
+                font-size: 12px;
+            }
+
+            .tour-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .header h1 {
+                font-size: 14px;
+            }
+
+            .palette-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .palette-item {
+                padding: var(--space-xs);
+                font-size: 10px;
+            }
+
+            .bucket {
+                min-height: 200px;
+            }
+
+            .stats-item {
+                padding: var(--space-sm) var(--space-md);
+            }
+
+            .tour-tip {
+                font-size: 12px;
+            }
+
+            .tour-title {
+                font-size: 12px;
+            }
+
+            .tour-desc {
+                font-size: 11px;
+            }
+
+            .model-button {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+        }
+            .palette-items:first-child::after {
+                opacity: 1;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .bucket-item {
+            animation: fadeIn 0.2s ease;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+    
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>The Context Window</h1>
+        <p>Everything the AI can see at once — drag items in to fill the window</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-area">
+        <!-- Left Panel: Content Palette -->
+        <div class="palette-panel">
+            <div class="palette-title">Content Types</div>
+            <div class="palette-items" id="palette">
+                <div class="palette-item" data-type="system-prompt" data-tokens="500" draggable="true">
+                    <div class="palette-item-icon">🔧</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">System Prompt</span>
+                        <span class="palette-item-tokens">~500 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="user-message" data-tokens="200" draggable="true">
+                    <div class="palette-item-icon">💬</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">User Message</span>
+                        <span class="palette-item-tokens">~200 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="ai-response" data-tokens="800" draggable="true">
+                    <div class="palette-item-icon">🤖</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">AI Response</span>
+                        <span class="palette-item-tokens">~800 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="document" data-tokens="3000" draggable="true">
+                    <div class="palette-item-icon">📄</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">Document (2 pages)</span>
+                        <span class="palette-item-tokens">~3,000 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="long-document" data-tokens="15000" draggable="true">
+                    <div class="palette-item-icon">📚</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">Long Document (20 pages)</span>
+                        <span class="palette-item-tokens">~15,000 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="image" data-tokens="1000" draggable="true">
+                    <div class="palette-item-icon">🖼️</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">Image</span>
+                        <span class="palette-item-tokens">~1,000 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="chat-history" data-tokens="4000" draggable="true">
+                    <div class="palette-item-icon">💭</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">Chat History (10 msg)</span>
+                        <span class="palette-item-tokens">~4,000 tokens</span>
+                    </div>
+                </div>
+
+                <div class="palette-item" data-type="few-shot" data-tokens="2000" draggable="true">
+                    <div class="palette-item-icon">📋</div>
+                    <div class="palette-item-content">
+                        <span class="palette-item-name">Few-Shot Examples</span>
+                        <span class="palette-item-tokens">~2,000 tokens</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Centre Panel: Bucket -->
+        <div class="bucket-panel">
+            <div class="bucket-title">Context Window</div>
+            <div class="bucket-container">
+                <div class="bucket-model-label" id="bucketLabel">GPT-4 — 8,000 tokens</div>
+                <div class="bucket" id="bucket">
+                    <div class="bucket-fill" id="bucketFill"></div>
+                    <div class="bucket-items" id="bucketItems"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Stats & Controls -->
+        <div class="stats-panel">
+            <!-- Capacity Stats -->
+            <div class="stats-section">
+                <div class="stats-title">Capacity</div>
+                <div class="stat-row">
+                    <span class="stat-label">Used:</span>
+                    <span class="stat-value" id="statUsed">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Available:</span>
+                    <span class="stat-value" id="statAvailable">8,000</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Fill Level:</span>
+                    <span class="stat-value" id="statFill">0%</span>
+                </div>
+                <div class="capacity-bar">
+                    <div class="capacity-fill" id="capacityFill"></div>
+                </div>
+            </div>
+
+            <!-- Items Stats -->
+            <div class="stats-section">
+                <div class="stats-title">Contents</div>
+                <div class="stat-row">
+                    <span class="stat-label">Items in window:</span>
+                    <span class="stat-value" id="statItems">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Items spilled:</span>
+                    <span class="stat-value" id="statSpilled">0</span>
+                </div>
+            </div>
+
+            <!-- Model Selector -->
+            <div class="stats-section">
+                <div class="stats-title">AI Model</div>
+                <div class="model-selector">
+                    <button class="model-button" data-model="gpt35" data-capacity="4000">
+                        <div class="model-button-text">
+                            <span>GPT-3.5</span>
+                            <span class="model-capacity">4K</span>
+                        </div>
+                    </button>
+                    <button class="model-button active" data-model="gpt4" data-capacity="8000">
+                        <div class="model-button-text">
+                            <span>GPT-4</span>
+                            <span class="model-capacity">8K</span>
+                        </div>
+                    </button>
+                    <button class="model-button" data-model="claude-haiku" data-capacity="200000">
+                        <div class="model-button-text">
+                            <span>Claude 3 Haiku</span>
+                            <span class="model-capacity">200K</span>
+                        </div>
+                    </button>
+                    <button class="model-button" data-model="gpt4-turbo" data-capacity="128000">
+                        <div class="model-button-text">
+                            <span>GPT-4 Turbo</span>
+                            <span class="model-capacity">128K</span>
+                        </div>
+                    </button>
+                    <button class="model-button" data-model="gemini-pro" data-capacity="1000000">
+                        <div class="model-button-text">
+                            <span>Gemini 1.5 Pro</span>
+                            <span class="model-capacity">1M</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Educational Callout -->
+            <div class="callout info" id="callout">
+                The context window is everything the AI can "see" in one conversation. Think of it as short-term memory.
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-secondary" id="clearBtn">Clear Bucket</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-brand">
+            <strong>AIA OS</strong> — AI Accelerator Learning
+        </div>
+        <div>Interactive Context Window Visualisation</div>
+    </div>
+
+    
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+        // ===== STATE MANAGEMENT =====
+        const state = {
+            items: [],
+            currentModel: 'gpt4',
+            capacity: 8000,
+            usedTokens: 0,
+            spilledCount: 0,
+            pixelsPerToken: 0
+        };
+
+        const contentTypeIcons = {
+            'system-prompt': '🔧',
+            'user-message': '💬',
+            'ai-response': '🤖',
+            'document': '📄',
+            'long-document': '📚',
+            'image': '🖼️',
+            'chat-history': '💭',
+            'few-shot': '📋'
+        };
+
+        const contentTypeNames = {
+            'system-prompt': 'System',
+            'user-message': 'User',
+            'ai-response': 'AI',
+            'document': 'Doc',
+            'long-document': 'Long Doc',
+            'image': 'Image',
+            'chat-history': 'History',
+            'few-shot': 'Examples'
+        };
+
+        // ===== UTILITY FUNCTIONS =====
+        function calculatePixelsPerToken() {
+            const bucketHeight = 400;
+            state.pixelsPerToken = bucketHeight / state.capacity;
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString();
+        }
+
+        function updateStats() {
+            const fillPercentage = Math.round((state.usedTokens / state.capacity) * 100);
+
+            document.getElementById('statUsed').textContent = formatNumber(state.usedTokens);
+            document.getElementById('statAvailable').textContent = formatNumber(state.capacity - state.usedTokens);
+            document.getElementById('statFill').textContent = `${fillPercentage}%`;
+            document.getElementById('statItems').textContent = state.items.length;
+            document.getElementById('statSpilled').textContent = state.spilledCount;
+
+            // Update capacity bar colour
+            const capacityFill = document.getElementById('capacityFill');
+            capacityFill.style.width = `${Math.min(fillPercentage, 100)}%`;
+
+            capacityFill.classList.remove('warning', 'danger');
+            if (fillPercentage >= 100) {
+                capacityFill.classList.add('danger');
+            } else if (fillPercentage >= 80) {
+                capacityFill.classList.add('warning');
+            }
+
+            // Update callout based on state
+            updateCallout(fillPercentage);
+        }
+
+        function updateCallout(fillPercentage) {
+            const callout = document.getElementById('callout');
+            const calloutText = {
+                0: {
+                    text: 'The context window is everything the AI can "see" in one conversation. Think of it as short-term memory.',
+                    class: 'info'
+                },
+                50: {
+                    text: 'There\'s plenty of room. You can add detailed instructions, examples, and conversation history.',
+                    class: 'info'
+                },
+                80: {
+                    text: 'Getting fuller. In practice, you want to leave room for the AI\'s response.',
+                    class: 'warning'
+                },
+                100: {
+                    text: 'Almost full. The AI might start losing track of earlier context.',
+                    class: 'warning'
+                },
+                101: {
+                    text: 'When the window overflows, the oldest content gets pushed out. The AI literally forgets it. This is why context engineering matters.',
+                    class: 'danger'
+                }
+            };
+
+            let selectedCallout = calloutText[0];
+            if (fillPercentage > 100) {
+                selectedCallout = calloutText[101];
+            } else if (fillPercentage >= 80) {
+                selectedCallout = calloutText[80];
+            } else if (fillPercentage >= 50) {
+                selectedCallout = calloutText[50];
+            }
+
+            callout.textContent = selectedCallout.text;
+            callout.className = `callout ${selectedCallout.class}`;
+        }
+
+        function renderBucket() {
+            const bucketItems = document.getElementById('bucketItems');
+            bucketItems.innerHTML = '';
+
+            let cumulativeHeight = 0;
+
+            state.items.forEach((item, index) => {
+                const itemHeight = item.tokens * state.pixelsPerToken;
+                const elem = document.createElement('div');
+                elem.className = 'bucket-item';
+                elem.style.bottom = cumulativeHeight + 'px';
+                elem.style.height = itemHeight + 'px';
+                elem.style.backgroundColor = getTypeColour(item.type);
+                elem.innerHTML = `<span class="bucket-item-label">${contentTypeNames[item.type]} (${item.tokens})</span>`;
+
+                bucketItems.appendChild(elem);
+                cumulativeHeight += itemHeight;
+            });
+
+            // Update fill bar
+            const fillPercentage = (state.usedTokens / state.capacity) * 100;
+            document.getElementById('bucketFill').style.height = `${Math.min(fillPercentage, 100)}%`;
+        }
+
+        function getTypeColour(type) {
+            const colours = {
+                'system-prompt': '#6161FF',
+                'user-message': '#00B1FF',
+                'ai-response': '#17CE95',
+                'document': '#C5B6F1',
+                'long-document': '#FF9E9E',
+                'image': '#66D9FF',
+                'chat-history': '#00FFBC',
+                'few-shot': '#FF5F5F'
+            };
+            return colours[type] || '#D4DFE6';
+        }
+
+        function addItem(type, tokens) {
+            const newItem = {
+                type,
+                tokens,
+                id: Date.now() + Math.random()
+            };
+
+            state.items.push(newItem);
+            state.usedTokens += tokens;
+
+            // Check for overflow
+            if (state.usedTokens > state.capacity) {
+                // Spill oldest items
+                while (state.usedTokens > state.capacity && state.items.length > 0) {
+                    const spilledItem = state.items.shift();
+                    state.usedTokens -= spilledItem.tokens;
+                    state.spilledCount++;
+
+                    // Animation for spilling
+                    const bucketItems = document.getElementById('bucketItems');
+                    const items = bucketItems.querySelectorAll('.bucket-item');
+                    if (items.length > 0) {
+                        items[0].classList.add('spilling');
+                    }
+                }
+            }
+
+            renderBucket();
+            updateStats();
+        }
+
+        function clearBucket() {
+            state.items = [];
+            state.usedTokens = 0;
+            state.spilledCount = 0;
+            renderBucket();
+            updateStats();
+        }
+
+        function switchModel(modelKey, capacity) {
+            state.currentModel = modelKey;
+            state.capacity = capacity;
+            calculatePixelsPerToken();
+
+            // Update active button
+            document.querySelectorAll('.model-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-model="${modelKey}"]`).classList.add('active');
+
+            // Update bucket label
+            document.getElementById('bucketLabel').textContent =
+                `${state.currentModel.toUpperCase()} — ${formatNumber(capacity)} tokens`;
+
+            // Check for overflow with new capacity
+            if (state.usedTokens > state.capacity) {
+                while (state.usedTokens > state.capacity && state.items.length > 0) {
+                    const spilledItem = state.items.shift();
+                    state.usedTokens -= spilledItem.tokens;
+                    state.spilledCount++;
+                }
+            }
+
+            renderBucket();
+            updateStats();
+        }
+
+        // ===== DRAG AND DROP =====
+        let draggedElement = null;
+
+        document.getElementById('palette').addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('palette-item')) {
+                draggedElement = e.target;
+                e.dataTransfer.effectAllowed = 'copy';
+            }
+        });
+
+        document.getElementById('bucket').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        document.getElementById('bucket').addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (draggedElement) {
+                const type = draggedElement.dataset.type;
+                const tokens = parseInt(draggedElement.dataset.tokens);
+                addItem(type, tokens);
+            }
+        });
+
+        // Touch fallback for mobile
+        document.getElementById('palette').addEventListener('click', (e) => {
+            const item = e.target.closest('.palette-item');
+            if (item) {
+                const type = item.dataset.type;
+                const tokens = parseInt(item.dataset.tokens);
+                addItem(type, tokens);
+            }
+        });
+
+        // ===== EVENT LISTENERS =====
+        document.querySelectorAll('.model-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const model = btn.dataset.model;
+                const capacity = parseInt(btn.dataset.capacity);
+                switchModel(model, capacity);
+            });
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', clearBucket);
+
+        // ===== INITIALIZATION =====
+        calculatePixelsPerToken();
+        updateStats();
+    
+
+        // ===== POSTMESSAGE PROTOCOL =====
+        // Signal to parent that graphic is ready
+        window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+
+        // Listen for incoming reset commands
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'RESET') {
+                clearBucket();
+            }
+        });
+
+        // Send interaction logs to parent (optional)
+        function logInteraction(action, details) {
+            window.parent.postMessage({
+                type: 'LOG_INTERACTION',
+                action: action,
+                details: details,
+                timestamp: new Date().toISOString()
+            }, '*');
+        }
+    
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.palette-item, .palette, [class*=palette]') || document.querySelector('.left, .sidebar'),
+    title: 'Content palette',
+    desc: 'These are the different types of content that go into a context window — system prompts, documents, conversation history.', pad: 8 },
+  { target: () => document.querySelector('.bucket-container, .bucket, [class*=bucket]') || document.querySelector('.center, .main'),
+    title: 'The context window',
+    desc: 'Drag items from the palette into the window. Watch it fill up — every model has a limited capacity.', pad: 6 },
+  { target: () => document.querySelector('.stats, .info, [class*=stat]') || document.querySelector('.right, aside'),
+    title: 'Token usage',
+    desc: 'Track how many tokens you\'ve used and how much capacity remains. Running out means the model starts forgetting.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

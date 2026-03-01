@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Engineering — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --gable-lighter: #2d4f64;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --seapink: #EFACA8;
+    --bittersweet: #FF5F5F;
+    --white: #FFFFFF;
+    --accessible-accent: #007A5E;
+    --slate: #8FA4B3;
+    --cloud: #D4DFE6;
+    --amber: #FFC107;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 22px 40px 16px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .header-text h1 span { color: var(--meadow); }
+  .header-text .subtitle {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--slate);
+    margin-top: 2px;
+  }
+  .reset-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--slate);
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    padding: 6px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+
+  /* ─── MENTAL MODEL ─── */
+  .mental-model {
+    background: rgba(23,206,149,0.06);
+    border: 1px solid rgba(23,206,149,0.12);
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--cloud);
+    line-height: 1.45;
+  }
+  .mental-model strong { color: var(--white); }
+  .mental-model .hl { color: var(--meadow); font-weight: 600; }
+
+  /* ─── MAIN WORKSPACE ─── */
+  .workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 220px 1fr 380px;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  /* ─── LEFT: INGREDIENT SHELF ─── */
+  .shelf {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .shelf-title {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .shelf-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .shelf-items::-webkit-scrollbar { width: 3px; }
+  .shelf-items::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .ingredient {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: grab;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .ingredient:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); }
+  .ingredient:active { cursor: grabbing; }
+  .ingredient.used { opacity: 0.3; cursor: default; pointer-events: none; }
+  .ingredient.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+
+  .ing-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .ing-icon { font-size: 16px; }
+  .ing-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .ing-impact {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+  .impact-high { background: rgba(23,206,149,0.15); color: var(--meadow); }
+  .impact-med { background: rgba(0,177,255,0.15); color: var(--dodger); }
+  .impact-low { background: rgba(255,193,7,0.15); color: var(--amber); }
+  .ing-desc {
+    font-size: 9px;
+    color: var(--slate);
+    line-height: 1.35;
+  }
+
+  /* ─── CENTRE: PROMPT KITCHEN ─── */
+  .kitchen {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .kitchen-title {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .recipe-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--meadow);
+  }
+
+  .drop-zone {
+    flex: 1;
+    background: rgba(255,255,255,0.02);
+    border: 2px dashed rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    transition: border-color 0.3s, background 0.3s;
+    position: relative;
+  }
+  .drop-zone::-webkit-scrollbar { width: 3px; }
+  .drop-zone::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .drop-zone.drag-over {
+    border-color: var(--meadow);
+    background: rgba(23,206,149,0.04);
+  }
+
+  .drop-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0.3;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .drop-placeholder.hidden { opacity: 0; }
+  .drop-placeholder-icon { font-size: 36px; }
+  .drop-placeholder-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--slate);
+  }
+  .drop-placeholder-hint {
+    font-size: 10px;
+    color: var(--slate);
+    opacity: 0.6;
+  }
+
+  .recipe-item {
+    background: rgba(23,206,149,0.06);
+    border: 1px solid rgba(23,206,149,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: dropIn 0.35s ease;
+    position: relative;
+  }
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .recipe-item .ri-icon { font-size: 16px; }
+  .recipe-item .ri-info { flex: 1; }
+  .recipe-item .ri-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .recipe-item .ri-preview {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--slate);
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .recipe-item .ri-remove {
+    background: none;
+    border: none;
+    color: var(--slate);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .recipe-item .ri-remove:hover { color: var(--bittersweet); background: rgba(255,95,95,0.1); }
+
+  /* Quality bar under kitchen */
+  .quality-bar-area {
+    flex-shrink: 0;
+    margin-top: 8px;
+  }
+  .quality-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .qb-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  .qb-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    transition: color 0.3s;
+  }
+  .quality-track {
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .quality-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease, background 0.5s ease;
+    width: 0%;
+  }
+
+  /* ─── RIGHT: OUTPUT PANEL ─── */
+  .output {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .output-title {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .output-card {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.4s;
+  }
+  .output-card::-webkit-scrollbar { width: 3px; }
+  .output-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .output-prompt-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dodger);
+    margin-bottom: 4px;
+  }
+  .output-prompt {
+    font-size: 11px;
+    color: var(--slate);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    border-left: 3px solid var(--dodger);
+    font-style: italic;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .output-response-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    transition: color 0.3s;
+  }
+  .output-response {
+    font-size: 12px;
+    color: var(--cloud);
+    line-height: 1.6;
+    flex: 1;
+    transition: opacity 0.3s;
+  }
+  .output-response strong { color: var(--white); font-weight: 600; }
+  .output-response .hallucination {
+    background: rgba(255,95,95,0.1);
+    border-bottom: 2px dashed var(--bittersweet);
+    padding: 0 2px;
+  }
+  .output-response .confident {
+    background: rgba(23,206,149,0.08);
+    border-bottom: 2px solid var(--meadow);
+    padding: 0 2px;
+  }
+  .output-response .filler {
+    color: var(--slate);
+    opacity: 0.6;
+  }
+  .output-change-note {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    line-height: 1.45;
+    animation: fadeUp 0.4s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    flex-shrink: 0;
+    padding-top: 6px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-text {
+    font-size: 10px;
+    color: var(--slate);
+    opacity: 0.5;
+  }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+  /* ─── MOBILE RESPONSIVENESS ─── */
+  @media (max-width: 1200px) {
+    .container {
+      padding: 16px 24px 12px;
+    }
+    .header-text h1 {
+      font-size: 20px;
+    }
+    .header-text .subtitle {
+      font-size: 10px;
+    }
+    .workspace {
+      grid-template-columns: 180px 1fr 320px;
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .container {
+      padding: 14px 20px 10px;
+    }
+    .header-text h1 {
+      font-size: 18px;
+    }
+    .workspace {
+      grid-template-columns: 140px 1fr 240px;
+      gap: 10px;
+    }
+    .shelf-title {
+      font-size: 8px;
+    }
+    .ing-name {
+      font-size: 10px;
+    }
+    .ing-desc {
+      font-size: 8px;
+    }
+    .output-prompt {
+      font-size: 10px;
+    }
+    .output-response {
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 12px 16px 8px;
+    }
+    .header {
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .header-text h1 {
+      font-size: 16px;
+    }
+    .header-text .subtitle {
+      font-size: 9px;
+    }
+    .reset-btn {
+      align-self: flex-start;
+      font-size: 10px;
+      padding: 5px 12px;
+    }
+    .mental-model {
+      font-size: 11px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+    }
+    .workspace {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .shelf {
+      display: none;
+    }
+    .kitchen {
+      order: 1;
+    }
+    .output {
+      order: 2;
+    }
+    .shelf-items {
+      gap: 4px;
+    }
+    .ingredient {
+      padding: 8px 10px;
+    }
+    .ing-top {
+      gap: 6px;
+    }
+    .ing-icon {
+      font-size: 14px;
+    }
+    .ing-name {
+      font-size: 9px;
+    }
+    .ing-impact {
+      font-size: 8px;
+      padding: 0px 4px;
+    }
+    .ing-desc {
+      font-size: 8px;
+    }
+    .recipe-item {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+    .recipe-item .ri-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .recipe-item .ri-name {
+      font-size: 10px;
+    }
+    .recipe-item .ri-preview {
+      font-size: 8px;
+      display: none;
+    }
+    .recipe-item .ri-remove {
+      font-size: 12px;
+      padding: 2px;
+    }
+    .output-card {
+      padding: 12px;
+    }
+    .output-prompt {
+      font-size: 10px;
+      padding: 6px 10px;
+    }
+    .output-response {
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .footer {
+      font-size: 9px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-text {
+      font-size: 9px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 10px 12px 6px;
+    }
+    .header-text h1 {
+      font-size: 14px;
+    }
+    .header-text .subtitle {
+      font-size: 8px;
+      line-height: 1.2;
+    }
+    .reset-btn {
+      font-size: 9px;
+      padding: 4px 10px;
+    }
+    .mental-model {
+      font-size: 10px;
+      padding: 5px 10px;
+      margin-bottom: 6px;
+    }
+    .kitchen-title {
+      font-size: 8px;
+    }
+    .recipe-count {
+      font-size: 9px;
+    }
+    .drop-zone {
+      padding: 10px;
+    }
+    .drop-placeholder-icon {
+      font-size: 28px;
+    }
+    .drop-placeholder-text {
+      font-size: 11px;
+    }
+    .drop-placeholder-hint {
+      font-size: 9px;
+    }
+    .qb-label {
+      font-size: 8px;
+    }
+    .qb-score {
+      font-size: 10px;
+    }
+    .output-title {
+      font-size: 8px;
+    }
+    .output-prompt-label {
+      font-size: 8px;
+    }
+    .output-prompt {
+      font-size: 9px;
+      padding: 6px 8px;
+    }
+    .output-response-label {
+      font-size: 8px;
+    }
+    .output-response {
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    .output-change-note {
+      font-size: 9px;
+      padding: 6px 8px;
+    }
+    .output-card {
+      padding: 10px;
+    }
+    .tour-tip {
+      max-width: 280px;
+      padding: 12px 16px 10px;
+    }
+    .tour-title {
+      font-size: 12px;
+    }
+    .tour-desc {
+      font-size: 10px;
+    }
+    .tour-step-num {
+      font-size: 8px;
+    }
+    .tour-btn {
+      font-size: 9px;
+      padding: 4px 12px;
+    }
+  }
+
+  @media (max-width: 320px) {
+    .container {
+      padding: 8px 8px 4px;
+      height: auto;
+      min-height: 100vh;
+    }
+    body {
+      height: auto;
+      overflow: auto;
+    }
+    .header {
+      margin-bottom: 6px;
+    }
+    .header-text h1 {
+      font-size: 12px;
+    }
+    .header-text .subtitle {
+      font-size: 7px;
+      line-height: 1.1;
+    }
+    .reset-btn {
+      font-size: 8px;
+      padding: 3px 8px;
+    }
+    .mental-model {
+      font-size: 9px;
+      padding: 4px 8px;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .workspace {
+      flex: none;
+      height: auto;
+      min-height: 0;
+      gap: 6px;
+    }
+    .kitchen-title {
+      font-size: 7px;
+    }
+    .recipe-count {
+      font-size: 8px;
+    }
+    .drop-zone {
+      min-height: 180px;
+      padding: 8px;
+    }
+    .drop-placeholder-icon {
+      font-size: 24px;
+    }
+    .drop-placeholder-text {
+      font-size: 10px;
+    }
+    .drop-placeholder-hint {
+      font-size: 8px;
+    }
+    .recipe-item {
+      padding: 6px 8px;
+      gap: 6px;
+    }
+    .recipe-item .ri-icon {
+      font-size: 12px;
+    }
+    .recipe-item .ri-name {
+      font-size: 9px;
+    }
+    .recipe-item .ri-remove {
+      font-size: 10px;
+      padding: 2px;
+    }
+    .output-title {
+      font-size: 7px;
+    }
+    .output-card {
+      padding: 8px;
+      min-height: 200px;
+    }
+    .output-prompt-label {
+      font-size: 7px;
+    }
+    .output-prompt {
+      font-size: 8px;
+      padding: 4px 6px;
+      margin-bottom: 8px;
+    }
+    .output-response-label {
+      font-size: 7px;
+    }
+    .output-response {
+      font-size: 8px;
+      line-height: 1.3;
+    }
+    .output-change-note {
+      font-size: 8px;
+      padding: 4px 6px;
+      margin-top: 6px;
+    }
+    .footer {
+      font-size: 8px;
+      padding-top: 4px;
+      margin-top: 6px;
+      gap: 4px;
+    }
+    .footer-text {
+      font-size: 8px;
+    }
+    .tour-tip {
+      max-width: 260px;
+      padding: 10px 12px 8px;
+    }
+    .tour-title {
+      font-size: 11px;
+    }
+    .tour-desc {
+      font-size: 9px;
+    }
+    .tour-step-num {
+      font-size: 7px;
+    }
+    .tour-btn {
+      font-size: 8px;
+      padding: 3px 10px;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>Context <span>Engineering</span></h1>
+      <div class="subtitle">Better answers come from better context, not smarter AI — drag ingredients into the prompt kitchen</div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+  </div>
+
+  <div class="mental-model">
+    Think of prompting like <span class="hl">cooking</span>. The AI model is the oven — you can't change how it works. But you <strong>can</strong> control what goes in: the ingredients, the order, the proportions. <span class="hl">Context engineering</span> is the recipe.
+  </div>
+
+  <div class="workspace">
+    <!-- LEFT: INGREDIENT SHELF -->
+    <div class="shelf">
+      <div class="shelf-title">Ingredients</div>
+      <div class="shelf-items" id="shelfItems"></div>
+    </div>
+
+    <!-- CENTRE: PROMPT KITCHEN -->
+    <div class="kitchen">
+      <div class="kitchen-title">
+        <span>Prompt Kitchen</span>
+        <span class="recipe-count" id="recipeCount">0 ingredients</span>
+      </div>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-placeholder" id="dropPlaceholder">
+          <div class="drop-placeholder-icon">🍳</div>
+          <div class="drop-placeholder-text">Drag ingredients here</div>
+          <div class="drop-placeholder-hint">Build your prompt recipe — order matters</div>
+        </div>
+      </div>
+      <div class="quality-bar-area">
+        <div class="quality-label-row">
+          <span class="qb-label">Prompt Quality</span>
+          <span class="qb-score" id="qbScore">0%</span>
+        </div>
+        <div class="quality-track">
+          <div class="quality-fill" id="qualityFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: OUTPUT PANEL -->
+    <div class="output">
+      <div class="output-title">AI Output</div>
+      <div class="output-card" id="outputCard">
+        <div class="output-prompt-label">User prompt</div>
+        <div class="output-prompt">"Write me a LinkedIn post about our company's AI journey"</div>
+        <div class="output-response-label" id="outputLabel" style="color:var(--bittersweet)">Response — No context</div>
+        <div class="output-response" id="outputResponse"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">AI Accelerator — AI Primer</div>
+    <div class="footer-text">aiaccelerator.uk</div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// POSTMESSAGE PROTOCOL
+// ═══════════════════════════════════════════
+
+// Send GRAPHIC_READY signal to parent when graphic initializes
+function notifyGraphicReady() {
+  window.parent.postMessage({ type: 'GRAPHIC_READY', name: 'context-engineering' }, '*');
+}
+
+// Listen for incoming messages from parent
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+
+  if (e.data.type === 'RESET') {
+    // External reset command
+    resetAll();
+    window.parent.postMessage({ type: 'LOG_INTERACTION', action: 'reset_via_parent' }, '*');
+  }
+});
+
+// Helper to send interaction logs to parent
+function logInteraction(action, details) {
+  window.parent.postMessage({
+    type: 'LOG_INTERACTION',
+    action: action,
+    details: details,
+    timestamp: new Date().toISOString()
+  }, '*');
+}
+
+// ═══════════════════════════════════════════
+// INGREDIENT DATA
+// ═══════════════════════════════════════════
+
+const INGREDIENTS = [
+  {
+    id: "role",
+    icon: "🎭",
+    name: "Role",
+    impact: "high",
+    desc: "Tell AI who it should be",
+    preview: "You are a senior marketing manager at a B2B tech consultancy...",
+    qualityAdd: 12,
+    outputEffect: "role"
+  },
+  {
+    id: "audience",
+    icon: "👥",
+    name: "Audience",
+    impact: "high",
+    desc: "Who will read this",
+    preview: "This post is for: CTOs, Heads of Digital, innovation leads at mid-market enterprises...",
+    qualityAdd: 14,
+    outputEffect: "audience"
+  },
+  {
+    id: "task",
+    icon: "🎯",
+    name: "Clear Task",
+    impact: "high",
+    desc: "Specific instruction, not vague ask",
+    preview: "Write a 150-word LinkedIn post that shares one concrete lesson from our AI pilot...",
+    qualityAdd: 16,
+    outputEffect: "task"
+  },
+  {
+    id: "context",
+    icon: "📋",
+    name: "Company Context",
+    impact: "high",
+    desc: "Facts about the business",
+    preview: "AI Accelerator: B2B consultancy, 5 staff, London. Flagship client: Virgin Red...",
+    qualityAdd: 15,
+    outputEffect: "context"
+  },
+  {
+    id: "examples",
+    icon: "📝",
+    name: "Examples",
+    impact: "med",
+    desc: "Show what good looks like",
+    preview: "Here are two LinkedIn posts I liked: [example 1 text] [example 2 text]...",
+    qualityAdd: 12,
+    outputEffect: "examples"
+  },
+  {
+    id: "tone",
+    icon: "🎨",
+    name: "Tone & Style",
+    impact: "med",
+    desc: "Voice, formality, personality",
+    preview: "Tone: conversational but credible. No jargon. Short paragraphs. End with a question...",
+    qualityAdd: 8,
+    outputEffect: "tone"
+  },
+  {
+    id: "constraints",
+    icon: "🚫",
+    name: "Constraints",
+    impact: "med",
+    desc: "What to avoid",
+    preview: "Do NOT use: buzzwords, 'leverage', 'synergy'. No emojis. Don't mention clients by name...",
+    qualityAdd: 7,
+    outputEffect: "constraints"
+  },
+  {
+    id: "format",
+    icon: "📐",
+    name: "Format",
+    impact: "low",
+    desc: "Structure and length",
+    preview: "Format: Hook line → 2 short paragraphs → takeaway → question. Max 150 words...",
+    qualityAdd: 6,
+    outputEffect: "format"
+  }
+];
+
+// ═══════════════════════════════════════════
+// OUTPUT RESPONSES
+// ═══════════════════════════════════════════
+
+const BASE_RESPONSE = `<span class="filler">In today's rapidly evolving digital landscape, artificial intelligence is transforming how businesses operate and innovate.</span> <span class="hallucination">Our company has been at the forefront of AI adoption since 2020, implementing cutting-edge solutions across multiple departments.</span><br><br><span class="filler">The journey has been remarkable, with significant improvements in efficiency and customer satisfaction.</span> <span class="hallucination">We've seen a 40% increase in productivity and reduced operational costs by 25%.</span><br><br><span class="filler">If you're thinking about starting your own AI journey, the time is now! #AI #DigitalTransformation #Innovation</span>`;
+
+function buildResponse(activeIds) {
+  const has = (id) => activeIds.includes(id);
+  const count = activeIds.length;
+
+  if (count === 0) return BASE_RESPONSE;
+
+  let parts = [];
+
+  // Opening hook — depends on whether we have task + tone + audience
+  if (has("task") && has("tone")) {
+    parts.push(`Here's something nobody tells you about bringing AI into a real business:`);
+  } else if (has("task")) {
+    parts.push(`One lesson from our AI pilot that changed how we work:`);
+  } else if (has("role")) {
+    parts.push(`<span class="filler">As someone working in AI adoption, I've seen first-hand how organisations approach this technology.</span>`);
+  } else {
+    parts.push(`<span class="filler">Artificial intelligence is changing how businesses think about productivity and innovation.</span>`);
+  }
+
+  parts.push("<br><br>");
+
+  // Body — depends on context + audience
+  if (has("context") && has("audience")) {
+    parts.push(`<span class="confident">We're a five-person consultancy helping mid-market enterprises adopt AI.</span> Our first major engagement taught us that the biggest barrier isn't the technology — <strong>it's the habits</strong>.`);
+  } else if (has("context")) {
+    parts.push(`<span class="confident">Working as a small AI consultancy in London</span>, we learned quickly that enterprise AI adoption isn't about tools — it's about changing how people think about their work.`);
+  } else if (has("audience")) {
+    parts.push(`For anyone leading digital transformation at a mid-sized company: the AI tools are ready. The question is whether <strong>your team's habits</strong> are ready for them.`);
+  } else {
+    parts.push(`<span class="filler">Many organisations are discovering that the real challenge isn't the technology — it's the organisational change that comes with it.</span>`);
+  }
+
+  parts.push("<br><br>");
+
+  // Lesson/detail — depends on examples + constraints
+  if (has("examples") && has("constraints")) {
+    parts.push(`We ran a 12-week pilot with one team. The metrics were fine — <span class="confident">22% time saved on reporting</span>. But the real win? The team started <strong>asking better questions</strong>. They stopped treating AI as a search engine and started treating it as a thinking partner.`);
+  } else if (has("examples")) {
+    parts.push(`The shift happened when our pilot team stopped asking AI to "write me a report" and started asking it to <strong>"challenge my assumptions about this data"</strong>. Same tool, completely different outcome.`);
+  } else if (has("context")) {
+    parts.push(`<span class="confident">After 12 weeks, the team's reporting time dropped 22%.</span> But the bigger shift was behavioural — they started approaching problems differently.`);
+  } else {
+    parts.push(`<span class="filler">The results have been promising, with teams reporting improved efficiency and new ways of approaching their work.</span>`);
+  }
+
+  // Closing — depends on format + tone
+  if (has("format") && has("tone")) {
+    parts.push(`<br><br>The takeaway: AI adoption isn't a technology project. It's a <strong>habits project</strong>.<br><br>What's the one thing that changed when your team started using AI daily?`);
+  } else if (has("format")) {
+    parts.push(`<br><br>The lesson: <strong>start with habits, not tools</strong>.<br><br>Has your team had a similar experience?`);
+  } else if (has("tone")) {
+    parts.push(`<br><br>Honestly — the technology is the easy part. Getting people to actually change how they work? That's the real project.`);
+  } else {
+    parts.push(`<br><br><span class="filler">We look forward to continuing this journey and helping more organisations unlock the potential of AI. #AI #Innovation</span>`);
+  }
+
+  return parts.join("");
+}
+
+function getChangeNote(activeIds) {
+  const count = activeIds.length;
+  if (count === 0) return { text: "No ingredients — the AI is guessing at everything. Generic, full of hallucinated claims.", colour: "var(--bittersweet)", bg: "rgba(255,95,95,0.06)" };
+  if (count <= 2) return { text: `${count} ingredient${count > 1 ? 's' : ''} added. Getting better but still filling in gaps with generic content.`, colour: "var(--amber)", bg: "rgba(255,193,7,0.06)" };
+  if (count <= 4) return { text: `${count} ingredients — the response is becoming specific and grounded. Notice how hallucinations disappear as real context arrives.`, colour: "var(--dodger)", bg: "rgba(0,177,255,0.06)" };
+  if (count <= 6) return { text: `${count} ingredients — strong output. The AI is working with real constraints, real context, and a clear task. This is what context engineering looks like.`, colour: "var(--meadow)", bg: "rgba(23,206,149,0.06)" };
+  return { text: `All ${count} ingredients in place. Maximum quality — every claim is grounded, the tone is right, the format is controlled. Same AI model, completely different output.`, colour: "var(--turquoise)", bg: "rgba(0,255,188,0.06)" };
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+
+let recipe = []; // array of ingredient IDs in order
+let draggedId = null;
+
+// ═══════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════
+
+function renderShelf() {
+  const el = document.getElementById('shelfItems');
+  el.innerHTML = INGREDIENTS.map(ing => {
+    const used = recipe.includes(ing.id);
+    const impactClass = ing.impact === 'high' ? 'impact-high' : ing.impact === 'med' ? 'impact-med' : 'impact-low';
+    return `<div class="ingredient ${used ? 'used' : ''}" id="shelf-${ing.id}"
+      draggable="${!used}"
+      ondragstart="onDragStart(event,'${ing.id}')"
+      ondragend="onDragEnd(event)"
+      ${!used ? `onclick="addIngredient('${ing.id}')"` : ''}>
+      <div class="ing-top">
+        <span class="ing-icon">${ing.icon}</span>
+        <span class="ing-name">${ing.name}</span>
+        <span class="ing-impact ${impactClass}">${ing.impact}</span>
+      </div>
+      <div class="ing-desc">${ing.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecipe() {
+  const zone = document.getElementById('dropZone');
+  const placeholder = document.getElementById('dropPlaceholder');
+  placeholder.className = 'drop-placeholder' + (recipe.length > 0 ? ' hidden' : '');
+
+  // Remove existing recipe items
+  zone.querySelectorAll('.recipe-item').forEach(el => el.remove());
+
+  recipe.forEach((id, i) => {
+    const ing = INGREDIENTS.find(x => x.id === id);
+    const item = document.createElement('div');
+    item.className = 'recipe-item';
+    item.innerHTML = `
+      <span class="ri-icon">${ing.icon}</span>
+      <div class="ri-info">
+        <div class="ri-name">${ing.name}</div>
+        <div class="ri-preview">${ing.preview}</div>
+      </div>
+      <button class="ri-remove" onclick="removeIngredient('${ing.id}')" title="Remove">✕</button>
+    `;
+    zone.appendChild(item);
+  });
+
+  // Update count
+  document.getElementById('recipeCount').textContent = `${recipe.length} ingredient${recipe.length !== 1 ? 's' : ''}`;
+}
+
+function renderOutput() {
+  const response = buildResponse(recipe);
+  document.getElementById('outputResponse').innerHTML = response;
+
+  // Quality
+  const totalQuality = recipe.reduce((sum, id) => {
+    const ing = INGREDIENTS.find(x => x.id === id);
+    return sum + (ing ? ing.qualityAdd : 0);
+  }, 0);
+  const qualityPct = Math.min(100, totalQuality);
+  const qualityFill = document.getElementById('qualityFill');
+  qualityFill.style.width = qualityPct + '%';
+
+  let colour;
+  if (qualityPct < 20) colour = 'var(--bittersweet)';
+  else if (qualityPct < 40) colour = 'var(--amber)';
+  else if (qualityPct < 65) colour = 'var(--dodger)';
+  else if (qualityPct < 85) colour = 'var(--meadow)';
+  else colour = 'var(--turquoise)';
+
+  qualityFill.style.background = colour;
+  const scoreEl = document.getElementById('qbScore');
+  scoreEl.textContent = qualityPct + '%';
+  scoreEl.style.color = colour;
+
+  // Label
+  const label = document.getElementById('outputLabel');
+  if (recipe.length === 0) {
+    label.textContent = 'Response — No context';
+    label.style.color = 'var(--bittersweet)';
+  } else {
+    label.textContent = `Response — ${recipe.length} ingredient${recipe.length > 1 ? 's' : ''}`;
+    label.style.color = colour;
+  }
+
+  // Output card border
+  document.getElementById('outputCard').style.borderColor = recipe.length > 4 ? 'rgba(23,206,149,0.2)' : '';
+
+  // Change note
+  const note = getChangeNote(recipe);
+  const existingNote = document.querySelector('.output-change-note');
+  if (existingNote) existingNote.remove();
+  const noteEl = document.createElement('div');
+  noteEl.className = 'output-change-note';
+  noteEl.style.background = note.bg;
+  noteEl.style.color = note.colour;
+  noteEl.style.border = `1px solid ${note.colour}30`;
+  noteEl.textContent = note.text;
+  document.getElementById('outputCard').appendChild(noteEl);
+}
+
+function renderAll() {
+  renderShelf();
+  renderRecipe();
+  renderOutput();
+}
+
+// ═══════════════════════════════════════════
+// DRAG AND DROP
+// ═══════════════════════════════════════════
+
+function onDragStart(e, id) {
+  draggedId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  setTimeout(() => {
+    const el = document.getElementById('shelf-' + id);
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function onDragEnd(e) {
+  if (draggedId) {
+    const el = document.getElementById('shelf-' + draggedId);
+    if (el) el.classList.remove('dragging');
+  }
+  draggedId = null;
+  document.getElementById('dropZone').classList.remove('drag-over');
+}
+
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+  if (!dropZone.contains(e.relatedTarget)) {
+    dropZone.classList.remove('drag-over');
+  }
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const id = e.dataTransfer.getData('text/plain');
+  if (id && !recipe.includes(id)) {
+    recipe.push(id);
+    renderAll();
+    logInteraction('ingredient_added', { ingredient: id, total: recipe.length });
+  }
+  draggedId = null;
+});
+
+// ═══════════════════════════════════════════
+// CLICK TO ADD / REMOVE
+// ═══════════════════════════════════════════
+
+function addIngredient(id) {
+  if (!recipe.includes(id)) {
+    recipe.push(id);
+    renderAll();
+    logInteraction('ingredient_added', { ingredient: id, total: recipe.length });
+  }
+}
+
+function removeIngredient(id) {
+  recipe = recipe.filter(x => x !== id);
+  renderAll();
+  logInteraction('ingredient_removed', { ingredient: id, total: recipe.length });
+}
+
+function resetAll() {
+  recipe = [];
+  renderAll();
+  logInteraction('reset', { total: 0 });
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+
+renderAll();
+notifyGraphicReady();
+
+// ═══════════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.ingredient, .shelf, .palette, [class*=ingredient]') || document.querySelector('.left, .sidebar'),
+    title: 'Context ingredients',
+    desc: 'These are the building blocks of a well-engineered context: system prompts, examples, constraints, and more.', pad: 8 },
+  { target: () => document.querySelector('.drop-zone, .recipe, .target, [class*=drop]') || document.querySelector('.center, .main'),
+    title: 'Build your recipe',
+    desc: 'Drag ingredients from the shelf and drop them here to build up your context. Order matters — experiment with different combinations.', pad: 6 },
+  { target: () => document.querySelector('.detail, .impact, .result, [class*=detail]') || document.querySelector('.right, aside'),
+    title: 'See the impact',
+    desc: 'Each ingredient you add changes the model\'s behaviour. This panel shows what effect your choices have.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

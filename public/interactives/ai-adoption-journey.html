@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Adoption Journey — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --white: #FFFFFF;
+    --w90: rgba(255,255,255,0.9);
+    --w70: rgba(255,255,255,0.7);
+    --w50: rgba(255,255,255,0.5);
+    --w30: rgba(255,255,255,0.3);
+    --w20: rgba(255,255,255,0.2);
+    --w10: rgba(255,255,255,0.1);
+    --w05: rgba(255,255,255,0.05);
+    --glass: rgba(27,47,60,0.75);
+    --glass-border: rgba(255,255,255,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 24px;
+    position: relative;
+  }
+  .hero-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--turquoise); margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 56px); font-weight: 700;
+    line-height: 1.1; margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--dodger); }
+  .hero p {
+    font-size: clamp(15px, 2vw, 19px); font-weight: 300;
+    color: var(--w70); max-width: 600px; line-height: 1.6;
+  }
+  .scroll-hint {
+    position: absolute; bottom: 40px;
+    font-size: 11px; color: var(--w30); letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    50% { opacity: 0.7; transform: translateY(6px); }
+  }
+
+  /* ─── JOURNEY CONTAINER ─── */
+  .journey {
+    position: relative;
+    padding: 0 0 80px;
+  }
+
+  /* ─── STICKY CURVE ─── */
+  .curve-track {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .curve-wrap {
+    width: 100%;
+    max-width: 1100px;
+    padding: 0 32px;
+    position: relative;
+  }
+  .curve-svg { width: 100%; height: auto; display: block; }
+
+  /* Tier zone labels that appear with the curve */
+  .tier-zone {
+    position: absolute;
+    bottom: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .tier-zone.visible { opacity: 1; }
+  .tier-zone.learn { left: 8%; color: rgba(0,177,255,0.25); }
+  .tier-zone.accelerate { left: 42%; color: rgba(0,255,188,0.25); }
+  .tier-zone.transform { left: 75%; color: rgba(92,213,255,0.25); }
+
+  /* ─── SCROLL SPACERS (drive the animation) ─── */
+  .scroll-spacer {
+    height: 100vh;
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  /* ─── INSIGHT CARDS (appear as curve progresses) ─── */
+  .insight {
+    position: fixed;
+    z-index: 30;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+    max-width: 420px;
+  }
+  .insight.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .insight.top { top: 12vh; }
+  .insight.bottom { bottom: 12vh; }
+  .insight.left { left: 5vw; }
+  .insight.right { right: 5vw; }
+  .insight.center-x { left: 50%; transform: translateX(-50%) translateY(20px); }
+  .insight.center-x.visible { transform: translateX(-50%) translateY(0); }
+
+  .insight-inner {
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 28px 32px;
+  }
+  .insight-tier {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .insight-tier.learn { color: var(--dodger); }
+  .insight-tier.accelerate { color: var(--turquoise); }
+  .insight-tier.transform { color: var(--malibu); }
+
+  .insight h3 {
+    font-size: clamp(18px, 2.5vw, 24px); font-weight: 700;
+    margin-bottom: 8px; line-height: 1.25;
+  }
+  .insight .sub {
+    font-size: 14px; color: var(--w50); line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .insight .detail {
+    font-size: 13px; color: var(--w70); line-height: 1.6;
+  }
+  .insight .services {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
+  }
+  .insight .service-tag {
+    font-size: 11px; padding: 4px 10px;
+    border-radius: 20px; background: var(--w10);
+    border: 1px solid var(--glass-border); color: var(--w70);
+  }
+  .insight .key-line {
+    font-size: 15px; font-weight: 600; font-style: italic;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--w10);
+  }
+  .insight .key-line.blue { color: var(--dodger); }
+  .insight .key-line.green { color: var(--turquoise); }
+  .insight .key-line.cyan { color: var(--malibu); }
+
+  /* ─── STAGE DOT LABELS on SVG ─── */
+  .dot-label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 8px; font-weight: 500;
+    fill: rgba(255,255,255,0.4);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .dot-label.visible { opacity: 1; }
+
+  /* ─── POST-JOURNEY: FRAMEWORKS + ASSESSMENT ─── */
+  .post-journey {
+    position: relative;
+    z-index: 40;
+    background: var(--gable);
+  }
+
+  .section-block {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+  .section-block h2 {
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 700; margin-bottom: 12px;
+  }
+  .section-block h2 span { color: var(--dodger); }
+  .section-block > p {
+    font-size: 15px; color: var(--w50); margin-bottom: 40px;
+    line-height: 1.6;
+  }
+
+  /* Frameworks grid */
+  .fw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .fw-card {
+    background: var(--w05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    transition: all 0.2s ease;
+  }
+  .fw-card:hover { background: var(--w10); border-color: var(--dodger); }
+  .fw-card h4 {
+    font-size: 14px; font-weight: 600; color: var(--dodger);
+    margin-bottom: 6px;
+  }
+  .fw-card p { font-size: 13px; color: var(--w50); line-height: 1.5; }
+
+  /* Assessment */
+  .assess-box {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+  }
+  .assess-box h3 {
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 700; margin-bottom: 8px;
+  }
+  .assess-box > p {
+    font-size: 14px; color: var(--w50); margin-bottom: 28px;
+  }
+  .quiz-progress {
+    display: flex; gap: 6px; justify-content: center; margin-bottom: 24px;
+  }
+  .quiz-pip {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--w20); transition: background 0.2s;
+  }
+  .quiz-pip.done { background: var(--dodger); }
+  .quiz-pip.current { background: var(--turquoise); }
+
+  .quiz-q { display: none; text-align: left; }
+  .quiz-q.active { display: block; }
+  .quiz-q h4 {
+    font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--w90);
+  }
+  .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    background: var(--w10);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 14px 18px; font-size: 14px;
+    color: var(--w70); cursor: pointer;
+    transition: all 0.2s; text-align: left;
+    font-family: 'Poppins', sans-serif;
+  }
+  .quiz-opt:hover { background: var(--w20); color: var(--white); border-color: var(--dodger); }
+  .quiz-opt.sel { background: rgba(0,177,255,0.15); border-color: var(--dodger); color: var(--white); }
+
+  .quiz-result { display: none; text-align: center; }
+  .quiz-result.active { display: block; }
+  .quiz-result h4 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .quiz-result .tier-label {
+    font-size: 14px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .quiz-result .desc { font-size: 14px; color: var(--w70); line-height: 1.6; margin-bottom: 20px; }
+  .result-cta {
+    display: inline-block; padding: 12px 28px;
+    background: var(--dodger); color: var(--white);
+    font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+    border: none; border-radius: 8px; cursor: pointer;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .result-cta:hover { background: var(--cerulean); }
+  .btn-restart {
+    display: inline-block; margin-top: 12px; padding: 8px 20px;
+    background: none; border: 1px solid var(--w20);
+    color: var(--w50); font-family: 'Poppins', sans-serif;
+    font-size: 12px; border-radius: 6px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-restart:hover { border-color: var(--w50); color: var(--w70); }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 40px 24px;
+    border-top: 1px solid var(--w10);
+  }
+  .footer p { font-size: 12px; color: var(--w50); }
+  .footer a { color: var(--dodger); text-decoration: none; }
+
+  /* ─── MOBILE RESPONSIVENESS (320px and up) ─── */
+  @media (max-width: 768px) {
+    .curve-track { display: none; }
+    .scroll-spacer { height: auto; min-height: 0; }
+    .insight {
+      position: relative !important;
+      top: auto !important; bottom: auto !important;
+      left: auto !important; right: auto !important;
+      transform: none !important;
+      opacity: 1 !important;
+      max-width: 100%;
+      pointer-events: auto;
+      padding: 12px 24px;
+      margin-bottom: 20px;
+    }
+    .insight.center-x { left: auto; transform: none; }
+    .insight.center-x.visible { transform: none; }
+    .journey { padding-top: 40px; }
+    .tier-divider {
+      text-align: center; padding: 40px 24px 0;
+      font-size: 11px; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .tier-divider.learn { color: var(--dodger); }
+    .tier-divider.accelerate { color: var(--turquoise); }
+    .tier-divider.transform { color: var(--malibu); }
+  }
+  @media (min-width: 769px) {
+    .tier-divider { display: none; }
+  }
+
+  /* Extra mobile tweaks for screens < 480px */
+  @media (max-width: 479px) {
+    .hero {
+      padding: 40px 16px;
+      min-height: auto;
+      padding-top: 100px;
+      padding-bottom: 80px;
+    }
+    .hero h1 {
+      font-size: clamp(24px, 5vw, 40px);
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: clamp(13px, 1.8vw, 16px);
+      max-width: 100%;
+    }
+    .insight-inner {
+      padding: 20px 20px;
+    }
+    .insight h3 {
+      font-size: clamp(16px, 2.2vw, 20px);
+    }
+    .insight .detail {
+      font-size: 12px;
+    }
+    .insight .sub {
+      font-size: 13px;
+    }
+    .section-block {
+      padding: 60px 16px;
+    }
+    .assess-box {
+      padding: 24px 20px;
+    }
+    .fw-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HERO ─── -->
+<div class="hero">
+  <div class="hero-label">AI Accelerator</div>
+  <h1>The AI <span>Adoption Journey</span></h1>
+  <p>From curiosity to capability to culture. A structured path through three tiers of AI maturity.</p>
+  <div class="scroll-hint">Scroll to explore the journey</div>
+</div>
+
+<!-- ─── JOURNEY (scroll-driven) ─── -->
+<div class="journey" id="journey">
+
+  <!-- Sticky S-curve canvas -->
+  <div class="curve-track" id="curveTrack">
+    <div class="curve-wrap">
+      <svg class="curve-svg" viewBox="0 0 1000 360" preserveAspectRatio="xMidYMid meet" id="curveSvg">
+        <defs>
+          <linearGradient id="cGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00B1FF" />
+            <stop offset="45%" stop-color="#00FFBC" />
+            <stop offset="100%" stop-color="#5CD5FF" />
+          </linearGradient>
+          <linearGradient id="cGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00B1FF" stop-opacity="0.25" />
+            <stop offset="45%" stop-color="#00FFBC" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="#5CD5FF" stop-opacity="0.25" />
+          </linearGradient>
+          <clipPath id="curveClip">
+            <rect id="clipRect" x="0" y="0" width="0" height="360" />
+          </clipPath>
+        </defs>
+
+        <!-- Zone backgrounds (always visible, subtle) -->
+        <rect x="30" y="5" width="290" height="350" rx="6" fill="rgba(0,177,255,0.03)" />
+        <rect x="330" y="5" width="340" height="350" rx="6" fill="rgba(0,255,188,0.03)" />
+        <rect x="680" y="5" width="290" height="350" rx="6" fill="rgba(92,213,255,0.03)" />
+
+        <!-- Glow (clipped) -->
+        <g clip-path="url(#curveClip)">
+          <path d="M 50,310 C 150,310 190,300 290,270 C 390,230 410,150 490,95 C 570,40 610,30 690,26 C 770,22 840,20 950,18" fill="none" stroke="url(#cGlow)" stroke-width="24" stroke-linecap="round" />
+        </g>
+
+        <!-- Main curve (clipped) -->
+        <g clip-path="url(#curveClip)">
+          <path d="M 50,310 C 150,310 190,300 290,270 C 390,230 410,150 490,95 C 570,40 610,30 690,26 C 770,22 840,20 950,18" fill="none" stroke="url(#cGrad)" stroke-width="3" stroke-linecap="round" />
+          <!-- Animated dash overlay -->
+          <path d="M 50,310 C 150,310 190,300 290,270 C 390,230 410,150 490,95 C 570,40 610,30 690,26 C 770,22 840,20 950,18" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="6 14" stroke-linecap="round" opacity="0.12">
+            <animate attributeName="stroke-dashoffset" from="0" to="-40" dur="2s" repeatCount="indefinite" />
+          </path>
+        </g>
+
+        <!-- Stage dots (each revealed by JS) -->
+        <!-- LEARN -->
+        <g class="stage-group" data-stage="0">
+          <circle cx="70" cy="308" r="14" fill="none" stroke="#00B1FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="70" cy="308" r="5" fill="#00B1FF" class="dot" />
+          <text x="70" y="332" text-anchor="middle" class="dot-label" data-stage="0">AI Curious</text>
+        </g>
+        <g class="stage-group" data-stage="1">
+          <circle cx="180" cy="298" r="14" fill="none" stroke="#00B1FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="180" cy="298" r="5" fill="#00B1FF" class="dot" />
+          <text x="180" y="288" text-anchor="middle" class="dot-label" data-stage="1">Building Awareness</text>
+        </g>
+        <g class="stage-group" data-stage="2">
+          <circle cx="285" cy="272" r="14" fill="none" stroke="#00B1FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="285" cy="272" r="5" fill="#00B1FF" class="dot" />
+          <text x="285" y="262" text-anchor="middle" class="dot-label" data-stage="2">First Experiments</text>
+        </g>
+
+        <!-- ACCELERATE -->
+        <g class="stage-group" data-stage="3">
+          <circle cx="400" cy="192" r="14" fill="none" stroke="#00FFBC" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="400" cy="192" r="5" fill="#00FFBC" class="dot" />
+          <text x="400" y="182" text-anchor="middle" class="dot-label" data-stage="3">Active Implementation</text>
+        </g>
+        <g class="stage-group" data-stage="4">
+          <circle cx="490" cy="95" r="14" fill="none" stroke="#00FFBC" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="490" cy="95" r="5" fill="#00FFBC" class="dot" />
+          <text x="490" y="115" text-anchor="middle" class="dot-label" data-stage="4">Scaling</text>
+        </g>
+        <g class="stage-group" data-stage="5">
+          <circle cx="580" cy="44" r="14" fill="none" stroke="#00FFBC" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="580" cy="44" r="5" fill="#00FFBC" class="dot" />
+          <text x="580" y="34" text-anchor="middle" class="dot-label" data-stage="5">Champions</text>
+        </g>
+
+        <!-- TRANSFORM -->
+        <g class="stage-group" data-stage="6">
+          <circle cx="710" cy="25" r="14" fill="none" stroke="#5CD5FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="710" cy="25" r="5" fill="#5CD5FF" class="dot" />
+          <text x="710" y="48" text-anchor="middle" class="dot-label" data-stage="6">Operating Model</text>
+        </g>
+        <g class="stage-group" data-stage="7">
+          <circle cx="830" cy="20" r="14" fill="none" stroke="#5CD5FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="830" cy="20" r="5" fill="#5CD5FF" class="dot" />
+          <text x="830" y="43" text-anchor="middle" class="dot-label" data-stage="7">Embedded</text>
+        </g>
+        <g class="stage-group" data-stage="8">
+          <circle cx="945" cy="18" r="14" fill="none" stroke="#5CD5FF" stroke-width="0.8" opacity="0.3" class="ring" />
+          <circle cx="945" cy="18" r="5" fill="#5CD5FF" class="dot" />
+          <text x="945" y="41" text-anchor="middle" class="dot-label" data-stage="8">AI-Native</text>
+        </g>
+
+        <!-- Y-axis -->
+        <text x="14" y="180" text-anchor="middle" fill="rgba(255,255,255,0.1)" font-family="Poppins" font-size="8" font-weight="500" transform="rotate(-90,14,180)">AI MATURITY</text>
+      </svg>
+
+      <!-- Tier zone labels -->
+      <div class="tier-zone learn" id="tzLearn">LEARN</div>
+      <div class="tier-zone accelerate" id="tzAccelerate">ACCELERATE</div>
+      <div class="tier-zone transform" id="tzTransform">TRANSFORM</div>
+    </div>
+  </div>
+
+  <!-- ═══ SCROLL SECTIONS (9 stages, each 100vh) ═══ -->
+  <!-- Mobile tier dividers are interspersed -->
+
+  <div class="tier-divider learn">Learn</div>
+
+  <!-- Stage 0: AI Curious -->
+  <div class="scroll-spacer" data-stage="0"></div>
+  <div class="insight top left" id="insight-0">
+    <div class="insight-inner">
+      <div class="insight-tier learn">Learn</div>
+      <h3>AI Curious</h3>
+      <div class="sub">The starting point. Your team knows AI matters, but confidence is low and there's no shared language.</div>
+      <div class="detail">A few people have tried ChatGPT. Leadership is asking questions. Nobody has a clear answer yet.</div>
+      <div class="services">
+        <span class="service-tag">AI Executive Briefing</span>
+        <span class="service-tag">Online AI Primer</span>
+      </div>
+      <div class="key-line blue">"The key thing is getting everyone to a shared starting line."</div>
+    </div>
+  </div>
+
+  <!-- Stage 1: Building Awareness -->
+  <div class="scroll-spacer" data-stage="1"></div>
+  <div class="insight bottom right" id="insight-1">
+    <div class="insight-inner">
+      <div class="insight-tier learn">Learn</div>
+      <h3>Building Awareness</h3>
+      <div class="sub">Structured learning replaces scattered experiments. The team builds a common vocabulary and practical skills.</div>
+      <div class="detail">Interactive workshops, not lectures. Your people leave with prompting skills they can use the same afternoon.</div>
+      <div class="services">
+        <span class="service-tag">AI Primer Workshop</span>
+        <span class="service-tag">AI Vision Workshop</span>
+      </div>
+      <div class="key-line blue">"Prompting isn't a trick. It's just clear thinking, written down."</div>
+    </div>
+  </div>
+
+  <!-- Stage 2: First Experiments -->
+  <div class="scroll-spacer" data-stage="2"></div>
+  <div class="insight top left" id="insight-2">
+    <div class="insight-inner">
+      <div class="insight-tier learn">Learn</div>
+      <h3>First Experiments</h3>
+      <div class="sub">Curiosity becomes action. Structured discovery, not random experimentation.</div>
+      <div class="detail">Your team identifies 5-8 real use cases, prioritised by impact and feasibility. Each one gets a build-ready spec.</div>
+      <div class="services">
+        <span class="service-tag">Use Case Discovery</span>
+        <span class="service-tag">Pilot Design Workshop</span>
+      </div>
+      <div class="key-line blue">"Don't guess at use cases. Discover them."</div>
+    </div>
+  </div>
+
+  <div class="tier-divider accelerate">Accelerate</div>
+
+  <!-- Stage 3: Active Implementation -->
+  <div class="scroll-spacer" data-stage="3"></div>
+  <div class="insight bottom right" id="insight-3">
+    <div class="insight-inner">
+      <div class="insight-tier accelerate">Accelerate</div>
+      <h3>Active Implementation</h3>
+      <div class="sub">The bridge between curiosity and capability. Real tools, real problems, expert guidance.</div>
+      <div class="detail">Your people get hands-on for a full day. They leave with a working prototype, not just notes. The AI Adoption Lab is where muscle memory forms.</div>
+      <div class="services">
+        <span class="service-tag">AI Adoption Lab</span>
+        <span class="service-tag">AI Adoption Framework</span>
+      </div>
+      <div class="key-line green">"Most people hit a wall between curiosity and capability. The Lab bridges it."</div>
+    </div>
+  </div>
+
+  <!-- Stage 4: Scaling What Works -->
+  <div class="scroll-spacer" data-stage="4"></div>
+  <div class="insight top left" id="insight-4">
+    <div class="insight-inner">
+      <div class="insight-tier accelerate">Accelerate</div>
+      <h3>Scaling What Works</h3>
+      <div class="sub">Pilots are proving value. Now scale the approach with playbooks, governance, and measurement.</div>
+      <div class="detail">Six-week intensive. Workshops, Labs, documented processes, trained champions. The whole organisation moves, not just a pilot team.</div>
+      <div class="services">
+        <span class="service-tag">AI Enablement Programme</span>
+        <span class="service-tag">Implementation Support</span>
+      </div>
+      <div class="key-line green">"Structure over speed. Vision over tools. Capability over dependency."</div>
+    </div>
+  </div>
+
+  <!-- Stage 5: Building Champions -->
+  <div class="scroll-spacer" data-stage="5"></div>
+  <div class="insight bottom right" id="insight-5">
+    <div class="insight-inner">
+      <div class="insight-tier accelerate">Accelerate</div>
+      <h3>Building Champions</h3>
+      <div class="sub">Capability multipliers. The people who will teach everyone else.</div>
+      <div class="detail">Train 5-15 internal champions. They run peer sessions, support their teams, and build momentum that doesn't depend on us being in the room.</div>
+      <div class="services">
+        <span class="service-tag">Train-the-Trainer</span>
+        <span class="service-tag">Champions Programme</span>
+      </div>
+      <div class="key-line green">"The real measure of adoption is what happens when we leave."</div>
+    </div>
+  </div>
+
+  <div class="tier-divider transform">Transform</div>
+
+  <!-- Stage 6: AI Operating Model -->
+  <div class="scroll-spacer" data-stage="6"></div>
+  <div class="insight top left" id="insight-6">
+    <div class="insight-inner">
+      <div class="insight-tier transform">Transform</div>
+      <h3>AI Operating Model</h3>
+      <div class="sub">Enterprise-grade transformation. AI is designed into processes, not bolted on.</div>
+      <div class="detail">Leadership drives vision. Labs build skills. Champions multiply capability. The Leadership-Lab-Crowd model makes adoption self-reinforcing.</div>
+      <div class="services">
+        <span class="service-tag">Operating Model Design</span>
+        <span class="service-tag">Enterprise Managed Service</span>
+      </div>
+      <div class="key-line cyan">"Leadership → Lab → Crowd. Three layers, one operating model."</div>
+    </div>
+  </div>
+
+  <!-- Stage 7: Embedded Capability -->
+  <div class="scroll-spacer" data-stage="7"></div>
+  <div class="insight bottom right" id="insight-7">
+    <div class="insight-inner">
+      <div class="insight-tier transform">Transform</div>
+      <h3>Embedded Capability</h3>
+      <div class="sub">AI is no longer a project. It's how you work.</div>
+      <div class="detail">A fractional CAIO keeps strategy sharp. Governance evolves with the technology. Quarterly reviews measure real business impact.</div>
+      <div class="services">
+        <span class="service-tag">Fractional AI Leadership</span>
+        <span class="service-tag">Managed AI Service</span>
+      </div>
+      <div class="key-line cyan">"AI fluency is judgement, not knowledge."</div>
+    </div>
+  </div>
+
+  <!-- Stage 8: AI-Native -->
+  <div class="scroll-spacer" data-stage="8"></div>
+  <div class="insight top center-x" id="insight-8">
+    <div class="insight-inner" style="text-align: center;">
+      <div class="insight-tier transform">Transform</div>
+      <h3>AI-Native Organisation</h3>
+      <div class="sub">The destination. Your culture has shifted. AI is assumed. Manual is suspicious.</div>
+      <div class="detail">Self-sustaining capability. Continuous learning. Competitive advantage at every level. Your team doesn't need permission to experiment. They need a reason not to.</div>
+      <div class="key-line cyan" style="text-align:center;">"AI is assumed. Manual is suspicious."</div>
+    </div>
+  </div>
+
+  <!-- Extra spacer to clear the last insight -->
+  <div class="scroll-spacer" data-stage="done"></div>
+</div>
+
+<!-- ─── POST JOURNEY ─── -->
+<div class="post-journey">
+
+  <!-- Frameworks -->
+  <div class="section-block">
+    <h2>Our <span>Frameworks</span></h2>
+    <p>The intellectual foundations behind the journey.</p>
+    <div class="fw-grid">
+      <div class="fw-card">
+        <h4>AI Fluency Model</h4>
+        <p>Task Executor → Thought Partner → System Architect. Judgement, not just knowledge.</p>
+      </div>
+      <div class="fw-card">
+        <h4>The 4 Ds</h4>
+        <p>Delegation, Description, Discernment, Diligence. The competency framework for AI work.</p>
+      </div>
+      <div class="fw-card">
+        <h4>Raise the Floor / Ceiling</h4>
+        <p>Two-track adoption. Foundation for everyone, advanced capability for those ready.</p>
+      </div>
+      <div class="fw-card">
+        <h4>Intent + Context + Constraints</h4>
+        <p>The real prompting framework beneath all the frameworks.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Self-Assessment -->
+  <div class="section-block">
+    <div class="assess-box">
+      <h3>Where are you on the journey?</h3>
+      <p>Four quick questions. Find your starting point.</p>
+
+      <div class="quiz-progress" id="qProg">
+        <div class="quiz-pip current" data-q="0"></div>
+        <div class="quiz-pip" data-q="1"></div>
+        <div class="quiz-pip" data-q="2"></div>
+        <div class="quiz-pip" data-q="3"></div>
+      </div>
+
+      <div class="quiz-q active" data-q="0">
+        <h4>How would you describe your team's AI experience?</h4>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="answer(0,0)">A few people have tried ChatGPT, but nothing structured</button>
+          <button class="quiz-opt" onclick="answer(0,1)">We've done some training and identified use cases</button>
+          <button class="quiz-opt" onclick="answer(0,2)">We have working AI workflows and internal champions</button>
+          <button class="quiz-opt" onclick="answer(0,3)">AI is embedded in how we operate day to day</button>
+        </div>
+      </div>
+      <div class="quiz-q" data-q="1">
+        <h4>Does your organisation have an AI strategy?</h4>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="answer(1,0)">No, not yet</button>
+          <button class="quiz-opt" onclick="answer(1,1)">We're working on it — leadership is engaged</button>
+          <button class="quiz-opt" onclick="answer(1,2)">Yes, with governance and playbooks</button>
+          <button class="quiz-opt" onclick="answer(1,3)">Yes, reviewed quarterly, drives our operating model</button>
+        </div>
+      </div>
+      <div class="quiz-q" data-q="2">
+        <h4>How do people learn about AI in your organisation?</h4>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="answer(2,0)">They figure it out themselves</button>
+          <button class="quiz-opt" onclick="answer(2,1)">We've run some workshops or shared resources</button>
+          <button class="quiz-opt" onclick="answer(2,2)">Structured training programme and champions</button>
+          <button class="quiz-opt" onclick="answer(2,3)">Continuous peer-led learning built into the culture</button>
+        </div>
+      </div>
+      <div class="quiz-q" data-q="3">
+        <h4>When someone suggests doing something manually, what happens?</h4>
+        <div class="quiz-opts">
+          <button class="quiz-opt" onclick="answer(3,0)">Nobody questions it</button>
+          <button class="quiz-opt" onclick="answer(3,1)">A few people might suggest an AI alternative</button>
+          <button class="quiz-opt" onclick="answer(3,2)">Most teams check if AI could help first</button>
+          <button class="quiz-opt" onclick="answer(3,3)">Manual is suspicious — people explain why they didn't use AI</button>
+        </div>
+      </div>
+
+      <div class="quiz-result" id="qResult">
+        <h4 id="rTitle"></h4>
+        <div class="tier-label" id="rTier"></div>
+        <p class="desc" id="rDesc"></p>
+        <a class="result-cta" href="https://aiaccelerator.uk" target="_blank">Talk to us about your next step</a>
+        <br>
+        <button class="btn-restart" onclick="restartQuiz()">Retake</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p><a href="https://aiaccelerator.uk">AI Accelerator</a> — From curiosity to capability to culture.</p>
+  </div>
+</div>
+
+<script>
+  // ═════════════════════════════════════════════════════════════════════════
+  // POSTMESSAGE PROTOCOL INTEGRATION
+  // ═════════════════════════════════════════════════════════════════════════
+
+  let graphicState = {
+    currentStage: -1,
+    quizAnswers: [null, null, null, null],
+    quizActive: false,
+    isReady: false
+  };
+
+  function sendGraphicMessage(type, data = {}) {
+    const message = { type, ...data };
+    if (window.parent !== window) {
+      window.parent.postMessage(message, '*');
+    }
+  }
+
+  function handleIncomingMessage(event) {
+    if (!event || !event.data || !event.data.type) return;
+
+    const { type, payload } = event.data;
+
+    switch (type) {
+      case 'RESET':
+        resetGraphicState();
+        break;
+      case 'LOG_INTERACTION':
+        if (payload && payload.action) {
+          logInteractionEvent(payload.action, payload.data);
+        }
+        break;
+      default:
+        console.debug('Unknown PostMessage type:', type);
+    }
+  }
+
+  function resetGraphicState() {
+    graphicState.currentStage = -1;
+    graphicState.quizAnswers = [null, null, null, null];
+    restartQuiz();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    sendGraphicMessage('STATE_RESET');
+  }
+
+  function logInteractionEvent(action, data) {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      action,
+      data,
+      currentStage: graphicState.currentStage
+    };
+    sendGraphicMessage('LOG_INTERACTION', logEntry);
+  }
+
+  window.addEventListener('message', handleIncomingMessage);
+
+  // Send GRAPHIC_READY after DOM is fully loaded
+  window.addEventListener('load', function() {
+    graphicState.isReady = true;
+    sendGraphicMessage('GRAPHIC_READY', {
+      timestamp: new Date().toISOString(),
+      hasPostMessage: true
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // ORIGINAL SCROLL-DRIVEN ANIMATION LOGIC
+  // ═════════════════════════════════════════════════════════════════════════
+
+  const STAGES = 9;
+  const stageCurveX = [70, 180, 285, 400, 490, 580, 710, 830, 945];
+  const MAX_X = 1000;
+  const tierThresholds = { learn: 70, accelerate: 400, transform: 710 };
+
+  let activeStage = -1;
+
+  function onScroll() {
+    const journey = document.getElementById('journey');
+    const rect = journey.getBoundingClientRect();
+    const journeyH = journey.scrollHeight;
+    const scrolled = -rect.top;
+    const progress = Math.max(0, Math.min(1, scrolled / (journeyH - window.innerHeight)));
+
+    const clipX = progress * MAX_X;
+    const clipRect = document.getElementById('clipRect');
+    if (clipRect) clipRect.setAttribute('width', clipX);
+
+    let currentStage = -1;
+    for (let i = STAGES - 1; i >= 0; i--) {
+      if (clipX >= stageCurveX[i] - 30) {
+        currentStage = i;
+        break;
+      }
+    }
+
+    document.querySelectorAll('.stage-group').forEach(g => {
+      const s = parseInt(g.dataset.stage);
+      const dots = g.querySelectorAll('.dot, .ring');
+      const visible = clipX >= stageCurveX[s] - 20;
+      dots.forEach(d => d.style.opacity = visible ? '1' : '0');
+      dots.forEach(d => d.style.transition = 'opacity 0.4s ease');
+    });
+
+    document.querySelectorAll('.dot-label').forEach(l => {
+      const s = parseInt(l.dataset.stage);
+      l.classList.toggle('visible', clipX >= stageCurveX[s] - 20);
+    });
+
+    document.getElementById('tzLearn').classList.toggle('visible', clipX >= tierThresholds.learn);
+    document.getElementById('tzAccelerate').classList.toggle('visible', clipX >= tierThresholds.accelerate);
+    document.getElementById('tzTransform').classList.toggle('visible', clipX >= tierThresholds.transform);
+
+    if (currentStage !== activeStage) {
+      activeStage = currentStage;
+      graphicState.currentStage = currentStage;
+
+      for (let i = 0; i < STAGES; i++) {
+        const el = document.getElementById('insight-' + i);
+        if (el) el.classList.toggle('visible', i === currentStage);
+      }
+
+      // Send scroll event to parent
+      if (currentStage >= 0) {
+        sendGraphicMessage('STAGE_CHANGED', {
+          stage: currentStage,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => { onScroll(); ticking = false; });
+      ticking = true;
+    }
+  });
+
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.stage-group .dot, .stage-group .ring').forEach(d => d.style.opacity = '0');
+    onScroll();
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // QUIZ LOGIC (with PostMessage logging)
+  // ═════════════════════════════════════════════════════════════════════════
+
+  let answers = [null, null, null, null];
+
+  function answer(q, v) {
+    answers[q] = v;
+    graphicState.quizAnswers[q] = v;
+
+    const qEl = document.querySelector(`.quiz-q[data-q="${q}"]`);
+    qEl.querySelectorAll('.quiz-opt').forEach((b, i) => b.classList.toggle('sel', i === v));
+    const pips = document.querySelectorAll('.quiz-pip');
+    pips[q].classList.add('done');
+    pips[q].classList.remove('current');
+
+    // Log quiz interaction
+    logInteractionEvent('QUIZ_ANSWER', { question: q, answer: v });
+
+    setTimeout(() => {
+      qEl.classList.remove('active');
+      if (q < 3) {
+        document.querySelector(`.quiz-q[data-q="${q+1}"]`).classList.add('active');
+        pips[q+1].classList.add('current');
+      } else {
+        showResult();
+      }
+    }, 300);
+  }
+
+  function showResult() {
+    const total = answers.reduce((a, b) => a + b, 0);
+    const r = document.getElementById('qResult');
+    const t = document.getElementById('rTitle');
+    const tier = document.getElementById('rTier');
+    const d = document.getElementById('rDesc');
+
+    let resultTier = '';
+    if (total <= 3) {
+      t.textContent = "You're at the start of the journey";
+      tier.textContent = "Start with: Learn";
+      tier.style.color = 'var(--dodger)';
+      d.textContent = "Your organisation is AI-curious but hasn't taken structured steps. An Executive Briefing or AI Primer Workshop will give your team the shared foundation to move forward with confidence.";
+      resultTier = 'LEARN';
+    } else if (total <= 7) {
+      t.textContent = "You're building real momentum";
+      tier.textContent = "Focus on: Accelerate";
+      tier.style.color = 'var(--turquoise)';
+      d.textContent = "You've done the groundwork. The AI Adoption Lab will bridge the gap between knowing and doing. From there, scale with playbooks, governance, and champions.";
+      resultTier = 'ACCELERATE';
+    } else {
+      t.textContent = "You're on the path to AI-native";
+      tier.textContent = "Evolve with: Transform";
+      tier.style.color = 'var(--malibu)';
+      d.textContent = "Your organisation has real capability. The next step is embedding AI into your operating model with strategic advisory, fractional AI leadership, and self-sustaining systems.";
+      resultTier = 'TRANSFORM';
+    }
+
+    r.classList.add('active');
+
+    // Log quiz completion
+    logInteractionEvent('QUIZ_COMPLETE', {
+      totalScore: total,
+      resultTier: resultTier,
+      answers: answers
+    });
+  }
+
+  function restartQuiz() {
+    answers = [null, null, null, null];
+    graphicState.quizAnswers = [null, null, null, null];
+    document.getElementById('qResult').classList.remove('active');
+    document.querySelectorAll('.quiz-q').forEach(q => q.classList.remove('active'));
+    document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+    document.querySelectorAll('.quiz-pip').forEach(p => { p.classList.remove('done', 'current'); });
+    document.querySelector('.quiz-q[data-q="0"]').classList.add('active');
+    document.querySelector('.quiz-pip[data-q="0"]').classList.add('current');
+
+    logInteractionEvent('QUIZ_RESTART');
+  }
+</script>
+
+</body>
+</html>

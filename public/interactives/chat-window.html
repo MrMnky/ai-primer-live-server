@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Chat Window — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --chicago: #575756;
+    --greenpea: #226B4D;
+    --bittersweet: #FF5F5F;
+    --white: #FFFFFF;
+    --slate: #8FA4B3;
+    --cloud: #D4DFE6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+
+  .slide {
+    width: 100vw; height: 100vh; height: 100dvh;
+    padding: 20px 32px 12px;
+    display: flex; flex-direction: column;
+  }
+  .hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; flex-shrink: 0; }
+  .hdr h1 { font-size: 24px; font-weight: 700; line-height: 1.15; }
+  .hdr h1 span { color: var(--dodger); }
+  .hdr .sub { font-size: 11px; font-weight: 300; color: var(--slate); margin-top: 2px; }
+  .ctrls { display: flex; gap: 6px; flex-shrink: 0; }
+  .tbtn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white); font-family: 'Poppins', sans-serif; font-size: 10px;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent; min-height: 36px;
+  }
+  .tbtn:hover { background: rgba(255,255,255,0.1); }
+  .tbtn.on { background: var(--greenpea); border-color: var(--greenpea); }
+
+  .canvas { flex: 1; position: relative; min-height: 0; }
+  .main-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  .ann {
+    flex-shrink: 0; border-radius: 8px;
+    max-height: 0; overflow: hidden; opacity: 0;
+    padding: 0 14px; transition: all 0.4s; margin-top: 0;
+  }
+  .ann.vis {
+    max-height: 100px; opacity: 1; margin-top: 6px;
+    padding: 8px 14px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .ann p { font-size: 11px; color: var(--white); opacity: 0.65; line-height: 1.5; }
+  .ann p strong { color: var(--dodger); font-weight: 600; opacity: 1; }
+
+  /* Fill bar */
+  .fill-wrap { flex-shrink: 0; display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+  .fill-label { font-size: 8px; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }
+  .fill-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .fill-bar-inner { height: 100%; border-radius: 3px; transition: width 0.6s ease, background 0.4s; width: 0%; }
+  .fill-pct { font-size: 10px; font-weight: 600; color: var(--dodger); min-width: 32px; text-align: right; }
+
+  .bot {
+    flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap; gap: 6px;
+  }
+  .bgrp { display: flex; gap: 6px; }
+  .abtn {
+    background: var(--cerulean); border: none; color: var(--white);
+    font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 8px 22px; border-radius: 7px; cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent; min-height: 44px;
+  }
+  .abtn:hover:not(:disabled) { background: var(--dodger); }
+  .abtn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .abtn.r { background: rgba(255,255,255,0.06); font-size: 10px; padding: 7px 14px; }
+  .abtn.r:hover { background: rgba(255,255,255,0.12); }
+  .sctr { font-size: 10px; color: var(--white); opacity: 0.35; }
+  .sctr b { color: var(--dodger); opacity: 1; }
+  .wm { font-size: 9px; color: var(--white); opacity: 0.15; }
+
+  @media (max-width: 700px), (orientation: portrait) {
+
+  @media (max-width: 480px) {
+    .slide { padding: 10px 10px 6px; }
+    .hdr h1 { font-size: 16px; }
+    .hdr .sub { font-size: 8px; }
+    .tbtn { font-size: 8px; padding: 3px 8px; min-height: 30px; }
+    .abtn { font-size: 10px; padding: 5px 12px; min-height: 36px; }
+    .ann.vis { max-height: 90px; }
+    .ann p { font-size: 9px; }
+    .fill-label { font-size: 6px; }
+    .box { margin-bottom: 10px; }
+    .tour-tip { max-width: 280px; padding: 12px 16px 12px; }
+  }
+
+  @media (max-width: 360px) {
+    .slide { padding: 8px 8px 4px; }
+    .hdr h1 { font-size: 14px; }
+    .hdr .sub { font-size: 7px; }
+    .tbtn { font-size: 7px; padding: 2px 6px; min-height: 28px; }
+    .abtn { font-size: 9px; padding: 4px 10px; min-height: 32px; }
+    .ann.vis { max-height: 80px; }
+    .ann p { font-size: 8px; }
+    .fill-label { font-size: 5px; }
+    .box { margin-bottom: 8px; }
+    .tour-tip { max-width: 240px; padding: 10px 14px 10px; font-size: 12px; }
+    .tour-step-num, .tour-title, .tour-desc { font-size: 11px; }
+  }
+    .slide { padding: 12px 14px 8px; }
+    .hdr h1 { font-size: 18px; }
+    .hdr .sub { font-size: 9px; }
+    .tbtn { font-size: 9px; padding: 4px 9px; min-height: 32px; }
+    .abtn { font-size: 11px; padding: 6px 16px; min-height: 40px; }
+    .ann.vis { max-height: 110px; }
+    .ann p { font-size: 10px; }
+    .fill-label { font-size: 7px; }
+  }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="hdr">
+    <div>
+      <h1>The <span>Chat Window</span></h1>
+      <div class="sub">It feels like a conversation — it's actually a document being completed</div>
+    </div>
+    <div class="ctrls">
+      <button class="tbtn" id="annT" onclick="toggleAnn()">Annotations</button>
+      <button class="tbtn" id="autoT" onclick="toggleAuto()">Auto-play</button>
+    </div>
+  </div>
+
+  <div class="canvas" id="canvas">
+    <svg class="main-svg" id="svg"></svg>
+  </div>
+
+  <div class="ann" id="annBar"><p id="annP"></p></div>
+
+  <div class="fill-wrap" id="fillWrap" style="opacity:0">
+    <div class="fill-label">Context used</div>
+    <div class="fill-bar"><div class="fill-bar-inner" id="fillInner"></div></div>
+    <div class="fill-pct" id="fillPct">0%</div>
+  </div>
+
+  <div class="bot">
+    <div class="bgrp">
+      <button class="abtn" id="sendBtn" onclick="next()">Send Message</button>
+      <button class="abtn r" id="rstBtn" onclick="rst()" style="display:none">Reset</button>
+    </div>
+    <div class="sctr" id="sctr">Step <b>0</b> / <b>7</b></div>
+    <div class="wm">© aiaccelerator.uk</div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+// ─── DATA ───
+const STEPS = [
+  {
+    uShort: 'Help with spring campaign…',
+    aShort: 'Product, audience, budget?',
+    ann: 'The <strong>system prompt</strong> and your message are bundled into a single document and sent to the model. The safety system wraps everything. <strong>Context: ~28%</strong>',
+    pct: 28
+  },
+  {
+    uShort: 'Sustainable homeware, £50k…',
+    aShort: '60% social, 25% ads, 15% email',
+    ann: 'The model <strong>re-reads the entire document</strong> every turn — system prompt, all messages, all replies. It doesn\'t remember — it re-reads. <strong>Context: ~48%</strong>',
+    pct: 48
+  },
+  {
+    uShort: 'Tone: warm, not preachy',
+    aShort: '6-week content calendar',
+    ann: 'Your tone instruction is now <strong>part of the document</strong>. It shapes every future response because the model re-reads it each time. <strong>Context: ~60%</strong>',
+    pct: 60
+  },
+  {
+    uShort: 'Draft IG captions for week 1',
+    aShort: 'Three captions: workshop, craft…',
+    ann: 'Context window filling up. The model still nails the tone because <strong>your instruction is in the document</strong>. This is the sweet spot. <strong>Context: ~72%</strong>',
+    pct: 72
+  },
+  {
+    uShort: 'Write the email sequence',
+    aShort: 'Teaser → launch → scarcity',
+    ann: 'Past <strong>75%</strong>. The <strong>middle</strong> of the context gets less attention — the model focuses on the start and end of the document. Watch the middle blocks dim.',
+    pct: 82
+  },
+  {
+    uShort: 'Playful subjects? Budget split?',
+    aShort: '60/25/the rest on email…',
+    ann: '<strong>Spot it?</strong> "The rest" instead of 15%. The budget details are in the middle — where attention has faded. The <strong>lost in the middle</strong> effect is real.',
+    pct: 90
+  },
+  {
+    uShort: 'What about micro-influencers?',
+    aShort: 'Some budget to 3-5 influencers',
+    ann: '<strong>Context lost.</strong> "Some budget" — no specifics. The earliest messages are squeezed out entirely. The middle is barely read. Only the start and end get full attention.',
+    pct: 100
+  }
+];
+
+// ─── STATE ───
+let step = -1;
+let annOn = false, autoOn = false, autoTmr = null;
+let animating = false;
+let llmWheelAngle = 0;
+
+// ─── COLOURS ───
+const C = {
+  sys: { fill: '#00FFBC', fillOp: 0.20, border: '#00FFBC', line: '#00FFBC', text: '#00FFBC' },
+  usr: { fill: '#00B1FF', fillOp: 0.25, border: '#00B1FF', line: '#00B1FF', text: '#00B1FF' },
+  ast: { fill: '#6161FF', fillOp: 0.25, border: '#6161FF', line: '#6161FF', text: '#6161FF' },
+};
+const WHEEL_COLS = ['#00B1FF','#6161FF','#00FFBC','#5CD5FF','#17CE95','#FF5F5F','#C5B6F1','#0084B2'];
+const BLOCK_WIDTHS = [1.0, 0.88, 0.75, 0.94, 0.70, 0.82, 0.90, 0.68, 0.86, 0.73, 0.92, 0.78, 0.65, 0.84, 0.96];
+
+// ─── LAYOUT ───
+function getLayout(W, H) {
+  const portrait = W < H || W < 650;
+  if (portrait) {
+    // Vertical stack: chat top, context middle, model bottom
+    return {
+      portrait: true,
+      chat: { x: 0.02, y: 0.01, w: 0.96, h: 0.28 },
+      ctx:  { x: 0.02, y: 0.31, w: 0.96, h: 0.38 },
+      mdl:  { x: 0.20, y: 0.72, w: 0.60, h: 0.26 },
+      div1Y: 0.295, div2Y: 0.705,
+      labelSize: 9, blockH: 20, blockGap: 3,
+      chatFontSize: 7, blockFontSize: 6.5,
+    };
+  }
+  // Landscape: three columns
+  return {
+    portrait: false,
+    chat: { x: 0.01, y: 0.05, w: 0.155, h: 0.88 },
+    ctx:  { x: 0.21, y: 0.05, w: 0.28,  h: 0.88 },
+    mdl:  { x: 0.58, y: 0.08, w: 0.26,  h: 0.52 },
+    div1X: 0.185, div2X: 0.52,
+    labelSize: 11, blockH: 26, blockGap: 4,
+    chatFontSize: 7.5, blockFontSize: 7,
+  };
+}
+
+// ─── DRAW ───
+function draw(phase, animProgress) {
+  phase = phase || 'static';
+  animProgress = animProgress || 0;
+  const el = document.getElementById('canvas');
+  const W = el.clientWidth, H = el.clientHeight;
+  if (W < 10 || H < 10) return;
+  const svg = document.getElementById('svg');
+  const L = getLayout(W, H);
+  let html = '';
+
+  // ─── DIVIDERS ───
+  if (L.portrait) {
+    const d1y = H * L.div1Y;
+    const d2y = H * L.div2Y;
+    html += `<line x1="${W*0.05}" y1="${d1y}" x2="${W*0.95}" y2="${d1y}" stroke="white" stroke-opacity="0.06" stroke-width="1"/>`;
+    html += `<line x1="${W*0.05}" y1="${d2y}" x2="${W*0.95}" y2="${d2y}" stroke="white" stroke-opacity="0.06" stroke-width="1"/>`;
+  } else {
+    const d1x = W * L.div1X;
+    const d2x = W * L.div2X;
+    html += `<line x1="${d1x}" y1="${H*0.02}" x2="${d1x}" y2="${H*0.95}" stroke="white" stroke-opacity="0.06" stroke-width="1" stroke-dasharray="6,5"/>`;
+    html += `<line x1="${d2x}" y1="${H*0.02}" x2="${d2x}" y2="${H*0.95}" stroke="white" stroke-opacity="0.06" stroke-width="1" stroke-dasharray="6,5"/>`;
+  }
+
+  // ─── ZONE LABELS ───
+  const chatCx = W * (L.chat.x + L.chat.w / 2);
+  const ctxCx  = W * (L.ctx.x + L.ctx.w / 2);
+  const mdlCx  = W * (L.mdl.x + L.mdl.w / 2);
+  const labelY  = L.portrait ? H * 0.005 : H * 0.02;
+  const ctxLabelY = L.portrait ? H * L.div1Y + 8 : labelY;
+  const mdlLabelY = L.portrait ? H * L.div2Y + 8 : labelY;
+
+  html += txt(chatCx, L.portrait ? labelY + 8 : labelY + 10, 'What You See', L.labelSize, 700, '#5CD5FF', 0.4, 'middle', 1.5);
+  html += txt(ctxCx, ctxLabelY + (L.portrait ? 6 : 10), 'Context Document', L.labelSize, 700, '#00FFBC', 0.55, 'middle', 1.5);
+  html += txt(mdlCx, mdlLabelY + (L.portrait ? 6 : 10), 'Model', L.labelSize, 700, '#00B1FF', 0.45, 'middle', 1.5);
+
+  // ═══════════════════════════════════════
+  // ── CHAT MOCKUP
+  // ═══════════════════════════════════════
+  const cx = W * L.chat.x, cy = H * L.chat.y + (L.portrait ? 14 : 18);
+  const cw = W * L.chat.w, ch = H * L.chat.h - (L.portrait ? 16 : 18);
+
+  html += `<rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="10" fill="#0d1b24" stroke="white" stroke-opacity="0.06"/>`;
+  // Title bar
+  html += `<rect x="${cx}" y="${cy}" width="${cw}" height="22" rx="10" fill="rgba(255,255,255,0.02)"/>`;
+  html += `<rect x="${cx}" y="${cy+13}" width="${cw}" height="9" fill="rgba(255,255,255,0.02)"/>`;
+  html += `<circle cx="${cx+10}" cy="${cy+11}" r="2.5" fill="#FF5F5F"/>`;
+  html += `<circle cx="${cx+18}" cy="${cy+11}" r="2.5" fill="#FFD93D"/>`;
+  html += `<circle cx="${cx+26}" cy="${cy+11}" r="2.5" fill="#17CE95"/>`;
+  html += txt(cx + 34, cy + 14, 'AI Chat', L.chatFontSize - 0.5, 600, 'white', 0.25);
+
+  let bubY = cy + 30;
+  // System prompt (dashed)
+  html += chatBubble(cx + 5, bubY, cw - 10, 'System prompt (hidden)', 'sys', 0.5, L.chatFontSize);
+  bubY += L.portrait ? 24 : 26;
+
+  for (let i = 0; i <= step && i < STEPS.length; i++) {
+    const s = STEPS[i];
+    // User bubble (right-aligned)
+    const ubW = cw * 0.8;
+    html += chatBubble(cx + cw - ubW - 5, bubY, ubW, s.uShort, 'usr', 1, L.chatFontSize);
+    bubY += L.portrait ? 24 : 26;
+    // Assistant bubble (left-aligned)
+    if (i < step || phase === 'complete' || phase === 'static') {
+      const abW = cw * 0.84;
+      html += chatBubble(cx + 5, bubY, abW, s.aShort, 'ast', 1, L.chatFontSize);
+      bubY += L.portrait ? 24 : 26;
+    }
+    if (bubY > cy + ch - 12) break;
+  }
+
+  // Colour legend
+  if (step >= 0) {
+    const lgY = cy + ch + 3;
+    const items = [
+      { col: '#00FFBC', label: 'System' },
+      { col: '#00B1FF', label: 'You' },
+      { col: '#6161FF', label: 'Model' }
+    ];
+    const spacing = cw / 3;
+    items.forEach((it, i) => {
+      const ix = cx + i * spacing + 4;
+      html += `<rect x="${ix}" y="${lgY}" width="7" height="7" rx="1.5" fill="${it.col}" opacity="0.5"/>`;
+      html += txt(ix + 10, lgY + 6.5, it.label, 6, 400, 'white', 0.3);
+    });
+  }
+
+  // ═══════════════════════════════════════
+  // ── CONTEXT BLOCKS (with lost-in-the-middle)
+  // ═══════════════════════════════════════
+  const bx = W * L.ctx.x + 12;
+  const bw = W * L.ctx.w - 24;
+  const bStartY = L.portrait ? H * L.div1Y + 24 : H * L.ctx.y + 24;
+  let by = bStartY;
+  const BH = L.blockH, BG = L.blockGap;
+
+  // Build block list first so we can calculate the middle
+  const allBlocks = [];
+  // System prompt always first
+  allBlocks.push({ type: 'sys', widthFrac: 0.95, label: 'SYS' });
+
+  let bIdx = 0;
+  for (let i = 0; i <= step && i < STEPS.length; i++) {
+    allBlocks.push({ type: 'usr', widthFrac: BLOCK_WIDTHS[(bIdx * 2) % BLOCK_WIDTHS.length], turnIdx: i });
+    if (i < step || phase === 'complete' || phase === 'static') {
+      allBlocks.push({ type: 'ast', widthFrac: BLOCK_WIDTHS[(bIdx * 2 + 1) % BLOCK_WIDTHS.length], turnIdx: i });
+    }
+    bIdx++;
+  }
+
+  // Calculate lost-in-the-middle opacity
+  const pct = step >= 0 ? STEPS[Math.min(step, STEPS.length - 1)].pct : 0;
+  const blockPositions = [];
+
+  for (let bi = 0; bi < allBlocks.length; bi++) {
+    const b = allBlocks[bi];
+    let opacity = 1;
+
+    if (pct > 65 && allBlocks.length > 3) {
+      // Lost-in-the-middle effect
+      const totalBlocks = allBlocks.length;
+      const normPos = bi / (totalBlocks - 1); // 0 = start, 1 = end
+      // Attention is U-shaped: high at start and end, low in middle
+      const distFromEdge = Math.min(normPos, 1 - normPos); // 0 at edges, 0.5 at centre
+      const middleness = distFromEdge / 0.5; // 0 at edges, 1 at centre
+      // Scale the fade based on how full the context is
+      const fadeStrength = Math.max(0, (pct - 65) / 35); // 0 at 65%, 1 at 100%
+      opacity = 1 - (middleness * fadeStrength * 0.75); // Minimum 0.25 opacity
+      opacity = Math.max(0.15, opacity);
+      // System prompt always stays bright
+      if (bi === 0) opacity = 1;
+      // Last block always bright
+      if (bi === totalBlocks - 1) opacity = 1;
+    }
+
+    const w = bw * b.widthFrac;
+    html += abstractBlock(bx, by, w, BH, b.type, opacity, b.type === 'sys', L.blockFontSize);
+    blockPositions.push({ x: bx, y: by, w: w, type: b.type, opacity: opacity });
+    by += BH + BG;
+  }
+
+  const wrapperTop = bStartY;
+  const wrapperBottom = by - BG;
+
+  // ── WRAPPER (context document border)
+  if (step >= 0) {
+    const wx = bx - 10, ww = bw + 20;
+    const wy = wrapperTop - 10;
+    const wh = (wrapperBottom - wrapperTop) + 20;
+
+    let wrapOp = 0.35, wrapSW = 1.5;
+    let wrapFill = 'rgba(0,255,188,0.02)';
+    let wrapLabel = 'SENT EVERY TURN →';
+    let wrapLabelCol = '#00FFBC';
+
+    if (phase === 'sending') {
+      wrapOp = 0.35 + 0.4 * (1 - animProgress);
+      wrapSW = 2;
+      wrapFill = `rgba(0,255,188,${(0.02 + 0.06 * (1 - animProgress)).toFixed(3)})`;
+      wrapLabel = 'SENDING →';
+    } else if (phase === 'processing') {
+      wrapOp = 0.2;
+      wrapLabel = 'PROCESSING…';
+    } else if (phase === 'returning') {
+      wrapLabel = '← RECEIVING';
+    }
+
+    html += `<rect x="${wx}" y="${wy}" width="${ww}" height="${wh}" rx="10" fill="${wrapFill}" stroke="${wrapLabelCol}" stroke-opacity="${wrapOp}" stroke-width="${wrapSW}" stroke-dasharray="6,4"/>`;
+
+    // "Sent every turn" label — larger and more prominent
+    html += txt(wx + ww - 8, wy - 5, wrapLabel, 8, 700, wrapLabelCol, 0.5, 'end', 2);
+
+    // Doc icon top-left
+    const ix = wx + 6, iy = wy - 8;
+    html += `<rect x="${ix}" y="${iy}" width="10" height="12" rx="1.5" fill="none" stroke="${wrapLabelCol}" stroke-opacity="0.4" stroke-width="0.8"/>`;
+    html += `<line x1="${ix+2.5}" y1="${iy+4}" x2="${ix+7.5}" y2="${iy+4}" stroke="${wrapLabelCol}" stroke-opacity="0.3" stroke-width="0.6"/>`;
+    html += `<line x1="${ix+2.5}" y1="${iy+7}" x2="${ix+7.5}" y2="${iy+7}" stroke="${wrapLabelCol}" stroke-opacity="0.3" stroke-width="0.6"/>`;
+
+    // ── LOST IN THE MIDDLE indicator ──
+    if (pct > 70 && allBlocks.length > 4) {
+      const midIdx = Math.floor(allBlocks.length / 2);
+      const midBp = blockPositions[midIdx];
+      if (midBp) {
+        const tearY = midBp.y + BH / 2;
+        // Soft red gradient zone
+        const gradH = BH * 3;
+        html += `<rect x="${wx + 3}" y="${tearY - gradH/2}" width="${ww - 6}" height="${gradH}" rx="4" fill="url(#lostGrad)" opacity="${Math.min(1, (pct - 70) / 30 * 0.6)}"/>`;
+        // Label
+        if (pct > 80) {
+          const labelW = 100;
+          const labelX = wx + ww / 2 - labelW / 2;
+          html += `<rect x="${labelX}" y="${tearY - 8}" width="${labelW}" height="16" rx="4" fill="#1B2F3C" stroke="#FF5F5F" stroke-opacity="0.25" stroke-width="0.8"/>`;
+          html += txt(wx + ww / 2, tearY + 3.5, '⚠ Lost in the middle', 7, 600, '#FF5F5F', 0.6, 'middle', 0.5);
+        }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════
+  // ── LLM MODEL (compact)
+  // ═══════════════════════════════════════
+  const mx = W * L.mdl.x, my = L.portrait ? H * L.div2Y + 22 : H * L.mdl.y + 22;
+  const mw = W * L.mdl.w, mh = H * L.mdl.h - 26;
+
+  // Safety wrapper — more prominent
+  const sx = mx - 10, sy = my - 12, sw = mw + 20, sh = mh + 24;
+  let safetyOp = 0.25;
+  if (phase === 'processing') safetyOp = 0.25 + 0.2 * Math.sin(animProgress * Math.PI);
+  html += `<rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="14" fill="rgba(255,95,95,0.03)" stroke="#FF5F5F" stroke-opacity="${safetyOp}" stroke-width="2.5" stroke-dasharray="10,6"/>`;
+  // Safety label — bolder
+  html += `<rect x="${sx + 4}" y="${sy - 10}" width="96" height="16" rx="4" fill="#1B2F3C"/>`;
+  html += txt(sx + 52, sy - 1, 'SAFETY SYSTEM', 8, 700, '#FF5F5F', 0.55, 'middle', 2);
+  // Small shield icon
+  html += `<path d="M${sx+10},${sy-6} l4,-4 l4,4 v5 c0,2,-4,4,-4,4 c0,0,-4,-2,-4,-4 z" fill="none" stroke="#FF5F5F" stroke-opacity="0.4" stroke-width="1"/>`;
+
+  // LLM box
+  let llmFill = 'rgba(0,177,255,0.04)';
+  let llmStroke = 'white';
+  let llmStrokeOp = 0.08;
+  if (phase === 'processing') {
+    const pulse = Math.sin(animProgress * Math.PI);
+    llmFill = `rgba(0,177,255,${(0.04 + 0.12 * pulse).toFixed(3)})`;
+    llmStroke = '#00B1FF';
+    llmStrokeOp = 0.1 + 0.3 * pulse;
+  }
+  html += `<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="12" fill="${llmFill}" stroke="${llmStroke}" stroke-opacity="${llmStrokeOp}"/>`;
+
+  // Spinning wheel
+  const wheelCx = mx + mw / 2;
+  const wheelCy = my + mh * 0.30;
+  const wheelR = Math.min(mw * 0.18, mh * 0.18, 42);
+
+  let wheelAngle = llmWheelAngle;
+  if (phase === 'processing') wheelAngle = llmWheelAngle + animProgress * 360;
+
+  html += `<g transform="rotate(${wheelAngle}, ${wheelCx}, ${wheelCy})">`;
+  const segCount = 8, segAngle = 360 / segCount;
+  for (let s = 0; s < segCount; s++) {
+    const a1 = s * segAngle, a2 = (s + 1) * segAngle;
+    const r1 = (a1 - 90) * Math.PI / 180, r2 = (a2 - 90) * Math.PI / 180;
+    const x1 = wheelCx + wheelR * Math.cos(r1), y1 = wheelCy + wheelR * Math.sin(r1);
+    const x2 = wheelCx + wheelR * Math.cos(r2), y2 = wheelCy + wheelR * Math.sin(r2);
+    const col = WHEEL_COLS[s % WHEEL_COLS.length];
+    const op = phase === 'processing' ? 0.7 : 0.35;
+    html += `<path d="M${wheelCx},${wheelCy} L${x1},${y1} A${wheelR},${wheelR} 0 0 1 ${x2},${y2} Z" fill="${col}" opacity="${op}" stroke="#1B2F3C" stroke-width="1.5"/>`;
+  }
+  html += `</g>`;
+  html += `<circle cx="${wheelCx}" cy="${wheelCy}" r="${wheelR * 0.15}" fill="#1B2F3C" stroke="white" stroke-opacity="0.15" stroke-width="1"/>`;
+  // Pointer
+  const ptrY = wheelCy - wheelR - 3;
+  html += `<polygon points="${wheelCx - 4},${ptrY - 5} ${wheelCx + 4},${ptrY - 5} ${wheelCx},${ptrY + 1}" fill="white" opacity="0.55"/>`;
+
+  // LLM labels
+  html += txt(wheelCx, my + mh * 0.54, 'Large Language Model', L.portrait ? 11 : 13, 700, '#00B1FF', 0.7, 'middle');
+  html += txt(wheelCx, my + mh * 0.62, 'Predicting the next token', L.portrait ? 8 : 9, 400, 'white', 0.3, 'middle');
+
+  // Neural net icon (compact)
+  const nnCy = my + mh * 0.76;
+  const nnS = L.portrait ? 14 : 16;
+  const nnNodes = [
+    {x: wheelCx - nnS, y: nnCy - nnS * 0.55}, {x: wheelCx - nnS, y: nnCy}, {x: wheelCx - nnS, y: nnCy + nnS * 0.55},
+    {x: wheelCx, y: nnCy - nnS * 0.3}, {x: wheelCx, y: nnCy + nnS * 0.3},
+    {x: wheelCx + nnS, y: nnCy}
+  ];
+  let nnOp = 0.3;
+  if (phase === 'processing') nnOp = 0.3 + 0.45 * Math.sin(animProgress * Math.PI);
+  for (let a = 0; a < 3; a++) for (let b = 3; b < 5; b++)
+    html += `<line x1="${nnNodes[a].x}" y1="${nnNodes[a].y}" x2="${nnNodes[b].x}" y2="${nnNodes[b].y}" stroke="white" stroke-opacity="0.07" stroke-width="0.7"/>`;
+  for (let a = 3; a < 5; a++)
+    html += `<line x1="${nnNodes[a].x}" y1="${nnNodes[a].y}" x2="${nnNodes[5].x}" y2="${nnNodes[5].y}" stroke="white" stroke-opacity="0.07" stroke-width="0.7"/>`;
+  for (let n = 0; n < 3; n++) html += `<circle cx="${nnNodes[n].x}" cy="${nnNodes[n].y}" r="2.5" fill="#00B1FF" opacity="${nnOp}"/>`;
+  for (let n = 3; n < 5; n++) html += `<circle cx="${nnNodes[n].x}" cy="${nnNodes[n].y}" r="2.5" fill="#5CD5FF" opacity="${nnOp}"/>`;
+  html += `<circle cx="${nnNodes[5].x}" cy="${nnNodes[5].y}" r="2.5" fill="#6161FF" opacity="${nnOp}"/>`;
+
+  if (step >= 1 && (phase === 'static' || phase === 'complete')) {
+    html += txt(wheelCx, my + mh * 0.88, 'Re-reads everything, every turn', L.portrait ? 7 : 8, 600, 'white', 0.22, 'middle', 1.5);
+  }
+
+  // ═══════════════════════════════════════
+  // ── CONNECTING LINES
+  // ═══════════════════════════════════════
+  if (step >= 0) {
+    const wrapRight = bx + bw + 10;
+    const wrapMidY = wrapperTop + (wrapperBottom - wrapperTop) / 2;
+    const targetX = L.portrait ? wheelCx : mx;
+    const targetY = L.portrait ? my : wheelCy;
+
+    if (L.portrait) {
+      // PORTRAIT: vertical connectors
+      const fromY = wrapperBottom + 10;
+      const toY = my - 14;
+
+      if (phase === 'sending') {
+        const t = animProgress;
+        const py = fromY + (toY - fromY) * t;
+        html += `<line x1="${wheelCx}" y1="${fromY}" x2="${wheelCx}" y2="${toY}" stroke="#00B1FF" stroke-opacity="0.1" stroke-width="1.5" stroke-dasharray="4,4"/>`;
+        html += `<circle cx="${wheelCx}" cy="${py}" r="5" fill="#00B1FF" opacity="0.6"/>`;
+        html += `<circle cx="${wheelCx}" cy="${py}" r="10" fill="#00B1FF" opacity="0.08"/>`;
+      } else if (phase === 'returning') {
+        const t = animProgress;
+        const py = toY + (fromY - toY) * t;
+        html += `<line x1="${wheelCx}" y1="${toY}" x2="${wheelCx}" y2="${fromY}" stroke="#6161FF" stroke-opacity="0.1" stroke-width="1.5" stroke-dasharray="4,4"/>`;
+        html += `<circle cx="${wheelCx}" cy="${py}" r="5" fill="#6161FF" opacity="0.6"/>`;
+        html += `<circle cx="${wheelCx}" cy="${py}" r="10" fill="#6161FF" opacity="0.08"/>`;
+      } else if (phase !== 'processing') {
+        // Static arrows
+        html += `<line x1="${wheelCx - 10}" y1="${fromY}" x2="${wheelCx - 10}" y2="${toY}" stroke="#00B1FF" stroke-opacity="0.25" stroke-width="1.5"/>`;
+        html += `<polygon points="${wheelCx - 10},${toY} ${wheelCx - 14},${toY + 6} ${wheelCx - 6},${toY + 6}" fill="#00B1FF" opacity="0.35"/>`;
+        html += txt(wheelCx - 18, (fromY + toY) / 2, 'ALL context →', 6.5, 600, '#00B1FF', 0.3, 'end', 1);
+
+        if (step >= 1) {
+          html += `<line x1="${wheelCx + 10}" y1="${toY}" x2="${wheelCx + 10}" y2="${fromY}" stroke="#6161FF" stroke-opacity="0.25" stroke-width="1.5"/>`;
+          html += `<polygon points="${wheelCx + 10},${fromY} ${wheelCx + 6},${fromY - 6} ${wheelCx + 14},${fromY - 6}" fill="#6161FF" opacity="0.35"/>`;
+          html += txt(wheelCx + 18, (fromY + toY) / 2, '← response', 6.5, 600, '#6161FF', 0.25, 'start', 1);
+        }
+      }
+    } else {
+      // LANDSCAPE: horizontal bezier connectors
+      const fromX = wrapRight + 4;
+      const toX = mx;
+      const midX = fromX + (toX - fromX) * 0.45;
+
+      if (phase === 'sending') {
+        const t = animProgress;
+        html += `<path d="M${fromX},${wrapMidY} C${midX},${wrapMidY} ${midX},${targetY} ${toX},${targetY}" fill="none" stroke="#00B1FF" stroke-width="1.5" opacity="0.12" stroke-dasharray="4,4"/>`;
+        // Animated dot
+        const pt = bezPt(fromX, wrapMidY, midX, wrapMidY, midX, targetY, toX, targetY, t);
+        // Trail
+        for (let ti = Math.max(0, t - 0.25); ti < t; ti += 0.025) {
+          const tp = bezPt(fromX, wrapMidY, midX, wrapMidY, midX, targetY, toX, targetY, ti);
+          const op = 0.18 * (1 - (t - ti) / 0.25);
+          html += `<circle cx="${tp.x}" cy="${tp.y}" r="3.5" fill="#00B1FF" opacity="${op}"/>`;
+        }
+        html += `<circle cx="${pt.x}" cy="${pt.y}" r="8" fill="#00B1FF" opacity="0.08"/>`;
+        html += `<circle cx="${pt.x}" cy="${pt.y}" r="4" fill="#00B1FF" opacity="0.6"/>`;
+      } else if (phase === 'returning') {
+        const lastBp = blockPositions[blockPositions.length - 1];
+        if (lastBp) {
+          const rfx = toX, rfy = targetY + mh * 0.2;
+          const rtx = lastBp.x + lastBp.w + 12, rty = lastBp.y + BH / 2;
+          const rmidX = rfx + (rtx - rfx) * 0.45;
+          const t = animProgress;
+          html += `<path d="M${rfx},${rfy} C${rmidX},${rfy} ${rmidX},${rty} ${rtx},${rty}" fill="none" stroke="#6161FF" stroke-width="1.5" opacity="0.12" stroke-dasharray="4,4"/>`;
+          const pt = bezPt(rfx, rfy, rmidX, rfy, rmidX, rty, rtx, rty, t);
+          for (let ti = Math.max(0, t - 0.25); ti < t; ti += 0.025) {
+            const tp = bezPt(rfx, rfy, rmidX, rfy, rmidX, rty, rtx, rty, ti);
+            const op = 0.18 * (1 - (t - ti) / 0.25);
+            html += `<circle cx="${tp.x}" cy="${tp.y}" r="3.5" fill="#6161FF" opacity="${op}"/>`;
+          }
+          html += `<circle cx="${pt.x}" cy="${pt.y}" r="8" fill="#6161FF" opacity="0.08"/>`;
+          html += `<circle cx="${pt.x}" cy="${pt.y}" r="4" fill="#6161FF" opacity="0.6"/>`;
+        }
+      } else if (phase !== 'processing') {
+        // Static arrows with clean curves
+        html += `<path d="M${fromX},${wrapMidY} C${midX},${wrapMidY} ${midX},${targetY} ${toX},${targetY}" fill="none" stroke="#00B1FF" stroke-width="2" opacity="0.25"/>`;
+        html += `<polygon points="${toX},${targetY - 4} ${toX},${targetY + 4} ${toX - 7},${targetY}" fill="#00B1FF" opacity="0.35"/>`;
+
+        // Return arrow
+        if (step >= 1) {
+          const lastBp = blockPositions[blockPositions.length - 1];
+          if (lastBp) {
+            const rfy = targetY + mh * 0.18;
+            const rty = lastBp.y + BH / 2;
+            const rtx = lastBp.x + lastBp.w + 12;
+            const rmidX = toX + (rtx - toX) * 0.45;
+            html += `<path d="M${toX},${rfy} C${rmidX},${rfy} ${rmidX},${rty} ${rtx},${rty}" fill="none" stroke="#6161FF" stroke-width="2" opacity="0.25"/>`;
+            html += `<polygon points="${rtx},${rty - 3.5} ${rtx},${rty + 3.5} ${rtx + 6},${rty}" fill="#6161FF" opacity="0.35"/>`;
+          }
+        }
+
+        // Labels
+        const labelX = (fromX + toX) / 2;
+        html += txt(labelX, wrapMidY - 12, 'ALL context', 8, 600, '#00B1FF', 0.35, 'middle', 1);
+        html += txt(labelX, wrapMidY + 1, 'sent →', 8, 400, '#00B1FF', 0.25, 'middle', 1);
+        if (step >= 1) {
+          html += txt(labelX, targetY + mh * 0.18 + 14, '← response', 8, 400, '#6161FF', 0.25, 'middle', 1);
+        }
+      }
+    }
+  }
+
+  // ── SVG defs (gradient for lost-in-the-middle)
+  html = `<defs>
+    <linearGradient id="lostGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF5F5F" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#FF5F5F" stop-opacity="0.08"/>
+      <stop offset="60%" stop-color="#FF5F5F" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#FF5F5F" stop-opacity="0"/>
+    </linearGradient>
+  </defs>` + html;
+
+  svg.innerHTML = html;
+}
+
+// ─── HELPERS ───
+function txt(x, y, text, size, weight, fill, opacity, anchor, ls) {
+  return `<text x="${x}" y="${y}" font-family="Poppins,sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}" opacity="${opacity}" text-anchor="${anchor || 'start'}" ${ls ? 'letter-spacing="' + ls + '"' : ''}>${text}</text>`;
+}
+
+function chatBubble(x, y, w, text, type, opacity, fontSize) {
+  const bg = type === 'sys' ? 'rgba(0,255,188,0.06)' : type === 'usr' ? '#0084B2' : 'rgba(255,255,255,0.07)';
+  const border = type === 'sys' ? 'stroke="#00FFBC" stroke-opacity="0.18" stroke-dasharray="3,3"' : '';
+  let s = `<g opacity="${opacity}">`;
+  s += `<rect x="${x}" y="${y}" width="${w}" height="20" rx="6" fill="${bg}" ${border}/>`;
+  s += txt(x + 7, y + 13.5, text, fontSize, 400, 'white', type === 'sys' ? 0.45 : 0.75);
+  s += `</g>`;
+  return s;
+}
+
+function abstractBlock(x, y, w, h, type, opacity, isSys, fontSize) {
+  const c = C[type];
+  let s = `<g opacity="${opacity}">`;
+  if (isSys) {
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="rgba(0,255,188,0.10)" stroke="#00FFBC" stroke-opacity="0.30" stroke-width="1.2" stroke-dasharray="4,3"/>`;
+    s += `<rect x="${x + 5}" y="${y + 4}" width="26" height="15" rx="3" fill="#00FFBC" opacity="0.22"/>`;
+    s += txt(x + 18, y + 14, 'SYS', fontSize, 700, '#00FFBC', 0.85, 'middle');
+    s += `<rect x="${x + 36}" y="${y + 7}" width="${w * 0.30}" height="4" rx="2" fill="#00FFBC" opacity="0.18"/>`;
+    s += `<rect x="${x + 40 + w * 0.30}" y="${y + 7}" width="${w * 0.16}" height="4" rx="2" fill="#00FFBC" opacity="0.12"/>`;
+    s += `<rect x="${x + 36}" y="${y + 14}" width="${w * 0.20}" height="4" rx="2" fill="#00FFBC" opacity="0.10"/>`;
+  } else {
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="${c.fill}" fill-opacity="${c.fillOp}" stroke="${c.border}" stroke-opacity="0.25" stroke-width="1.2"/>`;
+    const lineY = y + h / 2 - 2;
+    s += `<rect x="${x + 7}" y="${lineY}" width="${w * 0.36}" height="4" rx="2" fill="${c.fill}" opacity="0.25"/>`;
+    if (w > 60) {
+      s += `<rect x="${x + 11 + w * 0.36}" y="${lineY}" width="${w * 0.18}" height="4" rx="2" fill="${c.fill}" opacity="0.15"/>`;
+    }
+  }
+  s += `</g>`;
+  return s;
+}
+
+function bezPt(x0, y0, x1, y1, x2, y2, x3, y3, t) {
+  const m = 1 - t;
+  return {
+    x: m*m*m*x0 + 3*m*m*t*x1 + 3*m*t*t*x2 + t*t*t*x3,
+    y: m*m*m*y0 + 3*m*m*t*y1 + 3*m*t*t*y2 + t*t*t*y3
+  };
+}
+
+// ─── FILL BAR ───
+function updateFillBar() {
+  const wrap = document.getElementById('fillWrap');
+  const inner = document.getElementById('fillInner');
+  const pctEl = document.getElementById('fillPct');
+  if (step < 0) { wrap.style.opacity = '0'; return; }
+  wrap.style.opacity = '1';
+  const pct = STEPS[Math.min(step, STEPS.length - 1)].pct;
+  inner.style.width = pct + '%';
+  if (pct < 60) inner.style.background = 'var(--dodger)';
+  else if (pct < 80) inner.style.background = 'var(--meadow)';
+  else if (pct < 95) inner.style.background = '#FFA726';
+  else inner.style.background = 'var(--bittersweet)';
+  pctEl.textContent = pct + '%';
+  pctEl.style.color = pct > 90 ? 'var(--bittersweet)' : pct > 75 ? '#FFA726' : 'var(--dodger)';
+}
+
+// ─── ANIMATION ENGINE ───
+function animPhase(duration, onFrame) {
+  return new Promise(resolve => {
+    const start = performance.now();
+    function tick(now) {
+      let t = Math.min((now - start) / duration, 1);
+      t = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      onFrame(t);
+      if (t < 1) requestAnimationFrame(tick);
+      else resolve();
+    }
+    requestAnimationFrame(tick);
+  });
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── INTERACTION ───
+async function next() {
+  if (animating) return;
+  if (step + 1 >= STEPS.length) return;
+
+  animating = true;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  step++;
+  updateUI();
+  updateFillBar();
+
+  draw('user-added');
+  await sleep(250);
+
+  await animPhase(900, (t) => draw('sending', t));
+
+  const startAngle = llmWheelAngle;
+  const spinAmount = 360 + Math.random() * 360;
+  await animPhase(800, (t) => {
+    llmWheelAngle = startAngle + spinAmount * t;
+    draw('processing', t);
+  });
+  llmWheelAngle = (startAngle + spinAmount) % 360;
+
+  await animPhase(750, (t) => draw('returning', t));
+
+  draw('complete');
+  await sleep(120);
+  draw('static');
+
+  updateAnn();
+  btn.disabled = false;
+  animating = false;
+
+  if (autoOn && step + 1 < STEPS.length) autoTmr = setTimeout(next, 1400);
+}
+
+function rst() {
+  if (autoTmr) { clearTimeout(autoTmr); autoTmr = null; }
+  animating = false;
+  step = -1;
+  llmWheelAngle = 0;
+  document.getElementById('annBar').classList.remove('vis');
+  draw('static');
+  updateUI();
+  updateFillBar();
+}
+
+function updateUI() {
+  const btn = document.getElementById('sendBtn'), rb = document.getElementById('rstBtn');
+  const ctr = document.getElementById('sctr');
+  const d = step + 1;
+  ctr.innerHTML = 'Step <b>' + d + '</b> / <b>' + STEPS.length + '</b>';
+  if (d >= STEPS.length) { btn.textContent = 'Complete'; btn.disabled = true; rb.style.display = 'inline-flex'; }
+  else { btn.textContent = d === 0 ? 'Send Message' : 'Send Next'; btn.disabled = false; rb.style.display = d > 0 ? 'inline-flex' : 'none'; }
+}
+
+function toggleAnn() { annOn = !annOn; document.getElementById('annT').classList.toggle('on', annOn); updateAnn(); }
+function updateAnn() {
+  const bar = document.getElementById('annBar');
+  if (!annOn || step < 0) { bar.classList.remove('vis'); return; }
+  document.getElementById('annP').innerHTML = STEPS[step].ann;
+  bar.classList.add('vis');
+}
+function toggleAuto() {
+  autoOn = !autoOn; document.getElementById('autoT').classList.toggle('on', autoOn);
+  if (autoOn && step + 1 < STEPS.length && !animating) autoTmr = setTimeout(next, 800);
+  else if (!autoOn && autoTmr) { clearTimeout(autoTmr); autoTmr = null; }
+}
+
+document.addEventListener('keydown', e => {
+  if (tourActive) {
+    if (e.code === 'Escape') { endTour(); return; }
+    if (e.code === 'ArrowRight' || e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); tourNext(); return; }
+    if (e.code === 'ArrowLeft') { e.preventDefault(); tourPrev(); return; }
+    return;
+  }
+  
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); step + 1 >= STEPS.length ? rst() : next(); }
+  if (e.code === 'KeyR') rst();
+  if (e.code === 'KeyA') toggleAnn();
+});
+
+window.addEventListener('resize', () => { if (!animating) draw('static'); });
+draw('static');
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.getElementById('canvasWrap') || document.querySelector('canvas') || document.querySelector('.canvas-wrap'),
+    title: 'Chat is really a document',
+    desc: 'What looks like a conversation is actually a single document sent to the model every turn — system prompt, history, and your latest message.', pad: 6 },
+  { target: () => document.getElementById('sendBtn') || document.querySelector('.abtn, [class*=send]') || document.querySelector('.bot .bgrp'),
+    title: 'Send a message',
+    desc: 'Click to add the next message and watch the context document grow. Notice how the fill bar tracks how much of the context window is used.', pad: 8 },
+  { target: () => document.getElementById('annT') || document.querySelector('.tbtn, [class*=ann]'),
+    title: 'Toggle annotations',
+    desc: 'Turn on annotations to see labels explaining each section of the context document.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+
+  /* ─── POSTMESSAGE PROTOCOL ─── */
+  window.addEventListener("message", function(e) {
+    if (!e.data) return;
+    if (e.data.type === "RESET") {
+      tourStep = 0;
+      tourActive = false;
+      endTour();
+      if (msgScroll) msgScroll.scrollTop = 0;
+      console.log("[AI Primer] Reset signal received");
+    }
+  });
+  window.parent.postMessage({ type: "GRAPHIC_READY", name: "Chat Window" }, "*");
+  function logInteraction(action, detail) {
+    window.parent.postMessage({ type: "LOG_INTERACTION", action: action, detail: detail, timestamp: new Date().toISOString() }, "*");
+  }
+</script>
+</body>
+</html>

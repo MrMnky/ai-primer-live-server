@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Tool Use Works — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+  --white: #FFFFFF;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--gable); color:var(--white); height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:24px; }
+
+.header { text-align:center; margin-bottom:16px; max-width:880px; }
+.header h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+.header .subtitle { font-size:0.8rem; color:var(--slate); font-weight:300; line-height:1.5; }
+.header .subtitle em { color:var(--turquoise); font-style:normal; font-weight:600; }
+
+.workbench { width:100%; max-width:900px; display:flex; gap:16px; flex:1; min-height:0; }
+
+/* Left: AI + tool ring */
+.tool-col { width:340px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+
+.tool-ring-box { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; position:relative; }
+.tool-ring-box .ring-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--slate); text-align:center; margin-bottom:12px; }
+.ring-area { position:relative; width:280px; height:280px; margin:0 auto; }
+
+.ai-core { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, rgba(0,177,255,0.15), rgba(0,255,188,0.1)); border:2px solid rgba(0,177,255,0.3); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:all 0.4s; z-index:2; }
+.ai-core.thinking { border-color:var(--dodger); box-shadow:0 0 20px rgba(0,177,255,0.25); }
+.ai-core.using-tool { border-color:var(--turquoise); box-shadow:0 0 24px rgba(0,255,188,0.3); }
+.ai-core .ai-icon { font-size:1.4rem; }
+.ai-core .ai-label { font-size:0.55rem; color:var(--slate); margin-top:2px; }
+
+.tool-node { position:absolute; width:58px; height:58px; border-radius:50%; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.15); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; z-index:1; }
+.tool-node:hover { border-color:rgba(255,255,255,0.35); background:rgba(255,255,255,0.1); transform:scale(1.08); }
+.tool-node.active { border-color:var(--turquoise); background:rgba(0,255,188,0.1); box-shadow:0 0 16px rgba(0,255,188,0.2); }
+.tool-node .t-icon { font-size:1.2rem; }
+.tool-node .t-name { font-size:0.5rem; color:var(--slate); margin-top:2px; }
+.tool-node.active .t-name { color:var(--turquoise); }
+
+.connector { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+.connector line { stroke:rgba(255,255,255,0.08); stroke-width:1; transition:all 0.4s; }
+.connector line.active { stroke:var(--turquoise); stroke-width:2; stroke-opacity:0.6; filter:drop-shadow(0 0 4px rgba(0,255,188,0.3)); }
+
+/* Scenario buttons */
+.scenario-list { display:flex; flex-direction:column; gap:6px; flex:1; overflow-y:auto; }
+.scn-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px 12px; font-family:'Poppins',sans-serif; font-size:0.68rem; color:var(--slate); cursor:pointer; transition:all 0.2s; text-align:left; display:flex; align-items:center; gap:8px; line-height:1.3; }
+.scn-btn:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.scn-btn.active { border-color:var(--dodger); color:var(--white); background:rgba(0,177,255,0.08); }
+.scn-btn .s-icon { font-size:1rem; flex-shrink:0; }
+
+/* Right: process view */
+.process-col { flex:1; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+
+.query-bar { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:14px 18px; }
+.query-bar .q-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); margin-bottom:4px; }
+.query-bar .q-text { font-size:0.85rem; font-weight:500; }
+
+.process-feed { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+.feed-header { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--slate); display:flex; justify-content:space-between; align-items:center; }
+.play-btn { background:rgba(0,255,188,0.1); border:1px solid var(--turquoise); border-radius:6px; padding:4px 14px; font-family:'Poppins',sans-serif; font-size:0.68rem; color:var(--turquoise); cursor:pointer; transition:all 0.2s; }
+.play-btn:hover { background:rgba(0,255,188,0.2); }
+.play-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.feed-entries { flex:1; padding:12px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+
+.feed-step { display:flex; gap:10px; animation:stepIn 0.4s ease; }
+@keyframes stepIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.step-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
+.step-icon.think { background:rgba(0,177,255,0.12); }
+.step-icon.tool { background:rgba(0,255,188,0.12); }
+.step-icon.result { background:rgba(255,193,7,0.12); }
+.step-icon.answer { background:rgba(124,92,252,0.12); }
+.step-body { flex:1; }
+.step-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:2px; }
+.step-label.think { color:var(--dodger); }
+.step-label.tool { color:var(--turquoise); }
+.step-label.result { color:#FFC107; }
+.step-label.answer { color:#7C5CFC; }
+.step-text { font-size:0.75rem; color:var(--cloud); line-height:1.55; }
+.step-text code { font-family:'JetBrains Mono',monospace; font-size:0.68rem; background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px; }
+
+.without-box { background:var(--white); border-radius:12px; padding:16px 18px; color:var(--gable); }
+.without-box h3 { font-size:0.75rem; font-weight:700; color:var(--cerulean); margin-bottom:8px; }
+.without-box .compare { display:flex; gap:12px; }
+.without-box .cmp { flex:1; padding:10px; border-radius:8px; font-size:0.72rem; line-height:1.55; }
+.without-box .cmp.bad { background:#FFF5F5; color:#C53030; border:1px solid #FED7D7; }
+.without-box .cmp.good { background:#F0FFF4; color:#276749; border:1px solid #C6F6D5; }
+.without-box .cmp .cmp-label { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* MOBILE RESPONSIVENESS */
+/* ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  body { padding: 12px; }
+
+  .header { margin-bottom: 12px; }
+  .header h1 { font-size: 1.2rem; margin-bottom: 4px; }
+  .header .subtitle { font-size: 0.7rem; }
+
+  .workbench {
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  .tool-col {
+    width: 100%;
+    flex-direction: row;
+    gap: 10px;
+    max-height: 200px;
+  }
+
+  .tool-ring-box {
+    flex: 0 0 auto;
+    min-width: 180px;
+    padding: 12px;
+  }
+
+  .ring-area {
+    width: 160px;
+    height: 160px;
+  }
+
+  .ai-core {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ai-core .ai-icon { font-size: 1rem; }
+  .ai-core .ai-label { font-size: 0.45rem; }
+
+  .tool-node {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tool-node .t-icon { font-size: 0.9rem; }
+  .tool-node .t-name { font-size: 0.4rem; }
+
+  .scenario-list {
+    flex: 1;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .scn-btn {
+    padding: 6px 10px;
+    font-size: 0.6rem;
+    gap: 6px;
+  }
+
+  .scn-btn .s-icon { font-size: 0.85rem; }
+
+  .process-col {
+    flex: 1;
+    gap: 8px;
+  }
+
+  .query-bar {
+    padding: 10px 12px;
+  }
+
+  .query-bar .q-label { font-size: 0.55rem; }
+  .query-bar .q-text { font-size: 0.75rem; }
+
+  .feed-header { padding: 8px 12px; font-size: 0.6rem; }
+  .play-btn { padding: 3px 10px; font-size: 0.6rem; }
+  .feed-entries { padding: 8px 12px; gap: 8px; }
+
+  .feed-step { gap: 8px; }
+  .step-icon { width: 24px; height: 24px; font-size: 0.75rem; }
+
+  .step-label { font-size: 0.55rem; }
+  .step-text { font-size: 0.68rem; }
+  .step-text code { font-size: 0.6rem; padding: 0px 3px; }
+
+  .without-box {
+    padding: 12px 14px;
+  }
+
+  .without-box h3 { font-size: 0.65rem; margin-bottom: 6px; }
+  .without-box .compare {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .without-box .cmp {
+    padding: 8px;
+    font-size: 0.65rem;
+  }
+
+  .without-box .cmp .cmp-label { font-size: 0.55rem; margin-bottom: 4px; }
+}
+
+@media (max-width: 480px) {
+  body { padding: 8px; height: 100vh; }
+
+  .header { margin-bottom: 8px; }
+  .header h1 { font-size: 1rem; margin-bottom: 2px; }
+  .header .subtitle { font-size: 0.65rem; line-height: 1.3; }
+
+  .workbench {
+    gap: 8px;
+  }
+
+  .tool-col {
+    max-height: 160px;
+    gap: 8px;
+  }
+
+  .tool-ring-box {
+    min-width: 140px;
+    padding: 10px;
+  }
+
+  .ring-area {
+    width: 120px;
+    height: 120px;
+  }
+
+  .ai-core {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ai-core .ai-icon { font-size: 0.85rem; }
+  .ai-core .ai-label { font-size: 0.4rem; }
+
+  .tool-node {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tool-node .t-icon { font-size: 0.75rem; }
+  .tool-node .t-name { font-size: 0.35rem; }
+
+  .scenario-list {
+    max-height: 160px;
+  }
+
+  .scn-btn {
+    padding: 5px 8px;
+    font-size: 0.55rem;
+    gap: 5px;
+  }
+
+  .scn-btn .s-icon { font-size: 0.75rem; }
+
+  .query-bar { padding: 8px 10px; }
+  .query-bar .q-label { font-size: 0.5rem; }
+  .query-bar .q-text { font-size: 0.65rem; }
+
+  .feed-header { padding: 6px 10px; font-size: 0.55rem; }
+  .play-btn { padding: 2px 8px; font-size: 0.55rem; }
+  .feed-entries { padding: 6px 10px; gap: 6px; }
+
+  .feed-step { gap: 6px; }
+  .step-icon { width: 20px; height: 20px; font-size: 0.65rem; }
+
+  .step-label { font-size: 0.5rem; }
+  .step-text { font-size: 0.6rem; line-height: 1.4; }
+  .step-text code { font-size: 0.52rem; padding: 0px 2px; }
+
+  .without-box {
+    padding: 10px 12px;
+  }
+
+  .without-box h3 { font-size: 0.6rem; margin-bottom: 5px; }
+  .without-box .cmp {
+    padding: 6px;
+    font-size: 0.6rem;
+  }
+
+  .without-box .cmp .cmp-label { font-size: 0.5rem; margin-bottom: 3px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>How Tool Use Works</h1>
+  <div class="subtitle">An AI without tools is like a person locked in a library — knowledgeable but unable to act. <em>Tools let AI interact with the real world.</em></div>
+</div>
+
+<div class="workbench">
+  <div class="tool-col">
+    <div class="tool-ring-box">
+      <div class="ring-label">AI Tool Belt</div>
+      <div class="ring-area" id="ringArea">
+        <svg class="connector" id="connectorSvg" viewBox="0 0 280 280"></svg>
+        <div class="ai-core" id="aiCore">
+          <span class="ai-icon">🤖</span>
+          <span class="ai-label">AI Model</span>
+        </div>
+      </div>
+    </div>
+    <div class="scenario-list" id="scenarioList"></div>
+  </div>
+
+  <div class="process-col">
+    <div class="query-bar">
+      <div class="q-label">User Query</div>
+      <div class="q-text" id="queryText">Select a scenario to see tool use in action</div>
+    </div>
+    <div class="process-feed">
+      <div class="feed-header">
+        <span>Processing Steps</span>
+        <button class="play-btn" id="playBtn" onclick="playScenario()" disabled>Play ▶</button>
+      </div>
+      <div class="feed-entries" id="feedEntries">
+        <div style="text-align:center;padding:40px 0;color:var(--slate);font-size:0.75rem;">Choose a scenario to watch the AI use tools</div>
+      </div>
+    </div>
+    <div class="without-box" id="compareBox">
+      <h3>With vs Without Tools</h3>
+      <div class="compare">
+        <div class="cmp bad">
+          <div class="cmp-label">❌ Without tools</div>
+          The AI can only use knowledge from its training data — which is frozen at a cutoff date and may contain errors.
+        </div>
+        <div class="cmp good">
+          <div class="cmp-label">✅ With tools</div>
+          The AI can search the web, run calculations, read your documents, call APIs, and take real actions in the world.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* POSTMESSAGE PROTOCOL INTEGRATION */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Send GRAPHIC_READY message to parent window when loaded
+ */
+function sendGraphicReady() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+  }
+}
+
+/**
+ * Listen for incoming messages from parent window
+ */
+window.addEventListener('message', function(e) {
+  // Validate message structure
+  if (!e.data || typeof e.data !== 'object') return;
+
+  // Handle RESET message to clear graphic state
+  if (e.data.type === 'RESET') {
+    resetGraphic();
+  }
+});
+
+/**
+ * Log interaction events to parent window
+ */
+function logInteraction(action, details) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'LOG_INTERACTION',
+      action: action,
+      timestamp: new Date().toISOString(),
+      details: details
+    }, '*');
+  }
+}
+
+/**
+ * Reset graphic state (called via RESET message)
+ */
+function resetGraphic() {
+  activeScenario = -1;
+  stepIdx = 0;
+  playing = false;
+  clearInterval(playTimer);
+
+  document.querySelectorAll('.scn-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('queryText').textContent = 'Select a scenario to see tool use in action';
+  document.getElementById('feedEntries').innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--slate);font-size:0.75rem;">Choose a scenario to watch the AI use tools</div>';
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('playBtn').textContent = 'Play ▶';
+
+  TOOLS.forEach((t, i) => {
+    document.getElementById(`tool-${i}`).classList.remove('active');
+    document.getElementById(`line-${i}`).classList.remove('active');
+  });
+  document.getElementById('aiCore').className = 'ai-core';
+
+  logInteraction('reset', { timestamp: new Date().toISOString() });
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* APPLICATION LOGIC */
+/* ═══════════════════════════════════════════════════════════════ */
+
+const TOOLS = [
+  { icon:"🔍", name:"Search", angle:0 },
+  { icon:"🧮", name:"Calculate", angle:51 },
+  { icon:"📄", name:"Read Docs", angle:103 },
+  { icon:"💾", name:"Database", angle:154 },
+  { icon:"📧", name:"Email", angle:206 },
+  { icon:"📊", name:"Visualise", angle:257 },
+  { icon:"🌐", name:"Browse", angle:309 }
+];
+
+const SCENARIOS = [
+  {
+    icon:"📈", query:"What were our sales in Q4 2025, and how does that compare to Q3?",
+    tools:["Database","Calculate"],
+    steps:[
+      { type:"think", text:"The user wants specific sales figures and a comparison. I need to query actual data — I can't rely on training knowledge for real-time business data." },
+      { type:"tool", text:"<code>query_database</code>(\"SELECT SUM(revenue) FROM sales WHERE quarter IN ('Q3-2025','Q4-2025') GROUP BY quarter\")", toolIdx:3 },
+      { type:"result", text:"Q3: £2,340,000 | Q4: £2,891,000" },
+      { type:"tool", text:"<code>calculate</code>((2891000 - 2340000) / 2340000 * 100)", toolIdx:1 },
+      { type:"result", text:"23.5% growth quarter-on-quarter" },
+      { type:"think", text:"I have the raw numbers and the comparison. Let me present this clearly with context." },
+      { type:"answer", text:"Q4 2025 revenue was <strong>£2,891,000</strong>, up <strong>23.5%</strong> from Q3's £2,340,000. That's your strongest quarterly growth this year — Q2→Q3 was only 8.2%." }
+    ],
+    without:"I don't have access to your sales data. Based on general market trends, Q4 is typically a strong quarter…",
+    with:"Your Q4 revenue was £2,891,000 — up 23.5% from Q3. Strongest quarter-on-quarter growth this year."
+  },
+  {
+    icon:"🌤️", query:"What's the weather in London right now? Should I take an umbrella to my 3pm meeting?",
+    tools:["Search","Browse"],
+    steps:[
+      { type:"think", text:"Weather is real-time data — my training knowledge is months old. I need to search for current conditions." },
+      { type:"tool", text:"<code>search_web</code>(\"London weather today current conditions\")", toolIdx:0 },
+      { type:"result", text:"London: 11°C, overcast, 70% chance of rain from 2pm. Wind 15mph SW." },
+      { type:"think", text:"70% rain chance at 2pm means it'll likely be raining by 3pm. Clear recommendation." },
+      { type:"answer", text:"It's 11°C and overcast in London right now, with a <strong>70% chance of rain from 2pm</strong>. Definitely take an umbrella — it'll likely be raining by your 3pm meeting. Wind is 15mph so you might want a proper coat rather than just an umbrella." }
+    ],
+    without:"I don't have access to current weather data. I'd recommend checking a weather app before you leave…",
+    with:"70% chance of rain from 2pm — definitely take an umbrella. It's 11°C with 15mph winds."
+  },
+  {
+    icon:"📧", query:"Draft a follow-up email to Sarah about the proposal we discussed yesterday.",
+    tools:["Email","Read Docs","Search"],
+    steps:[
+      { type:"think", text:"I need context: what proposal, what was discussed yesterday? Let me check the email history and any relevant documents." },
+      { type:"tool", text:"<code>search_email</code>(\"to:sarah subject:proposal\", last 7 days)", toolIdx:4 },
+      { type:"result", text:"Found: email thread 'Re: Enterprise AI Proposal — Vertex Finance'. Last message: Sarah asked about timeline and pricing for Phase 2." },
+      { type:"tool", text:"<code>read_document</code>(\"Vertex Finance Proposal v3.pdf\")", toolIdx:2 },
+      { type:"result", text:"Proposal details: Phase 2 starts Month 4, £45,000, includes RAG implementation and custom knowledge base setup." },
+      { type:"think", text:"Now I have the context: Sarah wants Phase 2 timeline and pricing. I can draft a specific, informed follow-up rather than a generic one." },
+      { type:"answer", text:"<strong>Draft email ready:</strong><br><br>Hi Sarah,<br><br>Great speaking yesterday. As discussed, Phase 2 (RAG implementation + custom knowledge base) would start in Month 4 at £45,000. This includes…<br><br><em>[Email includes specific details from the proposal and references yesterday's conversation]</em>" }
+    ],
+    without:"Sure, here's a generic follow-up template: 'Hi Sarah, Thank you for your time yesterday. I wanted to follow up on our discussion…'",
+    with:"Draft references the specific proposal (£45k, Phase 2, RAG), yesterday's conversation topics, and Sarah's exact questions."
+  },
+  {
+    icon:"📊", query:"Create a chart showing our support ticket trends over the last 6 months.",
+    tools:["Database","Visualise","Calculate"],
+    steps:[
+      { type:"think", text:"The user wants a visual trend. I need to pull ticket data from the database and then generate a chart. Let me also calculate the trend direction." },
+      { type:"tool", text:"<code>query_database</code>(\"SELECT month, COUNT(*) as tickets, AVG(resolution_hours) as avg_resolve FROM support_tickets WHERE date >= '2025-09-01' GROUP BY month ORDER BY month\")", toolIdx:3 },
+      { type:"result", text:"Sep: 142 tickets (avg 4.2h) | Oct: 158 (3.8h) | Nov: 131 (3.5h) | Dec: 119 (3.1h) | Jan: 104 (2.7h) | Feb: 97 (2.4h)" },
+      { type:"tool", text:"<code>calculate</code>(trend line slope, percentage change Sep→Feb)", toolIdx:1 },
+      { type:"result", text:"Tickets down 31.7%. Resolution time down 42.9%. Both trends accelerating." },
+      { type:"tool", text:"<code>create_chart</code>({ type:\"line\", series:[tickets, avg_resolve], labels:months, title:\"Support Ticket Trends\" })", toolIdx:5 },
+      { type:"result", text:"Chart rendered: dual-axis line chart with ticket volume (left axis) and resolution time (right axis)." },
+      { type:"answer", text:"Here's your chart — support tickets are <strong>down 31.7%</strong> since September, and average resolution time has dropped <strong>42.9%</strong> from 4.2 hours to 2.4 hours. Both trends are accelerating, which suggests your recent process changes are compounding." }
+    ],
+    without:"I can't access your ticket data or create charts. You'd need to export the data from your helpdesk and use a spreadsheet tool…",
+    with:"Interactive chart with dual trends — tickets down 31.7%, resolution time down 42.9% — with analysis of the acceleration pattern."
+  },
+  {
+    icon:"🏛️", query:"What did the Chancellor announce yesterday that could affect our AI consulting clients?",
+    tools:["Search","Browse"],
+    steps:[
+      { type:"think", text:"This is about yesterday's news — well beyond my training data. I need to search for the latest announcements and then read the detail." },
+      { type:"tool", text:"<code>search_web</code>(\"UK Chancellor announcement yesterday AI technology business\")", toolIdx:0 },
+      { type:"result", text:"Top results: 'Chancellor unveils £500m AI Growth Fund' — FT, BBC, Gov.uk press release." },
+      { type:"tool", text:"<code>browse_page</code>(\"gov.uk/government/news/ai-growth-fund-announcement\")", toolIdx:6 },
+      { type:"result", text:"Key details: £500m fund for AI adoption in UK businesses. R&D tax credits expanded for AI projects. New AI skills visa route. Enterprise AI sandbox programme launching Q3." },
+      { type:"think", text:"Several of these directly affect our clients — the R&D credits and enterprise sandbox especially. Let me highlight what's actionable." },
+      { type:"answer", text:"Big news for our clients. Yesterday's announcement includes:<br><br>• <strong>£500m AI Growth Fund</strong> — grants for UK businesses adopting AI<br>• <strong>Expanded R&D tax credits</strong> for AI projects (our clients could claim on our engagements)<br>• <strong>Enterprise AI Sandbox</strong> launching Q3 — regulated industries can test AI with lighter oversight<br><br>The R&D credits are the big one — several of our enterprise clients could retrospectively claim on current projects." }
+    ],
+    without:"I don't have access to yesterday's news. I'd recommend checking the FT or Gov.uk for the latest fiscal announcements…",
+    with:"Specific breakdown of the Chancellor's AI announcements with actionable implications for our consulting clients."
+  }
+];
+
+// Position tools around the ring
+const ringArea = document.getElementById('ringArea');
+const svgEl = document.getElementById('connectorSvg');
+const cx = 140, cy = 140, radius = 110;
+
+TOOLS.forEach((t, i) => {
+  const rad = (t.angle - 90) * Math.PI / 180;
+  const x = cx + radius * Math.cos(rad);
+  const y = cy + radius * Math.sin(rad);
+
+  const node = document.createElement('div');
+  node.className = 'tool-node';
+  node.id = `tool-${i}`;
+  node.style.left = (x - 29) + 'px';
+  node.style.top = (y - 29) + 'px';
+  node.innerHTML = `<span class="t-icon">${t.icon}</span><span class="t-name">${t.name}</span>`;
+  ringArea.appendChild(node);
+
+  // Connector line
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1', cx);
+  line.setAttribute('y1', cy);
+  line.setAttribute('x2', x);
+  line.setAttribute('y2', y);
+  line.id = `line-${i}`;
+  svgEl.appendChild(line);
+});
+
+// Scenario buttons
+const scenarioList = document.getElementById('scenarioList');
+scenarioList.innerHTML = SCENARIOS.map((s,i) =>
+  `<button class="scn-btn" onclick="selectScenario(${i})"><span class="s-icon">${s.icon}</span>${s.query.substring(0,42)}…</button>`
+).join('');
+
+let activeScenario = -1;
+let stepIdx = 0;
+let playing = false;
+let playTimer = null;
+
+function selectScenario(idx) {
+  activeScenario = idx;
+  stepIdx = 0;
+  playing = false;
+  clearInterval(playTimer);
+
+  document.querySelectorAll('.scn-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+
+  const s = SCENARIOS[idx];
+  document.getElementById('queryText').textContent = s.query;
+  document.getElementById('feedEntries').innerHTML = '';
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('playBtn').textContent = 'Play ▶';
+
+  // Reset tools
+  TOOLS.forEach((t,i) => {
+    document.getElementById(`tool-${i}`).classList.remove('active');
+    document.getElementById(`line-${i}`).classList.remove('active');
+  });
+  document.getElementById('aiCore').className = 'ai-core';
+
+  updateCompare(idx);
+
+  logInteraction('scenario_selected', { scenario_index: idx, query: s.query });
+}
+
+function playScenario() {
+  if (playing) {
+    playing = false;
+    clearInterval(playTimer);
+    document.getElementById('playBtn').textContent = 'Play ▶';
+    logInteraction('scenario_paused', { scenario_index: activeScenario, step: stepIdx });
+    return;
+  }
+
+  playing = true;
+  document.getElementById('playBtn').textContent = 'Pause ⏸';
+  logInteraction('scenario_started', { scenario_index: activeScenario });
+
+  playTimer = setInterval(() => {
+    if (activeScenario < 0) return;
+    const s = SCENARIOS[activeScenario];
+    if (stepIdx >= s.steps.length) {
+      playing = false;
+      clearInterval(playTimer);
+      document.getElementById('playBtn').disabled = true;
+      document.getElementById('playBtn').textContent = 'Done ✓';
+      document.getElementById('aiCore').className = 'ai-core';
+      logInteraction('scenario_completed', { scenario_index: activeScenario });
+      return;
+    }
+    showStep(s.steps[stepIdx], s);
+    stepIdx++;
+  }, 1600);
+}
+
+function showStep(step, scenario) {
+  // Highlight AI state
+  const core = document.getElementById('aiCore');
+  if (step.type === 'think') core.className = 'ai-core thinking';
+  else if (step.type === 'tool') core.className = 'ai-core using-tool';
+  else if (step.type === 'answer') core.className = 'ai-core';
+
+  // Highlight tool if applicable
+  if (step.type === 'tool' && step.toolIdx !== undefined) {
+    document.getElementById(`tool-${step.toolIdx}`).classList.add('active');
+    document.getElementById(`line-${step.toolIdx}`).classList.add('active');
+  }
+
+  // Add feed entry
+  const entries = document.getElementById('feedEntries');
+  const el = document.createElement('div');
+  el.className = 'feed-step';
+  const icons = { think:'🧠', tool:'🔧', result:'📋', answer:'💬' };
+  el.innerHTML = `
+    <div class="step-icon ${step.type}">${icons[step.type]}</div>
+    <div class="step-body">
+      <div class="step-label ${step.type}">${step.type === 'think' ? 'Reasoning' : step.type === 'tool' ? 'Tool Call' : step.type === 'result' ? 'Result' : 'Response'}</div>
+      <div class="step-text">${step.text}</div>
+    </div>
+  `;
+  entries.appendChild(el);
+  entries.scrollTop = entries.scrollHeight;
+}
+
+function updateCompare(idx) {
+  const s = SCENARIOS[idx];
+  document.getElementById('compareBox').innerHTML = `
+    <h3>With vs Without Tools</h3>
+    <div class="compare">
+      <div class="cmp bad">
+        <div class="cmp-label">❌ Without tools</div>
+        ${s.without}
+      </div>
+      <div class="cmp good">
+        <div class="cmp-label">✅ With tools</div>
+        ${s.with}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.tool-node, .tool-ring, [class*=tool-node]') || document.querySelector('.ring, .tools'),
+    title: 'Available tools',
+    desc: 'The AI sits at the centre with tools arranged around it — web search, code execution, databases, and more.', pad: 6 },
+  { target: () => document.querySelector('.scn-btn, .scenario, [class*=scn]') || document.querySelector('.scenarios'),
+    title: 'Choose a scenario',
+    desc: 'Select a question to see which tools the AI reaches for and how it chains them together.', pad: 8 },
+  { target: () => document.querySelector('.play-btn, .start, [class*=play]') || document.querySelector('.controls'),
+    title: 'Watch it work',
+    desc: 'Hit Play to animate the tool-use process: the AI thinks, calls a tool, gets results, and builds its answer.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+  logInteraction('tour_started', {});
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+  logInteraction('tour_ended', {});
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() {
+  sendGraphicReady();
+  setTimeout(startTour, 600);
+});
+</script>
+</body>
+</html>

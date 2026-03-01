@@ -188,6 +188,22 @@ const SECTION_3_AI_RISKS = [
     notes: `Interactive deep-dive. Participants explore risk categories at their own pace. Each card reveals severity, real examples, and mitigation advice. Debrief: "Which risk surprised you most? Which one are you already managing well?"`,
   },
 
+  // ── 3.5c  AI Risks Visualisation ──────────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'AI RISKS',
+    title: 'Explore: AI Risks Deep Dive',
+    subtitle: 'Interactive risk scenarios and mitigation strategies.',
+    graphic: {
+      id: 'ai-risks-v2',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive risk visualisation system. Participants explore core risks (hallucinations, bias, privacy), emerging risks (automation failure, prompt injection), and systemic risks. Each risk card shows severity, real-world examples, and practical mitigation. Debrief: "Which risks are you already managing? Which need attention?"`,
+  },
+
   {
     type: 'statement',
     theme: 'gradient',

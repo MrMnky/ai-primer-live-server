@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Capability Landscape — The Rising Tide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --gable:      #1B2F3C;
+      --gable-mid:  #243B4A;
+      --turquoise:  #00FFBC;
+      --blue:       #00B1FF;
+      --malibu:     #5CD5FF;
+      --meadow:     #17CE95;
+      --cornflower: #6161FF;
+      --moonraker:  #C5B6F1;
+      --red:        #FF5F5F;
+      --amber:      #FFB84D;
+    }
+
+    html, body {
+      width:100%; height:100vh; overflow:hidden;
+      background: var(--gable);
+      font-family:'Poppins',sans-serif; color:#fff;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    .container {
+      width:100%; height:100%;
+      display:flex; flex-direction:column;
+      max-width:1100px; margin:0 auto;
+      padding:20px 24px 16px;
+    }
+
+    /* ── Header ── */
+    .header { text-align:center; margin-bottom:12px; flex-shrink:0; }
+    .header h1 { font-size:17px; font-weight:600; color:rgba(255,255,255,0.85); }
+    .header p { font-size:9.5px; font-weight:300; color:rgba(255,255,255,0.25); margin-top:2px; }
+
+    /* ── Main layout ── */
+    .main { flex:1; display:flex; gap:20px; min-height:0; }
+
+    /* ── Stack column ── */
+    .stack-col { flex:1; display:flex; flex-direction:column; min-width:0; position:relative; }
+
+    .stack-wrap {
+      flex:1; position:relative; overflow:hidden;
+      border-left:1px solid rgba(255,255,255,0.05);
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ── Capability items ── */
+    .cap {
+      position:absolute; left:0; right:0;
+      display:flex; align-items:center;
+      padding:0 14px 0 16px;
+      transition: opacity 0.6s ease, filter 0.6s ease;
+      cursor:default; z-index:3;
+    }
+    .cap:hover { z-index:12; }
+    .cap:hover .cap-name { color:rgba(255,255,255,0.95); }
+
+    .cap.submerged { opacity:0.25; filter:saturate(0.2); }
+    .cap.submerged .cap-name {
+      text-decoration:line-through;
+      text-decoration-color:rgba(255,95,95,0.5);
+    }
+
+    .cap-dot {
+      width:7px; height:7px; border-radius:50%;
+      flex-shrink:0; margin-right:10px;
+    }
+    .cap-name {
+      font-size:10.5px; font-weight:500;
+      color:rgba(255,255,255,0.55);
+      flex:1; white-space:nowrap; overflow:hidden;
+      text-overflow:ellipsis;
+      transition:color 0.2s;
+    }
+    .cap-status {
+      font-size:7px; font-weight:500; letter-spacing:0.4px;
+      padding:1px 7px; border-radius:8px;
+      margin-left:8px; flex-shrink:0;
+      text-transform:uppercase;
+    }
+    .cap-year {
+      font-size:8px; font-weight:400;
+      color:rgba(255,255,255,0.2);
+      margin-left:8px; flex-shrink:0;
+      min-width:28px; text-align:right;
+    }
+
+    /* ── Wave / tide ── */
+    .tide-fill {
+      position:absolute; left:0; right:0; bottom:0;
+      z-index:2; pointer-events:none;
+      background: linear-gradient(to top,
+        rgba(255,70,70,0.12) 0%,
+        rgba(255,150,80,0.08) 40%,
+        rgba(0,255,188,0.05) 80%,
+        rgba(0,255,188,0.02) 100%);
+    }
+
+    .tide-canvas {
+      position:absolute; left:0; right:0; top:0; bottom:0;
+      width:100%; height:100%;
+      z-index:3; pointer-events:none;
+    }
+
+    /* ── Pilot marker ── */
+    .pilot {
+      position:absolute; left:0; right:0; z-index:6;
+      pointer-events:none;
+    }
+    .pilot-line {
+      height:2px;
+      background: repeating-linear-gradient(90deg,
+        transparent 0px, rgba(0,177,255,0.5) 3px, transparent 6px);
+      animation: dash 1.2s linear infinite;
+    }
+    @keyframes dash {
+      to { background-position:12px 0; }
+    }
+    .pilot-tag {
+      position:absolute; right:0; top:-26px;
+      background:rgba(0,177,255,0.08);
+      border:1px solid rgba(0,177,255,0.3);
+      border-radius:6px; padding:3px 10px;
+      font-size:9px; font-weight:700; color:#00B1FF;
+      letter-spacing:1px;
+      box-shadow:0 0 20px rgba(0,177,255,0.1);
+      animation: ppulse 2.5s ease-in-out infinite;
+    }
+    @keyframes ppulse {
+      0%,100% { box-shadow:0 0 16px rgba(0,177,255,0.08); }
+      50%     { box-shadow:0 0 28px rgba(0,177,255,0.2); }
+    }
+    .pilot-sub {
+      position:absolute; right:0; top:6px;
+      font-size:7px; font-weight:300; color:rgba(0,177,255,0.35);
+    }
+
+    /* ── Side column ── */
+    .side-col {
+      width:210px; flex-shrink:0;
+      display:flex; flex-direction:column;
+      justify-content:center; gap:12px;
+      padding:10px 0;
+    }
+
+    .side-card {
+      border-radius:10px; padding:13px 14px;
+      border:1px solid rgba(255,255,255,0.05);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .side-card:hover { transform:translateX(-2px); border-color:rgba(255,255,255,0.1); }
+    .side-card .sc-icon { font-size:15px; margin-bottom:5px; display:block; }
+    .side-card .sc-title { font-size:10px; font-weight:600; margin-bottom:4px; letter-spacing:0.3px; }
+    .side-card .sc-body { font-size:8.5px; font-weight:300; line-height:1.6; color:rgba(255,255,255,0.3); }
+
+    .insight-card {
+      border-radius:10px; padding:13px 14px;
+      background:rgba(0,255,188,0.015);
+      border:1px solid rgba(0,255,188,0.08);
+    }
+    .insight-card .ic-icon { font-size:13px; margin-bottom:4px; display:block; }
+    .insight-card .ic-body { font-size:8.5px; font-weight:500; line-height:1.6; color:rgba(0,255,188,0.5); }
+
+    /* ── Bottom bar: timeline + controls ── */
+    .bottom-bar {
+      flex-shrink:0; margin-top:10px;
+      display:flex; align-items:center; gap:16px;
+      padding:0 4px;
+    }
+
+    .scrubber-wrap { flex:1; position:relative; height:40px; }
+    .scrubber-track {
+      position:absolute; left:0; right:0; top:18px;
+      height:4px; border-radius:2px;
+      background:rgba(255,255,255,0.06);
+      cursor:pointer;
+    }
+    .scrubber-fill {
+      position:absolute; left:0; top:0; bottom:0;
+      border-radius:2px;
+      background: linear-gradient(90deg, rgba(255,95,95,0.4), rgba(255,184,77,0.4), rgba(0,255,188,0.3));
+      pointer-events:none;
+    }
+    .scrubber-thumb {
+      position:absolute; top:-5px; width:14px; height:14px;
+      border-radius:50%; border:2px solid var(--turquoise);
+      background:var(--gable);
+      transform:translateX(-7px);
+      pointer-events:none;
+      box-shadow:0 0 8px rgba(0,255,188,0.3);
+    }
+    .scrubber-years {
+      position:absolute; left:0; right:0; top:28px;
+      display:flex; justify-content:space-between;
+      pointer-events:none;
+    }
+    .scrubber-year {
+      font-size:8px; font-weight:400; color:rgba(255,255,255,0.18);
+      text-align:center; min-width:30px;
+    }
+    .scrubber-year.now { color:var(--blue); font-weight:600; }
+
+    .play-btn {
+      width:36px; height:36px; border-radius:50%;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.1);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; flex-shrink:0;
+      font-size:12px; color:rgba(255,255,255,0.5);
+      transition:all 0.2s;
+      touch-action:manipulation;
+    }
+    .play-btn:hover { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.8); }
+    .play-btn.active { background:rgba(0,255,188,0.1); border-color:rgba(0,255,188,0.2); color:var(--turquoise); }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position:fixed; z-index:100; pointer-events:none;
+      opacity:0; transform:translateY(4px);
+      transition: opacity 0.15s, transform 0.15s;
+      background:rgba(27,47,60,0.94);
+      border:1px solid rgba(0,255,188,0.12);
+      border-radius:8px; padding:10px 14px;
+      max-width:250px;
+      backdrop-filter:blur(14px); box-shadow:0 6px 24px rgba(0,0,0,0.35);
+    }
+    #tooltip.visible { opacity:1; transform:translateY(0); }
+    .tt-name { font-size:11px; font-weight:600; margin-bottom:3px; }
+    .tt-desc { font-size:9px; font-weight:300; color:rgba(255,255,255,0.45); line-height:1.5; }
+    .tt-status { margin-top:5px; font-size:8px; font-weight:500; display:flex; gap:6px; }
+    .tt-tag { padding:1px 7px; border-radius:8px; }
+
+    /* ── Responsive — Tablet (≤768px) ── */
+    @media (max-width:768px) {
+      .side-col { display:none; }
+      .container { padding:14px 10px 10px; }
+      .cap-status, .cap-year { display:none; }
+    }
+
+    /* ── Responsive — Mobile (≤480px) ── */
+    @media (max-width:480px) {
+      .container { padding:10px 8px 8px; }
+      .header h1 { font-size:14px; }
+      .header p { font-size:8px; }
+      .main { gap:12px; }
+      .bottom-bar { gap:10px; margin-top:8px; }
+      .scrubber-wrap { height:32px; }
+      .scrubber-track { top:14px; height:3px; }
+      .scrubber-year { min-width:24px; font-size:7px; }
+      .play-btn { width:32px; height:32px; font-size:11px; }
+      .cap-name { font-size:9.5px; }
+      .cap-dot { width:6px; height:6px; margin-right:8px; }
+      .pilot-tag { font-size:8px; padding:2px 8px; top:-22px; }
+      .pilot-sub { font-size:6px; }
+    }
+
+    /* ── Responsive — Very small phones (≤360px) ── */
+    @media (max-width:360px) {
+      .container { padding:8px 6px 6px; }
+      .header h1 { font-size:13px; }
+      .header p { font-size:7px; }
+      .header { margin-bottom:10px; }
+      .cap-name { font-size:9px; }
+      .scrubber-year { min-width:20px; font-size:6px; }
+    }
+
+    /* ── Responsive — Extremely small (≤320px) ── */
+    @media (max-width:320px) {
+      .container { padding:6px 4px 4px; }
+      .header h1 { font-size:12px; }
+      .header p { font-size:6px; }
+      .header { margin-bottom:8px; }
+      .cap-name { font-size:8.5px; }
+      .cap-dot { width:5px; height:5px; margin-right:6px; }
+      .scrubber-wrap { height:28px; }
+      .scrubber-year { min-width:18px; font-size:6px; }
+      .bottom-bar { gap:8px; margin-top:6px; }
+      .play-btn { width:28px; height:28px; font-size:10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>The AI Timing Problem</h1>
+      <p>Consumer AI is rising. Will it catch your pilot before you ship?</p>
+    </div>
+
+    <div class="main">
+      <div class="stack-col">
+        <div class="stack-wrap" id="stackWrap">
+          <!-- CSS fill — guaranteed pixel-perfect alignment -->
+          <div class="tide-fill" id="tideFill"></div>
+          <!-- Canvas — animated wave surface only -->
+          <canvas class="tide-canvas" id="tideCanvas"></canvas>
+
+          <!-- Pilot marker (positioned by JS) -->
+          <div class="pilot" id="pilot">
+            <div class="pilot-line"></div>
+            <div class="pilot-tag">YOUR PILOT</div>
+            <div class="pilot-sub">Will the frontier reach here?</div>
+          </div>
+
+          <!-- Capability rows injected by JS -->
+        </div>
+      </div>
+
+      <div class="side-col">
+        <div class="insight-card">
+          <span class="ic-icon">💡</span>
+          <div class="ic-body">Focus on where your data, workflows, and expertise create real, defensible value that consumer AI can't replicate.</div>
+        </div>
+
+        <div class="side-card" style="background:rgba(0,177,255,0.02);">
+          <span class="sc-icon">📊</span>
+          <div class="sc-title" style="color:var(--malibu);">Feb 2026 snapshot</div>
+          <div class="sc-body">Code copilots, research assistants, image gen — all commodity. Shopping agents and voice AI are right at the waterline. The frontier is accelerating fast.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+      <div class="scrubber-wrap">
+        <div class="scrubber-track" id="scrubberTrack">
+          <div class="scrubber-fill" id="scrubberFill"></div>
+          <div class="scrubber-thumb" id="scrubberThumb"></div>
+        </div>
+        <div class="scrubber-years" id="scrubberYears"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip">
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-desc" id="tt-desc"></div>
+    <div class="tt-status" id="tt-status"></div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ══════════════════════════════════════════════════════════
+    // POSTMESSAGE PROTOCOL — for parent iframe integration
+    // ══════════════════════════════════════════════════════════
+    function sendGraphicReady() {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+      }
+    }
+
+    function resetGraphicState() {
+      currentYear = 2022;
+      stopPlay();
+      update();
+    }
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'RESET') {
+        resetGraphicState();
+      }
+    });
+
+    function logInteraction(action, data) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'LOG_INTERACTION',
+          action: action,
+          data: data,
+          timestamp: new Date().toISOString()
+        }, '*');
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // DATA — ordered bottom (earliest commoditised) to top
+    // status: 'done' | 'happening' | 'emerging' | 'future'
+    // commoditisedBy: decimal year when consumer AI fully swallows it
+    // ══════════════════════════════════════════════════════════
+
+    const CAPABILITIES = [
+      // ── Fully commoditised — already swallowed ──
+      { name:'Simple FAQ Chatbot',       commoditisedBy:2023.0, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Every platform ships one. 57% of businesses already using chatbots. Zero defensibility.' },
+      { name:'Text Summarisation',       commoditisedBy:2023.3, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Built into ChatGPT, Gemini, Copilot, Claude since 2023. Completely commodity.' },
+      { name:'Basic Email Drafting',     commoditisedBy:2023.5, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Every major AI tool does this. Outlook Copilot, Gmail, ChatGPT — table stakes.' },
+      { name:'Content Repurposing',      commoditisedBy:2024.0, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Blog to thread, podcast to article — multiple free tools. Commoditised by early 2024.' },
+      { name:'Meeting Transcription',    commoditisedBy:2024.3, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Otter, Copilot, Fireflies, Zoom AI. Conversations are now structured, searchable data.' },
+      { name:'Basic Image Generation',   commoditisedBy:2024.5, zone:'commoditised', status:'done', color:'#FF5F5F',
+        desc:'Midjourney, DALL-E 3, Firefly, Flux. Consumer-grade, free tiers everywhere.' },
+      { name:'Code Copilot',             commoditisedBy:2025.0, zone:'commoditised', status:'done', color:'#EFACA8',
+        desc:'85% of developers now use AI code tools. Cursor, Copilot, Claude Code. Effectively commoditised.' },
+      { name:'AI Research Assistant',    commoditisedBy:2025.5, zone:'commoditised', status:'done', color:'#EFACA8',
+        desc:'Perplexity, Gemini Deep Research, ChatGPT Deep Research. Multiple free options — commodity.' },
+
+      // ── Borderline — the frontier is here right now ──
+      { name:'Slide Deck Generation',    commoditisedBy:2025.8, zone:'borderline', status:'happening', color:'#FFB84D',
+        desc:'Gamma, Copilot, Beautiful.ai — getting good fast. Nearly commodity. Improving weekly.' },
+      { name:'AI Shopping Agent',        commoditisedBy:2026.0, zone:'borderline', status:'happening', color:'#FFB84D',
+        desc:'ChatGPT shopping live with Walmart, Target, Etsy. Google Shopping Graph + Gemini. Right at the edge.' },
+      { name:'AI Phone / Voice Agent',   commoditisedBy:2026.3, zone:'borderline', status:'happening', color:'#FFB84D',
+        desc:'Apple, Google, OpenAI all building consumer voice agents. Rapid progress — months, not years.' },
+      { name:'Production Video Gen',     commoditisedBy:2026.8, zone:'borderline', status:'happening', color:'#FFB84D',
+        desc:'Sora 2, Veo 3.1, Kling 3.0 — production-viable now. Still needs workflow, but moving fast.' },
+
+      // ── Opportunity — above the waterline, defensible ──
+      { name:'Autonomous Agents',        commoditisedBy:2028.0, zone:'opportunity', status:'emerging', color:'#17CE95',
+        desc:'Self-directed AI that plans, executes, adapts. Real but unreliable. The 2026 theme — still early.' },
+      { name:'Internal Knowledge AI',    commoditisedBy:2029.0, zone:'opportunity', status:'emerging', color:'#00FFBC',
+        desc:'Semantic search over YOUR docs. Consumer tools can\'t replicate your internal data.' },
+      { name:'Compliance Automation',    commoditisedBy:2029.5, zone:'opportunity', status:'emerging', color:'#17CE95',
+        desc:'AI wired to YOUR regulatory context and audit trail. Specialist, defensible value.' },
+      { name:'Workflow Automation',      commoditisedBy:2030.0, zone:'opportunity', status:'emerging', color:'#00FFBC',
+        desc:'AI embedded in your specific processes, approvals, and systems. Hard to commoditise.' },
+      { name:'Client-Specific Models',   commoditisedBy:2031.0, zone:'opportunity', status:'emerging', color:'#00FFBC',
+        desc:'RAG or fine-tuned on proprietary data. The deepest moat available today.' },
+
+      // ── Moonshot — future territory ──
+      { name:'AI Strategic Advisor',     commoditisedBy:2033.0, zone:'moonshot', status:'future', color:'#C5B6F1',
+        desc:'Multi-step strategic reasoning and decision-making. Early days — serious governance questions.' },
+      { name:'AI CEO?',                  commoditisedBy:2040.0, zone:'moonshot', status:'future', color:'#6161FF',
+        desc:'Full autonomous leadership. Thought experiment territory. But the trajectory is clear.' },
+      { name:'??? AGI ???',              commoditisedBy:2050.0, zone:'moonshot', status:'future', color:'#6161FF',
+        desc:'Artificial General Intelligence. Nobody agrees when — or if. But the conversation is real.' },
+    ];
+
+    // Pilot sits at the tide level for Feb 2026, plus a small offset above
+    const PILOT_YEAR = 2026.15;  // slightly ahead of "now"
+
+    const YEAR_MIN = 2022, YEAR_MAX = 2029;
+    const YEAR_LABELS = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029];
+
+    const STATUS_STYLES = {
+      done:      { label:'Commoditised',  bg:'rgba(255,95,95,0.12)',  color:'#FF5F5F' },
+      happening: { label:'Happening Now', bg:'rgba(255,184,77,0.12)', color:'#FFB84D' },
+      emerging:  { label:'Emerging',      bg:'rgba(0,255,188,0.1)',   color:'#00FFBC' },
+      future:    { label:'Future',        bg:'rgba(97,97,255,0.12)',  color:'#C5B6F1' },
+    };
+
+    // ═════════ STATE ═════════
+    let currentYear = 2022;
+    let playing = false;
+    let playRAF = null;
+
+    // ═════════ ELEMENTS ═════════
+    const stackWrap     = document.getElementById('stackWrap');
+    const tideFill      = document.getElementById('tideFill');
+    const tideCanvas    = document.getElementById('tideCanvas');
+    const tideCtx       = tideCanvas.getContext('2d');
+    const pilotEl       = document.getElementById('pilot');
+    const tooltip       = document.getElementById('tooltip');
+    const playBtn       = document.getElementById('playBtn');
+
+    let stackH = 0;
+
+    // ═════════ RENDER CAPABILITIES ═════════
+    function renderCaps() {
+      const n = CAPABILITIES.length;
+      const rowH = 100 / n;
+
+      CAPABILITIES.forEach((cap, i) => {
+        const el = document.createElement('div');
+        el.className = 'cap';
+        el.style.bottom = (i * rowH) + '%';
+        el.style.height = rowH + '%';
+
+        // Dot
+        const dot = document.createElement('div');
+        dot.className = 'cap-dot';
+        dot.style.background = cap.color;
+        dot.style.boxShadow = `0 0 6px ${cap.color}44`;
+        el.appendChild(dot);
+
+        // Name
+        const name = document.createElement('div');
+        name.className = 'cap-name';
+        name.textContent = cap.name;
+        el.appendChild(name);
+
+        // Status tag
+        const ss = STATUS_STYLES[cap.status];
+        const tag = document.createElement('div');
+        tag.className = 'cap-status';
+        tag.textContent = ss.label;
+        tag.style.background = ss.bg;
+        tag.style.color = ss.color;
+        el.appendChild(tag);
+
+        // Year
+        const yr = document.createElement('div');
+        yr.className = 'cap-year';
+        yr.textContent = cap.commoditisedBy < 2026 ? '✓ ' + Math.floor(cap.commoditisedBy) : '~' + Math.floor(cap.commoditisedBy);
+        el.appendChild(yr);
+
+        el._cap = cap;
+
+        // Tooltip
+        el.addEventListener('mouseenter', () => {
+          showTip(cap);
+          logInteraction('hover_capability', { name: cap.name });
+        });
+        el.addEventListener('mousemove', moveTip);
+        el.addEventListener('mouseleave', hideTip);
+        el.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          showTip(cap);
+          logInteraction('touch_capability', { name: cap.name });
+          const t = e.touches[0];
+          tooltip.style.left = (t.clientX+14)+'px';
+          tooltip.style.top = (t.clientY-8)+'px';
+        }, { passive:false });
+
+        stackWrap.appendChild(el);
+      });
+    }
+
+    // ═════════ RENDER SCRUBBER ═════════
+    function renderScrubber() {
+      const yearsEl = document.getElementById('scrubberYears');
+      YEAR_LABELS.forEach(yr => {
+        const span = document.createElement('span');
+        span.className = 'scrubber-year' + (yr === 2026 ? ' now' : '');
+        span.textContent = yr;
+        yearsEl.appendChild(span);
+      });
+
+      // Drag interaction
+      const track = document.getElementById('scrubberTrack');
+      let dragging = false;
+
+      function scrubFromEvent(e) {
+        const rect = track.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const frac = Math.max(0, Math.min(1, x / rect.width));
+        currentYear = YEAR_MIN + frac * (YEAR_MAX - YEAR_MIN);
+        stopPlay();
+        update();
+        logInteraction('scrub_timeline', { year: currentYear.toFixed(2) });
+      }
+
+      track.addEventListener('mousedown', (e) => { dragging = true; scrubFromEvent(e); });
+      window.addEventListener('mousemove', (e) => { if (dragging) scrubFromEvent(e); });
+      window.addEventListener('mouseup', () => { dragging = false; });
+      track.addEventListener('touchstart', (e) => { scrubFromEvent(e); }, { passive:true });
+      track.addEventListener('touchmove', (e) => { scrubFromEvent(e); }, { passive:true });
+    }
+
+    // ═════════ WAVE CANVAS ═════════
+    let waveTime = 0;
+
+    function resizeCanvas() {
+      const rect = stackWrap.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      tideCanvas.width = rect.width * dpr;
+      tideCanvas.height = rect.height * dpr;
+      tideCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      stackH = rect.height;
+    }
+
+    function drawWaveSurface(waterPct) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = tideCanvas.width / dpr;
+      const h = tideCanvas.height / dpr;
+      if (h === 0 || w === 0) return;
+      const waterY = h * (1 - waterPct / 100);
+
+      tideCtx.clearRect(0, 0, w + 1, h + 1);
+
+      if (waterPct < 2) return;
+
+      // Compute wave points once
+      const points = [];
+      for (let x = 0; x <= w; x += 2) {
+        const wave1 = Math.sin((x / w) * Math.PI * 3 + waveTime * 1.2) * 6;
+        const wave2 = Math.sin((x / w) * Math.PI * 5 + waveTime * 0.8 + 1.5) * 3;
+        const wave3 = Math.sin((x / w) * Math.PI * 7 + waveTime * 1.8 + 3.0) * 1.5;
+        points.push({ x, y: waterY + wave1 + wave2 + wave3 });
+      }
+
+      // Bright surface line
+      tideCtx.beginPath();
+      points.forEach((p, i) => i === 0 ? tideCtx.moveTo(p.x, p.y) : tideCtx.lineTo(p.x, p.y));
+
+      const surfGrad = tideCtx.createLinearGradient(0, 0, w, 0);
+      surfGrad.addColorStop(0, 'rgba(0,255,188,0.0)');
+      surfGrad.addColorStop(0.2, 'rgba(0,255,188,0.5)');
+      surfGrad.addColorStop(0.5, 'rgba(0,177,255,0.55)');
+      surfGrad.addColorStop(0.8, 'rgba(0,255,188,0.45)');
+      surfGrad.addColorStop(1, 'rgba(0,255,188,0.0)');
+
+      tideCtx.strokeStyle = surfGrad;
+      tideCtx.lineWidth = 2.5;
+      tideCtx.stroke();
+
+      // Wide glow behind the line
+      tideCtx.strokeStyle = 'rgba(0,255,188,0.1)';
+      tideCtx.lineWidth = 14;
+      tideCtx.stroke();
+
+      // Surface label
+      tideCtx.font = "500 9px 'Poppins',sans-serif";
+      tideCtx.fillStyle = 'rgba(0,255,188,0.45)';
+      tideCtx.textAlign = 'right';
+      tideCtx.fillText('AI frontier  ↑', w - 10, waterY + 22);
+    }
+
+    // ═════════ UPDATE ═════════
+    function update() {
+      const n = CAPABILITIES.length;
+      const rowH = 100 / n;
+
+      // Compute water level — smooth linear interpolation between capabilities
+      // Each capability maps to a position: item i sits at (i + 0.5) * rowH
+      // The water interpolates smoothly between these anchor points
+      let waterPct = 0;
+      if (currentYear <= CAPABILITIES[0].commoditisedBy) {
+        // Before first item — rise from 0 to first item
+        const frac = Math.max(0, (currentYear - YEAR_MIN) / (CAPABILITIES[0].commoditisedBy - YEAR_MIN));
+        waterPct = frac * rowH;
+      } else if (currentYear >= CAPABILITIES[n-1].commoditisedBy) {
+        waterPct = 100;
+      } else {
+        for (let i = 1; i < n; i++) {
+          if (currentYear < CAPABILITIES[i].commoditisedBy) {
+            const prevDate = CAPABILITIES[i-1].commoditisedBy;
+            const nextDate = CAPABILITIES[i].commoditisedBy;
+            const frac = (currentYear - prevDate) / (nextDate - prevDate);
+            waterPct = (i + frac) * rowH;
+            break;
+          }
+        }
+      }
+
+      // Update row states
+      stackWrap.querySelectorAll('.cap').forEach(el => {
+        const cap = el._cap;
+        if (!cap) return;
+        el.classList.toggle('submerged', currentYear >= cap.commoditisedBy);
+      });
+
+      // Set CSS fill height (pixel-perfect, same coordinate system as items)
+      tideFill.style.height = waterPct + '%';
+
+      // Draw animated wave surface line on canvas
+      drawWaveSurface(waterPct);
+
+      // Position pilot marker — compute where PILOT_YEAR sits in the stack
+      let pilotPct = 0;
+      for (let i = 0; i < n; i++) {
+        if (PILOT_YEAR >= CAPABILITIES[i].commoditisedBy) {
+          pilotPct = (i + 1) * rowH;
+        } else {
+          const prevY = i > 0 ? CAPABILITIES[i-1].commoditisedBy : YEAR_MIN;
+          const pf = Math.max(0, (PILOT_YEAR - prevY) / (CAPABILITIES[i].commoditisedBy - prevY));
+          pilotPct = (i + pf) * rowH;
+          break;
+        }
+      }
+      pilotEl.style.bottom = pilotPct + '%';
+
+      // Scrubber position
+      const frac = (currentYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN);
+      document.getElementById('scrubberFill').style.width = (frac * 100) + '%';
+      document.getElementById('scrubberThumb').style.left = (frac * 100) + '%';
+    }
+
+    // ═════════ ANIMATION LOOP (for wave + play) ═════════
+    let lastFrame = 0;
+    function animLoop(now) {
+      const dt = lastFrame ? (now - lastFrame) / 1000 : 0.016;
+      lastFrame = now;
+
+      waveTime += dt;
+
+      if (playing) {
+        currentYear += dt * 0.6;  // ~0.6 years per second
+        if (currentYear >= YEAR_MAX) {
+          currentYear = YEAR_MAX;
+          stopPlay();
+          logInteraction('animation_complete', { finalYear: currentYear.toFixed(2) });
+        }
+      }
+
+      update();
+      requestAnimationFrame(animLoop);
+    }
+
+    // ═════════ PLAY / PAUSE ═════════
+    window.togglePlay = function() {
+      if (playing) {
+        stopPlay();
+      } else {
+        playing = true;
+        playBtn.textContent = '⏸';
+        playBtn.classList.add('active');
+        if (currentYear >= YEAR_MAX - 0.1) currentYear = YEAR_MIN;
+        logInteraction('play_started', { startYear: currentYear.toFixed(2) });
+      }
+    };
+
+    function stopPlay() {
+      if (playing) {
+        logInteraction('play_stopped', { stoppedAtYear: currentYear.toFixed(2) });
+      }
+      playing = false;
+      playBtn.textContent = '▶';
+      playBtn.classList.remove('active');
+    }
+
+    // ═════════ TOOLTIP ═════════
+    function showTip(cap) {
+      document.getElementById('tt-name').textContent = cap.name;
+      document.getElementById('tt-desc').textContent = cap.desc;
+      const statusEl = document.getElementById('tt-status');
+      const ss = STATUS_STYLES[cap.status];
+      statusEl.innerHTML = `<span class="tt-tag" style="background:${ss.bg};color:${ss.color}">${ss.label}</span>` +
+        `<span class="tt-tag" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4)">~${Math.floor(cap.commoditisedBy)}</span>`;
+      tooltip.classList.add('visible');
+    }
+    function moveTip(e) {
+      let x = e.clientX + 14, y = e.clientY - 8;
+      if (x + 260 > window.innerWidth) x = e.clientX - 265;
+      if (y < 10) y = 10;
+      tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+    }
+    function hideTip() { tooltip.classList.remove('visible'); }
+
+    // ═════════ INIT ═════════
+    function init() {
+      renderCaps();
+      renderScrubber();
+      // Resize canvas after layout has settled
+      requestAnimationFrame(() => {
+        resizeCanvas();
+        update();
+        requestAnimationFrame(animLoop);
+      });
+
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        update();
+      });
+
+      document.addEventListener('touchstart', (e) => {
+        if (!e.target.closest('.cap')) hideTip();
+      });
+
+      // Send GRAPHIC_READY signal to parent when initialized
+      sendGraphicReady();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else { init(); }
+  })();
+  </script>
+</body>
+</html>

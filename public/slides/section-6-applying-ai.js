@@ -155,6 +155,54 @@ const SECTION_6_APPLYING_AI = [
     notes: `Three techniques on one slide — each gets a brief description. Simulation is conceptually the most interesting. The "synthetic audience" idea should feel like a light bulb moment. Pace: give each technique its own beat. End on the simulation callout to leave the strongest impression.`,
   },
 
+  // ── 6.1d  Operating Model Interactive ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Explore: AI Operating Model',
+    subtitle: 'See how AI fits into your business operating model.',
+    graphic: {
+      id: 'operating-model-v2',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive operating model framework. Shows how AI integrates into: strategy, people, processes, technology, governance. Participants explore each layer and see dependencies. Debrief: "Which operating model layers are you strongest in? Which need investment?"`,
+  },
+
+  // ── 6.2c  Solution Space Interactive ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Explore: AI Solution Space',
+    subtitle: 'Map different AI application categories and use cases.',
+    graphic: {
+      id: 'solution-space',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive solution space navigator. Participants explore AI application categories: automation, augmentation, insight generation, new products. See real examples and trade-offs. Debrief: "Where does your organisation have the most leverage?"`,
+  },
+
+  // ── 6.2d  3D Map Editor Interactive ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'APPLYING AI',
+    title: 'Try it: 3D Map Editor',
+    subtitle: 'Plan your AI adoption using an interactive 3D building editor.',
+    graphic: {
+      id: '3d-map-editor',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive 3D building/campus editor. Participants plan AI deployment like building a campus: which functions go where, how do they connect, where are the constraints? Visual planning tool for strategy. Debrief: "Where would you build your AI foundation first?"`,
+  },
+
   // ── 6.3  Summary ──────────────────────────────
   {
     type: 'statement',

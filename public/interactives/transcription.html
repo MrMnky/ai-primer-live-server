@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transcription — The Hidden Accelerator | AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gable: #1B2F3C;
+  --gable-light: #243d4e;
+  --gable-lighter: #2d4f64;
+  --turquoise: #00FFBC;
+  --dodger: #00B1FF;
+  --cerulean: #0084B2;
+  --malibu: #5BA3E6;
+  --meadow: #17CE95;
+  --cornflower: #6161FF;
+  --moonraker: #C5B6F1;
+  --seapink: #EFACA8;
+  --chicago: #575756;
+  --greenpea: #226B4D;
+  --bittersweet: #FF5F5F;
+  --white: #FFFFFF;
+  --accessible-accent: #007A5E;
+  --slate: #8FA4B3;
+  --cloud: #D4DFE6;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Poppins',sans-serif;
+  background:var(--gable);
+  color:var(--white);
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── HEADER ─── */
+.header {
+  padding:18px 32px 0;
+}
+.header h1 {
+  font-size:1.35rem;
+  font-weight:700;
+  letter-spacing:-0.5px;
+  margin-bottom:2px;
+}
+.header .subtitle {
+  font-size:0.7rem;
+  color:var(--slate);
+  font-weight:300;
+  line-height:1.5;
+}
+.header .subtitle em { font-style:normal; font-weight:600; color:var(--turquoise); }
+
+/* ─── MODE TABS ─── */
+.mode-bar {
+  padding:12px 32px 0;
+  display:flex;
+  gap:6px;
+}
+.mode-pill {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:20px;
+  padding:7px 18px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.68rem;
+  font-weight:500;
+  color:var(--slate);
+  cursor:pointer;
+  transition:all 0.25s;
+}
+.mode-pill:hover { border-color:rgba(255,255,255,0.25); color:var(--cloud); }
+.mode-pill.active {
+  border-color:var(--dodger);
+  color:var(--dodger);
+  background:rgba(0,177,255,0.08);
+}
+
+/* ─── MAIN CONTENT ─── */
+.main {
+  flex:1;
+  padding:14px 32px 12px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ─── MODE 1: EXPLORE ─── */
+.explore-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+.explore-left {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* Speed compare — persistent bars */
+.speed-compare {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:16px 20px;
+}
+.speed-compare .sc-title {
+  font-size:0.6rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:12px;
+  font-weight:600;
+}
+.speed-bar-group { margin-bottom:10px; }
+.speed-bar-group:last-of-type { margin-bottom:0; }
+.speed-bar-label {
+  font-size:0.68rem;
+  color:var(--cloud);
+  margin-bottom:4px;
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+}
+.speed-bar-label .val { font-weight:600; font-size:0.65rem; }
+.speed-bar-track {
+  height:26px;
+  background:rgba(255,255,255,0.06);
+  border-radius:6px;
+  overflow:hidden;
+  position:relative;
+}
+.speed-bar-fill {
+  height:100%;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  padding-left:10px;
+  transition:width 1.4s cubic-bezier(0.22,1,0.36,1);
+}
+.speed-bar-fill .wpm {
+  font-size:0.58rem;
+  font-weight:600;
+  white-space:nowrap;
+}
+.speed-bar-extra {
+  font-size:0.58rem;
+  color:var(--slate);
+  margin-top:2px;
+  line-height:1.4;
+}
+.speed-bar-extra strong { font-weight:600; }
+
+.big-idea {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:16px 20px;
+  flex:1;
+}
+.big-idea .bi-label {
+  font-size:0.6rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:10px;
+  font-weight:600;
+}
+.big-idea .bi-quote {
+  font-size:0.95rem;
+  font-weight:300;
+  line-height:1.6;
+  color:var(--cloud);
+}
+.big-idea .bi-quote span { color:var(--turquoise); font-weight:600; }
+.stat-row {
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+.stat-card {
+  flex:1;
+  background:rgba(255,255,255,0.05);
+  border-radius:8px;
+  padding:10px 12px;
+  text-align:center;
+}
+.stat-card .num {
+  font-size:1.3rem;
+  font-weight:700;
+  color:var(--turquoise);
+  line-height:1.1;
+}
+.stat-card .unit {
+  font-size:0.65rem;
+  font-weight:300;
+  color:var(--turquoise);
+  opacity:0.6;
+}
+.stat-card .label {
+  font-size:0.55rem;
+  color:var(--slate);
+  margin-top:2px;
+  line-height:1.3;
+}
+
+/* Explore right — live race simulator */
+.explore-right {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.sim-panel {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:16px 20px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+.sim-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.sim-header .sh-title {
+  font-size:0.6rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  font-weight:600;
+}
+.sim-controls { display:flex; gap:6px; }
+.sim-btn {
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:6px;
+  padding:5px 14px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.62rem;
+  font-weight:500;
+  color:var(--slate);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.sim-btn:hover { border-color:var(--dodger); color:var(--white); }
+.sim-btn.active {
+  border-color:var(--dodger);
+  color:var(--dodger);
+  background:rgba(0,177,255,0.08);
+}
+.sim-btn.go {
+  border-color:var(--meadow);
+  color:var(--meadow);
+  animation:pulse 2s infinite;
+}
+.sim-btn.go:hover { background:rgba(23,206,149,0.12); }
+.sim-btn.running {
+  border-color:var(--bittersweet);
+  color:var(--bittersweet);
+  animation:none;
+}
+
+.race-lanes {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  flex:1;
+}
+.race-lane {
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:8px;
+  padding:10px 14px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+.race-lane-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+}
+.race-lane-header .rl-label {
+  font-size:0.62rem;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.race-lane-header .rl-count {
+  font-size:0.58rem;
+  font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+}
+.race-text-area {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.62rem;
+  line-height:1.55;
+  color:var(--cloud);
+  flex:1;
+  overflow:hidden;
+  position:relative;
+}
+.race-text-area .cursor {
+  display:inline-block;
+  width:2px;
+  height:0.75em;
+  background:currentColor;
+  animation:blink 0.8s step-end infinite;
+  vertical-align:text-bottom;
+  margin-left:1px;
+}
+@keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
+
+.race-result {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:10px;
+  padding:12px 16px;
+}
+.race-result .rr-label {
+  font-size:0.55rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:6px;
+  font-weight:600;
+}
+.race-result .rr-text {
+  font-size:0.66rem;
+  color:var(--cloud);
+  line-height:1.55;
+}
+.race-result .rr-text strong { font-weight:600; }
+
+/* ─── MODE 2: USE CASES ─── */
+.usecases-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+.uc-list {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  overflow-y:auto;
+}
+.uc-item {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+  transition:all 0.25s;
+}
+.uc-item:hover { border-color:rgba(255,255,255,0.20); }
+.uc-item.active { border-color:var(--meadow); background:rgba(23,206,149,0.06); }
+.uc-item .uci-icon { font-size:1.1rem; margin-bottom:2px; }
+.uc-item .uci-name { font-size:0.72rem; font-weight:600; color:var(--cloud); }
+.uc-item.active .uci-name { color:var(--meadow); }
+.uc-item .uci-tag { font-size:0.55rem; color:var(--slate); text-transform:uppercase; letter-spacing:1px; }
+
+.uc-detail {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.uc-hero {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:16px 20px;
+}
+.uc-hero .uch-title { font-size:0.95rem; font-weight:700; margin-bottom:4px; }
+.uc-hero .uch-desc { font-size:0.7rem; color:var(--cloud); line-height:1.6; }
+.uc-hero .uch-desc strong { color:var(--meadow); font-weight:600; }
+
+.uc-steps {
+  display:flex;
+  gap:8px;
+  flex:1;
+}
+.uc-step {
+  flex:1;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:all 0.3s;
+  position:relative;
+}
+.uc-step:hover { border-color:rgba(255,255,255,0.18); }
+.uc-step.revealed { border-color:var(--meadow); background:rgba(23,206,149,0.04); }
+.uc-step .ucs-num {
+  font-size:0.55rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:4px;
+  font-weight:600;
+}
+.uc-step .ucs-title { font-size:0.72rem; font-weight:600; margin-bottom:4px; }
+.uc-step .ucs-text {
+  font-size:0.63rem;
+  color:var(--slate);
+  line-height:1.5;
+}
+.uc-step.revealed .ucs-text { color:var(--cloud); }
+.uc-step .ucs-hidden {
+  font-size:0.62rem;
+  color:var(--cloud);
+  line-height:1.5;
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:none;
+}
+.uc-step.revealed .ucs-hidden { display:block; }
+.uc-step .click-hint {
+  font-size:0.55rem;
+  color:var(--dodger);
+  margin-top:6px;
+  animation:pulse 2s infinite;
+}
+.uc-step.revealed .click-hint { display:none; }
+
+/* ─── MODE 3: PIPELINE ─── */
+.pipeline-layout {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+.pipeline-flow {
+  display:flex;
+  align-items:center;
+  gap:0;
+  position:relative;
+  padding:0 8px;
+}
+.pipe-stage {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  cursor:pointer;
+  z-index:2;
+}
+.pipe-stage .ps-box {
+  background:rgba(255,255,255,0.04);
+  border:2px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:18px 14px;
+  text-align:center;
+  width:100%;
+  transition:all 0.4s;
+}
+.pipe-stage:hover .ps-box { border-color:rgba(255,255,255,0.25); }
+.pipe-stage.active .ps-box {
+  border-color:var(--dodger);
+  background:rgba(0,177,255,0.08);
+  box-shadow:0 0 20px rgba(0,177,255,0.15);
+}
+.pipe-stage.completed .ps-box {
+  border-color:var(--meadow);
+  background:rgba(23,206,149,0.06);
+}
+.pipe-stage .ps-icon { font-size:1.6rem; margin-bottom:6px; }
+.pipe-stage .ps-name { font-size:0.75rem; font-weight:600; margin-bottom:2px; }
+.pipe-stage .ps-desc { font-size:0.58rem; color:var(--slate); line-height:1.4; }
+.pipe-stage .ps-progress {
+  width:100%;
+  height:3px;
+  background:rgba(255,255,255,0.06);
+  border-radius:2px;
+  margin-top:8px;
+  overflow:hidden;
+}
+.pipe-stage .ps-progress-fill {
+  height:100%;
+  border-radius:2px;
+  width:0%;
+  transition:width 0.6s ease;
+}
+.pipe-stage.active .ps-progress-fill { background:var(--dodger); }
+.pipe-stage.completed .ps-progress-fill { background:var(--meadow); width:100% !important; }
+
+/* Connector lines between stages */
+.pipe-connector {
+  flex:0 0 40px;
+  height:2px;
+  position:relative;
+  z-index:1;
+}
+.pipe-connector-track {
+  position:absolute;
+  top:0; left:0; right:0;
+  height:2px;
+  background:rgba(255,255,255,0.08);
+  border-radius:1px;
+}
+.pipe-connector-fill {
+  position:absolute;
+  top:0; left:0;
+  height:2px;
+  border-radius:1px;
+  width:0%;
+  transition:width 0.5s ease;
+}
+.pipe-connector.filled .pipe-connector-fill { width:100%; background:var(--meadow); }
+.pipe-connector .pipe-dot {
+  position:absolute;
+  top:-3px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--dodger);
+  opacity:0;
+  box-shadow:0 0 6px rgba(0,177,255,0.5);
+}
+@keyframes dotTravel {
+  0% { left:0; opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { left:calc(100% - 8px); opacity:0; }
+}
+.pipe-connector .pipe-dot.traveling {
+  animation:dotTravel 0.8s ease-in-out forwards;
+}
+
+.pipe-detail-area {
+  display:flex;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+.pipe-detail {
+  flex:1;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:18px 22px;
+  display:flex;
+  flex-direction:column;
+  transition:border-color 0.3s;
+}
+.pipe-detail.active-border { border-color:rgba(0,177,255,0.3); }
+.pipe-detail .pd-title {
+  font-size:0.88rem;
+  font-weight:700;
+  margin-bottom:8px;
+}
+.pipe-detail .pd-body {
+  font-size:0.7rem;
+  color:var(--cloud);
+  line-height:1.65;
+  flex:1;
+}
+.pipe-detail .pd-body strong { color:var(--dodger); font-weight:600; }
+.pipe-detail .pd-tools {
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+.pd-tool-pill {
+  font-size:0.58rem;
+  background:rgba(0,177,255,0.08);
+  border:1px solid rgba(0,177,255,0.20);
+  border-radius:12px;
+  padding:3px 10px;
+  color:var(--dodger);
+}
+.pipe-example {
+  width:300px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+}
+.pipe-example .pe-label {
+  font-size:0.55rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:8px;
+  font-weight:600;
+}
+.pipe-example .pe-text {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.6rem;
+  color:var(--cloud);
+  line-height:1.6;
+  flex:1;
+  overflow-y:auto;
+}
+.pipe-example .pe-text .stage-label {
+  display:inline-block;
+  font-family:'Poppins',sans-serif;
+  font-size:0.5rem;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  font-weight:600;
+  padding:2px 8px;
+  border-radius:3px;
+  margin-bottom:4px;
+}
+.pipe-controls {
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-top:4px;
+}
+.pipe-play-btn {
+  background:rgba(0,177,255,0.08);
+  border:1px solid rgba(0,177,255,0.25);
+  border-radius:8px;
+  padding:8px 24px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.68rem;
+  font-weight:600;
+  color:var(--dodger);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.pipe-play-btn:hover { background:rgba(0,177,255,0.15); border-color:var(--dodger); }
+.pipe-play-btn.playing {
+  background:rgba(255,95,95,0.08);
+  border-color:rgba(255,95,95,0.25);
+  color:var(--bittersweet);
+}
+.pipe-reset-btn {
+  background:none;
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:8px;
+  padding:8px 16px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.62rem;
+  color:var(--slate);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.pipe-reset-btn:hover { color:var(--white); border-color:rgba(255,255,255,0.25); }
+
+/* ─── MODE 4: BEST PRACTICE ─── */
+.bp-layout {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+.bp-col {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow-y:auto;
+}
+.bp-section {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  padding:14px 18px;
+}
+.bp-section .bps-title {
+  font-size:0.75rem;
+  font-weight:700;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.bp-section .bps-title .icon { font-size:1rem; }
+.bp-check-item {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.bp-check-item:last-child { border-bottom:none; }
+.bp-check-item:hover { opacity:0.9; }
+.bp-checkbox {
+  width:18px;
+  height:18px;
+  border-radius:4px;
+  border:1.5px solid rgba(255,255,255,0.20);
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.6rem;
+  transition:all 0.25s;
+  margin-top:1px;
+}
+.bp-check-item.checked .bp-checkbox {
+  border-color:var(--meadow);
+  background:var(--meadow);
+  color:var(--gable);
+}
+.bp-check-text {
+  font-size:0.66rem;
+  color:var(--cloud);
+  line-height:1.5;
+}
+.bp-check-text strong { font-weight:600; }
+.bp-check-item.checked .bp-check-text { color:var(--slate); }
+
+.bp-progress-bar {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:10px;
+  padding:12px 18px;
+}
+.bp-progress-bar .bppb-label {
+  font-size:0.6rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--slate);
+  margin-bottom:6px;
+  font-weight:600;
+  display:flex;
+  justify-content:space-between;
+}
+.bp-progress-track {
+  height:8px;
+  background:rgba(255,255,255,0.06);
+  border-radius:4px;
+  overflow:hidden;
+}
+.bp-progress-fill {
+  height:100%;
+  background:var(--meadow);
+  border-radius:4px;
+  transition:width 0.5s ease;
+  width:0%;
+}
+
+.bp-tip {
+  background:rgba(0,177,255,0.06);
+  border:1px solid rgba(0,177,255,0.15);
+  border-radius:10px;
+  padding:12px 16px;
+}
+.bp-tip .bpt-label {
+  font-size:0.55rem;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--dodger);
+  margin-bottom:4px;
+  font-weight:600;
+}
+.bp-tip .bpt-text {
+  font-size:0.66rem;
+  color:var(--cloud);
+  line-height:1.55;
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  padding:8px 32px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.footer-text {
+  font-size:0.55rem;
+  color:var(--slate);
+  opacity:0.5;
+}
+
+/* ─── UTILITIES ─── */
+.hidden { display:none !important; }
+@keyframes pulse { 0%,100% { box-shadow:none; } 50% { box-shadow:0 0 0 3px rgba(0,177,255,0.15); } }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.fade-in { animation:fadeIn 0.4s ease; }
+
+/* ─── RESPONSIVE MOBILE ─── */
+@media (max-width:768px) {
+  body {
+    height:100dvh;
+  }
+  .header {
+    padding:12px 16px 0;
+  }
+  .header h1 {
+    font-size:1.1rem;
+  }
+  .header .subtitle {
+    font-size:0.65rem;
+  }
+  .mode-bar {
+    padding:8px 16px 0;
+    gap:4px;
+    flex-wrap:wrap;
+  }
+  .mode-pill {
+    padding:6px 12px;
+    font-size:0.6rem;
+  }
+  .main {
+    padding:10px 16px 8px;
+  }
+  .explore-grid {
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .speed-compare,
+  .big-idea,
+  .sim-panel,
+  .pipe-container,
+  .bp-layout {
+    padding:12px 14px;
+  }
+  .bp-layout {
+    grid-template-columns:1fr;
+  }
+  .stat-card .num {
+    font-size:1rem;
+  }
+  .footer {
+    padding:6px 16px 8px;
+    gap:8px;
+    flex-direction:column;
+    align-items:flex-start;
+    font-size:0.5rem;
+  }
+  .footer-text {
+    font-size:0.5rem;
+  }
+  .use-case-grid {
+    grid-template-columns:1fr;
+  }
+  .uc-card {
+    padding:12px 14px;
+  }
+}
+
+@media (max-width:480px) {
+  .header {
+    padding:10px 12px 0;
+  }
+  .header h1 {
+    font-size:0.95rem;
+    margin-bottom:1px;
+  }
+  .header .subtitle {
+    font-size:0.6rem;
+    line-height:1.4;
+  }
+  .mode-bar {
+    padding:6px 12px 0;
+    gap:3px;
+  }
+  .mode-pill {
+    padding:5px 10px;
+    font-size:0.55rem;
+  }
+  .main {
+    padding:8px 12px 6px;
+  }
+  .explore-grid,
+  .bp-layout {
+    gap:8px;
+  }
+  .speed-compare,
+  .big-idea,
+  .sim-panel,
+  .pipe-container {
+    padding:10px 12px;
+  }
+  .speed-compare .sc-title,
+  .big-idea .bi-label,
+  .sim-header .sh-title {
+    font-size:0.55rem;
+    letter-spacing:1px;
+  }
+  .big-idea .bi-quote {
+    font-size:0.85rem;
+    line-height:1.5;
+  }
+  .stat-card {
+    padding:8px 10px;
+  }
+  .stat-card .num {
+    font-size:0.9rem;
+  }
+  .stat-card .unit {
+    font-size:0.55rem;
+  }
+  .stat-card .label {
+    font-size:0.5rem;
+  }
+  .speed-bar-label {
+    font-size:0.6rem;
+  }
+  .speed-bar-label .val {
+    font-size:0.55rem;
+  }
+  .footer {
+    padding:5px 12px 6px;
+  }
+  .footer-text {
+    font-size:0.45rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Transcription — The Hidden Accelerator</h1>
+  <div class="subtitle">How turning speech into text unlocks <em>the biggest untapped data source</em> in any organisation</div>
+</div>
+
+<div class="mode-bar">
+  <div class="mode-pill active" onclick="switchMode(0)">Explore</div>
+  <div class="mode-pill" onclick="switchMode(1)">Use Cases</div>
+  <div class="mode-pill" onclick="switchMode(2)">The Pipeline</div>
+  <div class="mode-pill" onclick="switchMode(3)">Best Practice</div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<div class="footer">
+  <div class="footer-text">AI Accelerator — Transcription Technique Interactive</div>
+  <div class="footer-text">aiaccelerator.uk</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   POSTMESSAGE PROTOCOL
+   ══════════════════════════════════════════════════ */
+function initPostMessageProtocol() {
+  // Signal to parent that graphic is ready
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+  }
+
+  // Listen for incoming messages from parent
+  window.addEventListener('message', function(e) {
+    if (!e.data) return;
+
+    switch(e.data.type) {
+      case 'RESET':
+        resetGraphic();
+        break;
+      case 'SWITCH_MODE':
+        if (typeof e.data.mode === 'number') {
+          switchMode(e.data.mode);
+        }
+        break;
+      case 'LOG_INTERACTION':
+        // For analytics/tracking if needed
+        console.log('[Transcription Interactive] Interaction logged:', e.data);
+        break;
+    }
+  });
+}
+
+function logInteraction(action, details = {}) {
+  // Send interaction logs to parent if available
+  if (window.parent !== window) {
+    window.parent.postMessage({
+      type: 'LOG_INTERACTION',
+      action: action,
+      details: details,
+      timestamp: new Date().toISOString()
+    }, '*');
+  }
+}
+
+function resetGraphic() {
+  stopRace();
+  stopPipeAnim();
+  currentMode = 0;
+  currentUC = 0;
+  revealedSteps = {};
+  currentPipeStage = 0;
+  Object.keys(BP_CHECKLIST).forEach(cat => {
+    bpChecks[cat] = BP_CHECKLIST[cat].map(() => false);
+  });
+  document.querySelectorAll('.mode-pill').forEach((p, i) => {
+    p.classList.toggle('active', i === 0);
+  });
+  renderMain();
+  logInteraction('graphic_reset');
+}
+
+/* ══════════════════════════════════════════════════
+   DATA
+   ══════════════════════════════════════════════════ */
+
+const RACE_TEXT = "I want to create a proposal for a mid-size retailer with about 200 staff. They're most worried about disrupting their engineering team during a platform migration. The CTO mentioned board pressure to have an AI story by Q2, and she's been burned by a consultancy before. I think we should lead with the audit because it runs alongside existing work. We could start after their current sprint ends.";
+
+const RACE_SCENARIOS = [
+  { label: "Project brief", text: "We need to redesign the onboarding flow for new enterprise customers. The current process takes 3 weeks and involves 4 handoffs between teams. Customers complain about repetitive questions. We want it down to 5 days with a single point of contact. Budget is 80k and the board wants it live by end of Q2." },
+  { label: "Meeting debrief", text: "Just came out of the client meeting with Sarah Chen from Nexus Retail. She's interested in our AI audit but worried about disruption to her 15-person engineering team during their platform migration. Series B just closed so they have runway. Main competitor ShopAI just launched AI recommendations which has sharpened urgency." },
+  { label: "Lessons learned", text: "The Virgin Red project taught us three things. First, executive sponsorship makes or breaks adoption. We had Richard's team engaged from day one and that gave us air cover. Second, the champions network was more effective than top-down training. Third, we should have started governance earlier. The responsible AI filter came in late and we had to retrofit it." }
+];
+
+const USE_CASES = [
+  {
+    icon: "\u{1F399}\uFE0F", name: "Self-Interview", tag: "personal productivity",
+    title: "Self-Interview: Thinking Out Loud",
+    desc: "Use transcription to <strong>interview yourself</strong>. Ask a question, talk through your answer, then feed the transcript to AI. This captures nuance, reasoning, and context that you'd never type \u2014 because typing forces you to edit as you go, but speaking lets you think freely.",
+    steps: [
+      { title: "Record", text: "Open a voice recorder. Ask yourself the question.", hidden: "Example: 'What did we learn from the Virgin Red project? What would I do differently?' Then just talk for 5-10 minutes without filtering." },
+      { title: "Transcribe", text: "Run through Whisper, Word Online, or your tool of choice.", hidden: "Cloud APIs process in seconds. Local models on an M1 Mac handle an hour in 2-3 minutes. Cost is negligible either way." },
+      { title: "Process", text: "Feed the transcript to an AI with a specific instruction.", hidden: "Try: 'Extract the key lessons from this self-interview. Group by theme. Flag anything that contradicts what I said earlier.' The AI finds patterns you missed." },
+      { title: "Refine", text: "Use the AI output as a structured starting point.", hidden: "You've gone from a vague feeling of 'I learned stuff' to a structured lessons-learned document \u2014 in 15 minutes, not 2 hours of staring at a blank page." }
+    ]
+  },
+  {
+    icon: "\u{1F4F9}", name: "Video & Media Extraction", tag: "content mining",
+    title: "Extracting Insight from Video & Audio",
+    desc: "YouTube tutorials, podcast episodes, conference talks, training recordings \u2014 all contain valuable knowledge <strong>locked inside audio</strong>. Transcription unlocks it. Instead of rewatching a 60-minute video, extract the text and let AI find the gold.",
+    steps: [
+      { title: "Source", text: "Identify the video, podcast, or recording.", hidden: "YouTube auto-generates captions/subtitles. Many tools can extract these directly. For other sources, download the audio track." },
+      { title: "Extract", text: "Pull the transcript from captions or transcribe the audio.", hidden: "For YouTube: use subtitle extraction tools. For raw audio: Whisper API, Otter.ai, Microsoft Teams transcription, or Google's Speech-to-Text." },
+      { title: "Analyse", text: "Pass to AI with your specific question.", hidden: "'Summarise the 3 key arguments in this talk.' 'Extract every statistic mentioned.' 'Compare this speaker\u2019s view with [our approach].' 'Create a training guide based on this tutorial.'" },
+      { title: "Transform", text: "Turn extracted insight into your own asset.", hidden: "A 90-minute conference keynote becomes a one-page brief. A 20-part YouTube playlist becomes a structured training curriculum. Knowledge that took hours to consume now takes minutes to process." }
+    ]
+  },
+  {
+    icon: "\u{1F3D7}\uFE0F", name: "Organisational Knowledge", tag: "knowledge management",
+    title: "Capturing Organisational Knowledge",
+    desc: "When experienced people leave, their knowledge walks out the door. Transcription-based <strong>knowledge extraction interviews</strong> can capture decades of expertise in hours \u2014 creating searchable, reusable institutional knowledge.",
+    steps: [
+      { title: "Identify", text: "Map the people who hold critical tacit knowledge.", hidden: "Who knows how things really work? The person who\u2019s been here 15 years, the engineer who built the original system, the sales lead who knows every client\u2019s quirks. These people are your biggest knowledge risk." },
+      { title: "Interview", text: "Record structured conversations focused on how and why.", hidden: "Not 'tell me about your role' \u2014 that gets you a job description. Instead: 'Walk me through how you handle [specific scenario].' 'What do you check that isn't in any manual?' 'What mistakes do new people always make?'" },
+      { title: "Process", text: "Transcribe and extract structured knowledge assets.", hidden: "Feed transcripts to AI: 'Extract all decision-making rules mentioned. Create an FAQ from the common questions discussed. Build a troubleshooting guide from the scenarios described.'" },
+      { title: "Operationalise", text: "Turn insights into living reference documents.", hidden: "The transcripts become: onboarding guides, decision trees, process documentation, FAQ databases, and training scenarios \u2014 all grounded in real expertise, not someone\u2019s best guess at writing a manual." }
+    ]
+  },
+  {
+    icon: "\u{1F4CA}", name: "Data Collection", tag: "research & analysis",
+    title: "Data Collection at Scale",
+    desc: "Surveys get low response rates. Forms capture what people think they should say. <strong>Conversational data collection</strong> via transcription captures what people actually think \u2014 richer, more honest, and faster to process at scale with AI.",
+    steps: [
+      { title: "Design", text: "Create an interview script with open-ended questions.", hidden: "Instead of 'Rate your satisfaction 1-5', ask 'Tell me about the last time you used the system and what happened.' Open questions + transcription = rich qualitative data." },
+      { title: "Collect", text: "Record interviews, focus groups, or field observations.", hidden: "In-person, phone, video call \u2014 all work. Even 10 interviews of 20 minutes each gives you 3+ hours of data. Historically, analysing this would take weeks. Now it takes an afternoon." },
+      { title: "Transcribe", text: "Batch-process all recordings.", hidden: "Whisper and similar models handle accents, multiple speakers, and background noise well. Speaker diarisation (identifying who said what) is available in most tools." },
+      { title: "Analyse", text: "Use AI to find themes, sentiment, and outliers.", hidden: "'Across these 10 transcripts, what are the 5 most common complaints? Quote directly from participants.' 'Identify where participant sentiment shifts from positive to negative.' 'Find contradictions between what managers said and what frontline staff said.'" }
+    ]
+  },
+  {
+    icon: "\u{1F4CB}", name: "Project Retrospectives", tag: "continuous improvement",
+    title: "Project Retrospectives That Actually Work",
+    desc: "Most project retrospectives produce a bullet list that nobody reads. <strong>Transcribed retro sessions</strong> capture the real conversation \u2014 the disagreements, the nuance, the 'what we'd actually do differently' \u2014 and AI turns it into genuinely useful lessons.",
+    steps: [
+      { title: "Record", text: "Run the retrospective as a natural conversation and record it.", hidden: "Don't try to capture everything on a whiteboard. Let people talk. The transcript is your record. People are more candid when they're not watching someone type their words into a shared screen." },
+      { title: "Transcribe", text: "Process the full session.", hidden: "A 45-minute retro produces roughly 6,000-7,000 words of transcript. Rich, detailed, and full of context that bullet points would lose." },
+      { title: "Extract", text: "Ask AI to find the signal in the noise.", hidden: "'What went well \u2014 with specific examples? What would the team change? Where did people disagree? What root causes were mentioned more than once?' The AI cross-references across the whole conversation." },
+      { title: "Action", text: "Generate improvement actions that reference real evidence.", hidden: "Instead of 'improve communication', you get: 'Three team members independently mentioned that requirements changed mid-sprint without notification. Proposed fix: mandatory change-impact notes in the project channel within 2 hours of any scope change.'" }
+    ]
+  },
+  {
+    icon: "\u{1F4AC}", name: "Voice Prompting", tag: "ai interaction",
+    title: "Voice as Your AI Interface",
+    desc: "Typing prompts to AI is natural for short queries. But for <strong>complex, context-rich instructions</strong>, speaking is dramatically faster and produces richer context. Transcription bridges voice to text, giving AI more to work with.",
+    steps: [
+      { title: "Speak", text: "Talk through what you need, naturally.", hidden: "Don't try to 'write' your prompt out loud. Just explain what you want as if you're briefing a colleague: 'So basically, I need a proposal for this client, they're a mid-size retailer, about 200 staff, and the thing they're most worried about is...' This produces 3-5x more context than typing." },
+      { title: "Transcribe", text: "Convert your voice note to text.", hidden: "Most AI chat interfaces now have built-in voice input. Or record a voice note, transcribe it, and paste. Either way, you've captured 400+ words of rich context in 2-3 minutes." },
+      { title: "Prompt", text: "Feed the transcript directly to the AI.", hidden: "Add a light instruction: 'I've just dictated my thoughts on this project. Extract my key requirements and write a [deliverable] based on what I've described.' The AI structures your stream of consciousness." },
+      { title: "Iterate", text: "Refine with shorter typed follow-ups.", hidden: "The heavy lifting is done. Now you're editing and refining with short typed instructions. Total time: 5 minutes of talking + 5 minutes of refining vs. 30 minutes of typing from scratch." }
+    ]
+  }
+];
+
+const PIPELINE_STAGES = [
+  {
+    icon: "\u{1F399}\uFE0F", name: "Capture", desc: "Record audio",
+    detail: "The starting point. <strong>Any device with a microphone becomes a capture tool.</strong> Phone voice memos, laptop recordings, meeting platform transcription, dedicated recorders, even dictation apps. The key insight: capture doesn\u2019t require any special equipment. What matters is building the habit.",
+    tools: ["Phone voice memo", "Teams/Zoom recording", "Dedicated recorder", "Dictation app"],
+    example: { label: "CAPTURE", color: "#EFACA8", text: "\u{1F3A4} Recording started...\n\n\"I want to create a proposal for a mid-size retailer with about 200 staff. They're most worried about disruption...\"" },
+  },
+  {
+    icon: "\u{1F4DD}", name: "Transcribe", desc: "Speech to text",
+    detail: "Convert audio to text using AI speech recognition. <strong>Modern models handle accents, multiple speakers, background noise, and jargon.</strong> Cloud services process in seconds. Local models (Whisper) run on standard hardware. Speaker diarisation identifies who said what.",
+    tools: ["Whisper (OpenAI)", "Word Online", "Otter.ai", "Google Speech-to-Text", "Teams"],
+    example: { label: "TRANSCRIBE", color: "#5BA3E6", text: "[00:00] I want to create a proposal for a mid-size retailer with about 200 staff.\n[00:04] They're most worried about disrupting their engineering team during a platform migration.\n[00:09] The CTO mentioned board pressure to have an AI story by Q2..." },
+  },
+  {
+    icon: "\u{1F50D}", name: "Process", desc: "AI analysis",
+    detail: "Feed the transcript to a large language model with a specific instruction. <strong>This is where the real value is created.</strong> The raw transcript is data; the processed output is insight. The instruction you give determines the output: summaries, action items, themes, structured documents.",
+    tools: ["Claude", "ChatGPT", "Gemini", "Custom prompts", "Automated pipelines"],
+    example: { label: "PROCESS", color: "#6161FF", text: "Prompt: \"Extract the client brief from this transcript. Identify: company profile, key concern, decision driver, and recommended approach.\"\n\n\u2192 Analysing 67 words of transcript..." },
+  },
+  {
+    icon: "\u{1F4C4}", name: "Transform", desc: "Create assets",
+    detail: "The AI output becomes a reusable knowledge asset. <strong>A 60-minute conversation becomes a one-page brief, a training guide, a FAQ, a process document, or a searchable knowledge base entry.</strong> The transcript is the raw material; the transformed output is the product.",
+    tools: ["Reports", "Training materials", "Knowledge bases", "Process docs", "Action trackers"],
+    example: { label: "TRANSFORM", color: "#17CE95", text: "\u{1F4CB} Client Brief \u2014 Nexus Retail\n\nProfile: Mid-size retailer, ~200 staff\nKey concern: Engineering disruption during platform migration\nDriver: Board pressure for AI story by Q2\nRisk: Previous bad consultancy experience\n\nRecommended approach: Position AI audit as running alongside existing sprint cycle, not competing with it. Start after current sprint ends." },
+  },
+  {
+    icon: "\u{1F504}", name: "Feedback", desc: "Learn & improve",
+    detail: "Close the loop. <strong>Track what was useful, refine your prompts, improve your capture habits.</strong> Over time, you build organisational muscle memory for transcription-first workflows. Teams that do this consistently find transcription becomes their primary input method within weeks.",
+    tools: ["Prompt templates", "Quality reviews", "Team playbooks", "Workflow automation"],
+    example: { label: "FEEDBACK", color: "#00FFBC", text: "\u2705 Client brief generated in 45 seconds\n\u2705 All key data points extracted correctly\n\u26A0\uFE0F Missed: CTO\u2019s name (Sarah Chen)\n\nAction: Add \"include all named individuals\" to prompt template\n\nTemplate saved \u2192 client-brief-v2.md\nNext time: 30 seconds, higher accuracy" },
+  }
+];
+
+const BP_CHECKLIST = {
+  consent: [
+    { text: "<strong>Inform participants</strong> that the session will be recorded and transcribed" },
+    { text: "<strong>Explain the purpose</strong> \u2014 what the transcription will be used for" },
+    { text: "<strong>Obtain explicit consent</strong> before recording begins (verbal on recording or written)" },
+    { text: "<strong>Offer opt-out</strong> \u2014 participants should be able to decline without consequence" },
+    { text: "<strong>Note any restrictions</strong> \u2014 some participants may consent to recording but not to AI processing" }
+  ],
+  data: [
+    { text: "<strong>Define a retention period</strong> \u2014 how long will raw transcripts be kept? (UK GDPR: only as long as necessary)" },
+    { text: "<strong>Store securely</strong> \u2014 transcripts containing personal data need appropriate access controls" },
+    { text: "<strong>Consider redaction</strong> \u2014 extract the insight, then remove or anonymise personal identifiers" },
+    { text: "<strong>Document your basis</strong> \u2014 under UK GDPR, you need a lawful basis for processing (usually legitimate interest or consent)" },
+    { text: "<strong>Right to erasure</strong> \u2014 if someone requests their data be deleted, can you find and remove their contributions?" }
+  ],
+  quality: [
+    { text: "<strong>Review AI transcriptions</strong> for accuracy \u2014 names, numbers, and technical terms often need correction" },
+    { text: "<strong>Separate fact from opinion</strong> \u2014 transcripts capture what people said, not necessarily what's true" },
+    { text: "<strong>Extract, then archive</strong> \u2014 pull the structured insights out, keep the raw transcript as backup only" },
+    { text: "<strong>Version your outputs</strong> \u2014 AI-processed summaries should be dated and attributed" }
+  ]
+};
+
+const BP_TIPS = [
+  "Under UK GDPR, transcripts containing identifiable personal data are subject to data protection law. Define your lawful basis and retention period before you start.",
+  "Redaction is your friend. Extract the knowledge, then strip the names. A lessons-learned document doesn\u2019t need to say who made the mistake \u2014 just what the lesson was.",
+  "Build consent into your meeting culture. A simple 'This session will be recorded and transcribed for internal reference \u2014 please let me know if you'd prefer not to be recorded' becomes second nature.",
+  "The Data Protection Act 2018 doesn\u2019t prevent transcription \u2014 it requires you to be thoughtful about it. Proportionate, purposeful, and transparent use is fine.",
+  "Consider automated pipelines: record \u2192 transcribe \u2192 extract insights \u2192 redact personal data \u2192 archive. The human reviews the extracted insight, not the raw transcript."
+];
+
+/* ══════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════ */
+let currentMode = 0;
+let currentUC = 0;
+let revealedSteps = {};
+let currentPipeStage = 0;
+let bpChecks = {};
+let pipeAnimInterval = null;
+let pipeAnimStage = -1;
+let pipeIsPlaying = false;
+
+// Race simulator state
+let raceRunning = false;
+let raceTimers = [];
+let raceScenario = 0;
+let speakPos = 0;
+let typePos = 0;
+let raceStartTime = 0;
+let raceFinished = { speak: false, type: false };
+
+// Init bpChecks
+Object.keys(BP_CHECKLIST).forEach(cat => {
+  bpChecks[cat] = BP_CHECKLIST[cat].map(() => false);
+});
+
+/* ══════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════ */
+function switchMode(m) {
+  stopRace();
+  stopPipeAnim();
+  currentMode = m;
+  document.querySelectorAll('.mode-pill').forEach((p, i) => {
+    p.classList.toggle('active', i === m);
+  });
+  renderMain();
+}
+
+function renderMain() {
+  const el = document.getElementById('mainContent');
+  switch(currentMode) {
+    case 0: el.innerHTML = renderExplore(); initSpeedBars(); break;
+    case 1: el.innerHTML = renderUseCases(); break;
+    case 2: el.innerHTML = renderPipeline(); break;
+    case 3: el.innerHTML = renderBestPractice(); break;
+  }
+}
+
+/* ─── EXPLORE ─── */
+function renderExplore() {
+  const scenario = RACE_SCENARIOS[raceScenario];
+  const text = scenario.text;
+  const speakWC = raceRunning || raceFinished.speak ? speakPos : 0;
+  const typeWC = raceRunning || raceFinished.type ? typePos : 0;
+  const speakText = text.split(/\s+/).slice(0, speakPos).join(' ');
+  const typeText = text.split(/\s+/).slice(0, typePos).join(' ');
+  const totalWords = text.split(/\s+/).length;
+
+  let resultHTML = '';
+  if (raceFinished.speak && raceFinished.type) {
+    const speakSecs = Math.round((totalWords / 140) * 60);
+    const typeSecs = Math.round((totalWords / 40) * 60);
+    resultHTML = `<strong style="color:var(--dodger)">Speaking finished in ~${speakSecs}s.</strong> <strong style="color:var(--seapink)">Typing would take ~${typeSecs}s.</strong> That\u2019s <strong style="color:var(--turquoise)">${Math.round(typeSecs/speakSecs)}x faster</strong> \u2014 same ${totalWords} words, same content, but you also captured richer context because you weren\u2019t editing as you went.`;
+  } else if (raceRunning) {
+    resultHTML = `Watch the gap open up. <strong style="color:var(--dodger)">Speaking</strong> captures ideas at your natural pace. <strong style="color:var(--seapink)">Typing</strong> forces you to think and edit simultaneously \u2014 slowing both.`;
+  } else {
+    resultHTML = `Pick a scenario and hit <strong style="color:var(--meadow)">Start Race</strong> to see the speed difference in real time. Same content, two speeds \u2014 the gap is bigger than you think.`;
+  }
+
+  return `<div class="explore-grid fade-in">
+    <div class="explore-left">
+      <div class="speed-compare">
+        <div class="sc-title">Speed of Thought vs. Speed of Input</div>
+        <div class="speed-bar-group">
+          <div class="speed-bar-label"><span>\u{1F9E0} Thinking</span><span class="val" style="color:var(--turquoise)">~400 wpm</span></div>
+          <div class="speed-bar-track"><div class="speed-bar-fill" id="bar-think" style="width:0%;background:var(--turquoise)"><span class="wpm" style="color:var(--gable)">400 wpm</span></div></div>
+          <div class="speed-bar-extra">Internal monologue \u2014 fast but <strong style="color:var(--turquoise)">trapped in your head</strong></div>
+        </div>
+        <div class="speed-bar-group">
+          <div class="speed-bar-label"><span>\u{1F399}\uFE0F Speaking</span><span class="val" style="color:var(--dodger)">~140 wpm</span></div>
+          <div class="speed-bar-track"><div class="speed-bar-fill" id="bar-speak" style="width:0%;background:var(--dodger)"><span class="wpm" style="color:var(--white)">140 wpm</span></div></div>
+          <div class="speed-bar-extra"><strong style="color:var(--dodger)">Transcription captures this</strong> \u2014 3.5x faster than typing</div>
+        </div>
+        <div class="speed-bar-group">
+          <div class="speed-bar-label"><span>\u2328\uFE0F Typing</span><span class="val" style="color:var(--seapink)">~40 wpm</span></div>
+          <div class="speed-bar-track"><div class="speed-bar-fill" id="bar-type" style="width:0%;background:var(--seapink)"><span class="wpm" style="color:var(--gable)">40 wpm</span></div></div>
+          <div class="speed-bar-extra">Forces you to edit as you go \u2014 <strong style="color:var(--seapink)">loses context and nuance</strong></div>
+        </div>
+      </div>
+      <div class="big-idea">
+        <div class="bi-label">The Core Insight</div>
+        <div class="bi-quote">Transcription isn\u2019t a meeting feature \u2014 it\u2019s a <span>technique for turning the fastest human output into AI-ready input.</span></div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="num">40<span class="unit">+</span></div><div class="label">hours of conversation per week in a 10-person team</div></div>
+          <div class="stat-card"><div class="num">95<span class="unit">%</span></div><div class="label">of that knowledge currently goes unrecorded</div></div>
+          <div class="stat-card"><div class="num">&lt;1<span class="unit">min</span></div><div class="label">to transcribe 30 minutes with modern AI</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="explore-right">
+      <div class="sim-panel">
+        <div class="sim-header">
+          <div class="sh-title">Live Speed Race</div>
+          <div class="sim-controls">
+            ${RACE_SCENARIOS.map((s,i) => `<div class="sim-btn ${i===raceScenario?'active':''}" onclick="pickScenario(${i})">${s.label}</div>`).join('')}
+          </div>
+        </div>
+        <div class="race-lanes">
+          <div class="race-lane" style="border-color:rgba(0,177,255,0.15)">
+            <div class="race-lane-header">
+              <div class="rl-label" style="color:var(--dodger)">\u{1F399}\uFE0F Speaking (140 wpm)</div>
+              <div class="rl-count" id="speakCount" style="color:var(--dodger)">${speakWC}/${totalWords} words</div>
+            </div>
+            <div class="race-text-area" id="speakArea">${speakText}${raceRunning && !raceFinished.speak ? '<span class="cursor" style="color:var(--dodger)"></span>' : ''}</div>
+          </div>
+          <div class="race-lane" style="border-color:rgba(239,172,168,0.15)">
+            <div class="race-lane-header">
+              <div class="rl-label" style="color:var(--seapink)">\u2328\uFE0F Typing (40 wpm)</div>
+              <div class="rl-count" id="typeCount" style="color:var(--seapink)">${typeWC}/${totalWords} words</div>
+            </div>
+            <div class="race-text-area" id="typeArea">${typeText}${raceRunning && !raceFinished.type ? '<span class="cursor" style="color:var(--seapink)"></span>' : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <div class="sim-btn ${raceRunning ? 'running' : 'go'}" onclick="${raceRunning ? 'stopRace()' : 'startRace()'}" style="flex:0 0 auto">${raceRunning ? '\u25A0 Stop' : '\u25B6 Start Race'}</div>
+          <div class="race-result" style="flex:1;padding:8px 14px">
+            <div class="rr-text">${resultHTML}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function initSpeedBars() {
+  requestAnimationFrame(() => {
+    const t = document.getElementById('bar-think');
+    const s = document.getElementById('bar-speak');
+    const y = document.getElementById('bar-type');
+    if (t) t.style.width = '100%';
+    if (s) s.style.width = '35%';
+    if (y) y.style.width = '10%';
+  });
+}
+
+function pickScenario(i) {
+  if (raceRunning) stopRace();
+  raceScenario = i;
+  speakPos = 0;
+  typePos = 0;
+  raceFinished = { speak: false, type: false };
+  renderExploreOnly();
+}
+
+function startRace() {
+  if (raceRunning) return;
+  raceRunning = true;
+  speakPos = 0;
+  typePos = 0;
+  raceFinished = { speak: false, type: false };
+  raceStartTime = Date.now();
+
+  const text = RACE_SCENARIOS[raceScenario].text;
+  const words = text.split(/\s+/);
+  const totalWords = words.length;
+
+  // Do one full render to set up the running state (buttons, etc.)
+  renderMain();
+
+  // Speaking: 140 wpm = ~2.33 words per second
+  const speakInterval = 1000 / 2.33;
+  // Typing: 40 wpm = ~0.67 words per second
+  const typeInterval = 1000 / 0.67;
+
+  const speakTimer = setInterval(() => {
+    if (speakPos >= totalWords) {
+      clearInterval(speakTimer);
+      raceFinished.speak = true;
+      if (raceFinished.type) { raceRunning = false; renderMain(); }
+      updateRaceLane('speak', words, totalWords);
+      return;
+    }
+    speakPos++;
+    updateRaceLane('speak', words, totalWords);
+  }, speakInterval);
+
+  const typeTimer = setInterval(() => {
+    if (typePos >= totalWords) {
+      clearInterval(typeTimer);
+      raceFinished.type = true;
+      if (raceFinished.speak) { raceRunning = false; renderMain(); }
+      updateRaceLane('type', words, totalWords);
+      return;
+    }
+    typePos++;
+    updateRaceLane('type', words, totalWords);
+  }, typeInterval);
+
+  raceTimers = [speakTimer, typeTimer];
+}
+
+/* Targeted DOM update — only touches the text area and word count for one lane */
+function updateRaceLane(lane, words, totalWords) {
+  const pos = lane === 'speak' ? speakPos : typePos;
+  const finished = lane === 'speak' ? raceFinished.speak : raceFinished.type;
+  const areaId = lane === 'speak' ? 'speakArea' : 'typeArea';
+  const countId = lane === 'speak' ? 'speakCount' : 'typeCount';
+  const cursorColor = lane === 'speak' ? 'var(--dodger)' : 'var(--seapink)';
+
+  const area = document.getElementById(areaId);
+  const count = document.getElementById(countId);
+  if (area) {
+    area.innerHTML = words.slice(0, pos).join(' ') + (raceRunning && !finished ? '<span class="cursor" style="color:' + cursorColor + '"></span>' : '');
+  }
+  if (count) {
+    count.textContent = pos + '/' + totalWords + ' words';
+  }
+}
+
+function stopRace() {
+  raceTimers.forEach(t => clearInterval(t));
+  raceTimers = [];
+  raceRunning = false;
+  if (currentMode === 0) renderMain();
+}
+
+/* ─── USE CASES ─── */
+function renderUseCases() {
+  const uc = USE_CASES[currentUC];
+  const key = currentUC;
+  if (!revealedSteps[key]) revealedSteps[key] = {};
+
+  return `<div class="usecases-layout fade-in">
+    <div class="uc-list">
+      ${USE_CASES.map((u, i) => `
+        <div class="uc-item ${i===currentUC?'active':''}" onclick="pickUC(${i})">
+          <div class="uci-icon">${u.icon}</div>
+          <div class="uci-name">${u.name}</div>
+          <div class="uci-tag">${u.tag}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="uc-detail">
+      <div class="uc-hero">
+        <div class="uch-title">${uc.title}</div>
+        <div class="uch-desc">${uc.desc}</div>
+      </div>
+      <div class="uc-steps">
+        ${uc.steps.map((s, i) => {
+          const revealed = revealedSteps[key] && revealedSteps[key][i];
+          return `<div class="uc-step ${revealed?'revealed':''}" onclick="revealStep(${key},${i})">
+            <div class="ucs-num">Step ${i+1}</div>
+            <div class="ucs-title">${s.title}</div>
+            <div class="ucs-text">${s.text}</div>
+            <div class="ucs-hidden">${s.hidden}</div>
+            ${!revealed?'<div class="click-hint">Click to reveal</div>':''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function pickUC(i) {
+  currentUC = i;
+  renderMain();
+}
+
+function revealStep(uc, step) {
+  if (!revealedSteps[uc]) revealedSteps[uc] = {};
+  revealedSteps[uc][step] = true;
+  renderMain();
+}
+
+/* ─── PIPELINE ─── */
+function renderPipeline() {
+  const ps = PIPELINE_STAGES[currentPipeStage];
+  const animStage = pipeIsPlaying ? pipeAnimStage : -1;
+
+  return `<div class="pipeline-layout fade-in">
+    <div class="pipeline-flow">
+      ${PIPELINE_STAGES.map((s, i) => {
+        let cls = 'pipe-stage';
+        if (pipeIsPlaying) {
+          if (i < animStage) cls += ' completed';
+          else if (i === animStage) cls += ' active';
+        } else {
+          if (i === currentPipeStage) cls += ' active';
+        }
+        const progressWidth = pipeIsPlaying && i === animStage ? '60%' : '0%';
+        return `<div class="${cls}" onclick="pickPipeStage(${i})">
+          <div class="ps-box">
+            <div class="ps-icon">${s.icon}</div>
+            <div class="ps-name">${s.name}</div>
+            <div class="ps-desc">${s.desc}</div>
+            <div class="ps-progress"><div class="ps-progress-fill" style="width:${pipeIsPlaying && i < animStage ? '100%' : progressWidth}"></div></div>
+          </div>
+        </div>${i < PIPELINE_STAGES.length - 1 ? renderConnector(i, animStage) : ''}`;
+      }).join('')}
+    </div>
+    <div class="pipe-detail-area">
+      <div class="pipe-detail ${pipeIsPlaying && currentPipeStage === animStage ? 'active-border' : ''}">
+        <div class="pd-title">${ps.icon} ${ps.name}</div>
+        <div class="pd-body">${ps.detail}</div>
+        <div class="pd-tools">
+          ${ps.tools.map(t => `<span class="pd-tool-pill">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="pipe-example">
+        <div class="pe-label">Example: What Happens Here</div>
+        <div class="pe-text"><span class="stage-label" style="background:${ps.example.color}22;color:${ps.example.color}">${ps.example.label}</span><br>${ps.example.text.replace(/\n/g, '<br>')}</div>
+      </div>
+    </div>
+    <div class="pipe-controls">
+      <div class="pipe-play-btn ${pipeIsPlaying?'playing':''}" onclick="${pipeIsPlaying ? 'stopPipeAnim()' : 'startPipeAnim()'}">${pipeIsPlaying ? '\u25A0 Stop Walkthrough' : '\u25B6 Play Walkthrough'}</div>
+      <div class="pipe-reset-btn" onclick="resetPipe()">\u21BA Reset</div>
+    </div>
+  </div>`;
+}
+
+function renderConnector(i, animStage) {
+  const filled = pipeIsPlaying && i < animStage;
+  const dotClass = pipeIsPlaying && i === animStage - 1 ? 'traveling' : '';
+  return `<div class="pipe-connector ${filled?'filled':''}">
+    <div class="pipe-connector-track"></div>
+    <div class="pipe-connector-fill"></div>
+    <div class="pipe-dot ${dotClass}"></div>
+  </div>`;
+}
+
+function pickPipeStage(i) {
+  if (pipeIsPlaying) return;
+  currentPipeStage = i;
+  renderMain();
+}
+
+function startPipeAnim() {
+  if (pipeIsPlaying) return;
+  pipeIsPlaying = true;
+  pipeAnimStage = 0;
+  currentPipeStage = 0;
+  renderMain();
+
+  pipeAnimInterval = setInterval(() => {
+    pipeAnimStage++;
+    if (pipeAnimStage >= PIPELINE_STAGES.length) {
+      stopPipeAnim();
+      return;
+    }
+    currentPipeStage = pipeAnimStage;
+    renderMain();
+    // Trigger dot animation on new connector
+    setTimeout(() => {
+      const connectors = document.querySelectorAll('.pipe-connector');
+      if (connectors[pipeAnimStage - 1]) {
+        const dot = connectors[pipeAnimStage - 1].querySelector('.pipe-dot');
+        if (dot) { dot.classList.remove('traveling'); void dot.offsetWidth; dot.classList.add('traveling'); }
+      }
+    }, 50);
+  }, 2500);
+}
+
+function stopPipeAnim() {
+  clearInterval(pipeAnimInterval);
+  pipeAnimInterval = null;
+  pipeIsPlaying = false;
+  pipeAnimStage = -1;
+  if (currentMode === 2) renderMain();
+}
+
+function resetPipe() {
+  stopPipeAnim();
+  currentPipeStage = 0;
+  renderMain();
+}
+
+/* ─── BEST PRACTICE ─── */
+function renderBestPractice() {
+  const totalChecks = Object.values(BP_CHECKLIST).reduce((a, c) => a + c.length, 0);
+  const checkedCount = Object.keys(bpChecks).reduce((a, cat) => a + bpChecks[cat].filter(Boolean).length, 0);
+  const pct = Math.round((checkedCount / totalChecks) * 100);
+  const tipIdx = Math.min(Math.floor(checkedCount / 3), BP_TIPS.length - 1);
+
+  return `<div class="bp-layout fade-in">
+    <div class="bp-col">
+      <div class="bp-section">
+        <div class="bps-title"><span class="icon">\u{1F91D}</span> Consent & Transparency</div>
+        ${BP_CHECKLIST.consent.map((item, i) => `
+          <div class="bp-check-item ${bpChecks.consent[i]?'checked':''}" onclick="toggleBP('consent',${i})">
+            <div class="bp-checkbox">${bpChecks.consent[i]?'\u2713':''}</div>
+            <div class="bp-check-text">${item.text}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="bp-section">
+        <div class="bps-title"><span class="icon">\u{1F512}</span> Data Protection (UK GDPR)</div>
+        ${BP_CHECKLIST.data.map((item, i) => `
+          <div class="bp-check-item ${bpChecks.data[i]?'checked':''}" onclick="toggleBP('data',${i})">
+            <div class="bp-checkbox">${bpChecks.data[i]?'\u2713':''}</div>
+            <div class="bp-check-text">${item.text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="bp-col">
+      <div class="bp-progress-bar">
+        <div class="bppb-label"><span>Readiness Score</span><span>${checkedCount}/${totalChecks} (${pct}%)</span></div>
+        <div class="bp-progress-track"><div class="bp-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="bp-section">
+        <div class="bps-title"><span class="icon">\u2705</span> Quality & Accuracy</div>
+        ${BP_CHECKLIST.quality.map((item, i) => `
+          <div class="bp-check-item ${bpChecks.quality[i]?'checked':''}" onclick="toggleBP('quality',${i})">
+            <div class="bp-checkbox">${bpChecks.quality[i]?'\u2713':''}</div>
+            <div class="bp-check-text">${item.text}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="bp-tip">
+        <div class="bpt-label">Tip</div>
+        <div class="bpt-text">${BP_TIPS[tipIdx]}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleBP(cat, idx) {
+  bpChecks[cat][idx] = !bpChecks[cat][idx];
+  renderMain();
+}
+
+/* ══════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════ */
+renderMain();
+initPostMessageProtocol();
+</script>
+</body>
+</html>

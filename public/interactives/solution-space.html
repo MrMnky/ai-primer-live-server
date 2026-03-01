@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Narrowing the Solution Space — AI Accelerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gable: #1B2F3C;
+    --gable-light: #243d4e;
+    --turquoise: #00FFBC;
+    --dodger: #00B1FF;
+    --cerulean: #0084B2;
+    --malibu: #5CD5FF;
+    --meadow: #17CE95;
+    --cornflower: #6161FF;
+    --moonraker: #C5B6F1;
+    --seapink: #EFACA8;
+    --bittersweet: #FF5F5F;
+    --white: #FFFFFF;
+    --slate: #8FA4B3;
+    --amber: #FFA726;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--gable);
+    color: var(--white);
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  .container {
+    width: 100vw; height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    padding: 16px 28px 10px;
+    max-width: 1600px; margin: 0 auto;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 4px; flex-shrink: 0;
+  }
+  .header-text h1 { font-size: 22px; font-weight: 700; line-height: 1.15; }
+  .header-text h1 span { color: var(--meadow); }
+  .header-text .subtitle { font-size: 10.5px; font-weight: 300; color: var(--slate); margin-top: 1px; }
+  .hdr-ctrls { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; padding-top: 3px; }
+  .tbtn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white); font-family: 'Poppins', sans-serif; font-size: 10px;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent; min-height: 32px;
+  }
+  .tbtn:hover { background: rgba(255,255,255,0.1); }
+  .tbtn.on { background: #226B4D; border-color: #226B4D; }
+
+  /* ─── CONSTRAINT PILLS ─── */
+  .constraint-bar {
+    display: flex; gap: 4px; flex-shrink: 0;
+    margin: 4px 0 5px; flex-wrap: wrap;
+  }
+  .cpill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 500;
+    padding: 4px 11px; border-radius: 7px;
+    cursor: pointer; transition: all 0.35s;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 30px; display: flex; align-items: center; gap: 5px;
+  }
+  .cpill .cnum {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%;
+    font-size: 7.5px; font-weight: 700;
+    background: rgba(255,255,255,0.08); color: var(--slate);
+    transition: all 0.35s;
+  }
+  .cpill.active {
+    border-color: rgba(0,255,188,0.3);
+    background: rgba(0,255,188,0.08);
+    color: var(--turquoise);
+  }
+  .cpill.active .cnum { background: var(--turquoise); color: var(--gable); }
+  .cpill.active.conflict {
+    border-color: rgba(255,95,95,0.3);
+    background: rgba(255,95,95,0.08);
+    color: var(--bittersweet);
+  }
+  .cpill.active.conflict .cnum { background: var(--bittersweet); color: var(--white); }
+  .cpill.locked { opacity: 0.3; cursor: not-allowed; }
+
+  /* separator pill */
+  .csep {
+    display: flex; align-items: center; padding: 0 4px;
+    font-size: 8px; color: var(--slate); opacity: 0.3;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ─── CANVAS ─── */
+  .canvas-wrap { flex: 1; position: relative; min-height: 0; border-radius: 12px; overflow: hidden; }
+  canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  /* ─── STATS OVERLAY ─── */
+  .stats {
+    position: absolute; top: 10px; right: 12px;
+    display: flex; flex-direction: column; gap: 3px;
+    pointer-events: none; text-align: right;
+  }
+  .stat-num { font-size: 26px; font-weight: 800; color: var(--turquoise); line-height: 1; transition: color 0.4s; }
+  .stat-label { font-size: 8px; font-weight: 500; color: var(--slate); text-transform: uppercase; letter-spacing: 1.5px; }
+  .stat-pct { font-size: 10px; font-weight: 600; color: var(--slate); transition: color 0.4s; }
+
+  /* ─── PHASE LABEL ─── */
+  .phase-label {
+    position: absolute; top: 10px; left: 12px;
+    pointer-events: none; transition: opacity 0.4s;
+  }
+  .phase-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 5px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; transition: all 0.4s;
+  }
+  .phase-tag.narrowing { background: rgba(0,255,188,0.12); color: var(--turquoise); border: 1px solid rgba(0,255,188,0.2); }
+  .phase-tag.confused { background: rgba(255,95,95,0.12); color: var(--bittersweet); border: 1px solid rgba(255,95,95,0.2); }
+
+  /* ─── INSIGHT PANEL ─── */
+  .insight {
+    position: absolute; bottom: 10px; left: 12px; right: 12px;
+    background: rgba(27,47,60,0.92); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+    padding: 9px 14px; max-height: 0; overflow: hidden; opacity: 0;
+    transition: all 0.4s; pointer-events: none;
+  }
+  .insight.vis { max-height: 120px; opacity: 1; }
+  .insight-title { font-size: 10.5px; font-weight: 700; color: var(--turquoise); margin-bottom: 2px; transition: color 0.3s; }
+  .insight-title.warn { color: var(--bittersweet); }
+  .insight-text { font-size: 10px; font-weight: 400; color: var(--white); opacity: 0.6; line-height: 1.5; }
+  .insight-text strong { color: var(--dodger); opacity: 1; font-weight: 600; }
+  .insight-text strong.warn { color: var(--bittersweet); }
+
+  /* ─── BOTTOM BAR ─── */
+  .bot {
+    flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+    margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.06);
+    gap: 6px; flex-wrap: wrap;
+  }
+  .bgrp { display: flex; gap: 6px; }
+  .abtn {
+    background: var(--cerulean); border: none; color: var(--white);
+    font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600;
+    padding: 7px 18px; border-radius: 7px; cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent; min-height: 38px;
+  }
+  .abtn:hover:not(:disabled) { background: var(--dodger); }
+  .abtn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .abtn.sec { background: rgba(255,255,255,0.06); font-size: 10px; }
+  .abtn.sec:hover { background: rgba(255,255,255,0.12); }
+  .sctr { font-size: 9px; color: var(--white); opacity: 0.3; }
+  .sctr b { color: var(--dodger); opacity: 1; }
+  .wm { font-size: 9px; color: var(--white); opacity: 0.15; }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+
+  /* The spotlight hole — uses a massive box-shadow to dim everything else */
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease, border-radius 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+
+  /* Tooltip card that floats near the spotlight */
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+
+  /* Arrow pointer — positioned dynamically via JS */
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up    { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down  { bottom: -7px; border-left: none; border-top: none; }
+  .tour-arrow.left  { left: -7px; border-right: none; border-top: none; }
+
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate);
+    line-height: 1.55;
+  }
+
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots {
+    display: flex; gap: 5px;
+  }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s;
+    min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary {
+    background: var(--cerulean); border-color: var(--cerulean); color: var(--white);
+  }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+
+  /* Click-through layer to capture clicks outside the tooltip */
+  .tour-click-layer {
+    position: fixed; inset: 0; z-index: 500;
+    cursor: pointer;
+  }
+
+  @media (max-width: 900px), (orientation: portrait) {
+    .container { padding: 12px 16px 8px; }
+    .header-text h1 { font-size: 19px; }
+    .header-text .subtitle { font-size: 9.5px; }
+    .cpill { font-size: 9.5px; padding: 4px 10px; min-height: 28px; }
+    .cpill .cnum { width: 16px; height: 16px; font-size: 8px; }
+    .stat-num { font-size: 22px; }
+    .abtn { font-size: 11px; padding: 7px 16px; min-height: 36px; }
+    .insight.vis { max-height: 160px; }
+    .csep { display: none; }
+  }
+
+  @media (max-width: 600px), (orientation: portrait) {
+    .container { padding: 10px 12px 6px; }
+    .header-text h1 { font-size: 17px; }
+    .header-text .subtitle { font-size: 9px; }
+    .cpill { font-size: 9px; padding: 3px 8px; min-height: 26px; }
+    .cpill .cnum { width: 14px; height: 14px; font-size: 7px; }
+    .stat-num { font-size: 20px; }
+    .abtn { font-size: 10px; padding: 6px 14px; min-height: 34px; }
+    .insight.vis { max-height: 140px; }
+    .csep { display: none; }
+  }
+
+  @media (max-width: 400px) {
+    .container { padding: 8px 10px 4px; }
+    .header-text h1 { font-size: 15px; }
+    .header-text .subtitle { font-size: 8px; }
+    .hdr-ctrls { gap: 4px; }
+    .tbtn { font-size: 9px; padding: 4px 10px; min-height: 30px; }
+    .constraint-bar { gap: 3px; margin: 3px 0 4px; }
+    .cpill { font-size: 8px; padding: 3px 7px; min-height: 24px; }
+    .cpill .cnum { width: 13px; height: 13px; font-size: 6px; }
+    .stat-num { font-size: 18px; }
+    .stat-label { font-size: 9px; }
+    .stat-pct { font-size: 9px; }
+    .abtn { font-size: 9px; padding: 5px 12px; min-height: 32px; }
+    .bot { padding: 6px 0; gap: 10px; }
+    .sctr { font-size: 9px; }
+    .wm { font-size: 8px; }
+    .insight.vis { max-height: 120px; }
+  }
+
+  /* Landscape phones (max 320px width) */
+  @media (max-width: 320px) {
+    .container { padding: 6px 8px 3px; }
+    .header-text h1 { font-size: 13px; line-height: 1.1; }
+    .header-text .subtitle { font-size: 7px; }
+    .hdr-ctrls { gap: 3px; }
+    .tbtn { font-size: 8px; padding: 3px 8px; min-height: 28px; }
+    .constraint-bar { gap: 2px; margin: 2px 0 3px; }
+    .cpill { font-size: 7px; padding: 2px 6px; min-height: 22px; }
+    .cpill .cnum { width: 12px; height: 12px; font-size: 5px; }
+    .stat-num { font-size: 16px; }
+    .stat-label { font-size: 8px; }
+    .stat-pct { font-size: 8px; }
+    .abtn { font-size: 8px; padding: 4px 10px; min-height: 30px; }
+    .bot { padding: 4px 0; gap: 8px; }
+    .sctr { font-size: 8px; }
+    .wm { font-size: 7px; }
+    .canvas-wrap { margin: 4px 0; }
+    .insight.vis { max-height: 100px; font-size: 9px; }
+  }
+    .header-text h1 { font-size: 17px; }
+    .cpill { font-size: 9px; padding: 3px 8px; min-height: 26px; }
+    .stat-num { font-size: 20px; }
+    .abtn { font-size: 10px; padding: 6px 14px; min-height: 34px; }
+    .insight.vis { max-height: 140px; }
+    .csep { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>Narrowing the <span>Solution Space</span></h1>
+      <div class="subtitle">Every element of your prompt constrains what the model can produce</div>
+    </div>
+    <div class="hdr-ctrls">
+      <button class="tbtn" id="annT" onclick="toggleAnn()">Annotations</button>
+      <button class="tbtn" id="autoT" onclick="toggleAuto()">Auto-play</button>
+    </div>
+  </div>
+
+  <div class="constraint-bar" id="cbar"></div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="cv"></canvas>
+    <div class="phase-label" id="phaseLabel">
+      <div class="phase-tag narrowing" id="phaseTag">NARROWING</div>
+    </div>
+    <div class="stats" id="statsPanel">
+      <div class="stat-num" id="statAlive">—</div>
+      <div class="stat-label">possible outputs</div>
+      <div class="stat-pct" id="statPct" style="margin-top:2px">—</div>
+    </div>
+    <div class="insight" id="insight">
+      <div class="insight-title" id="insightTitle"></div>
+      <div class="insight-text" id="insightText"></div>
+    </div>
+  </div>
+
+  <div class="bot">
+    <div class="bgrp">
+      <button class="abtn" id="nextBtn" onclick="addNext()">Add Constraint</button>
+      <button class="abtn sec" id="removeBtn" onclick="removeLast()" style="display:none">Remove</button>
+      <button class="abtn sec" id="resetBtn" onclick="resetAll()" style="display:none">Reset</button>
+    </div>
+    <div class="sctr" id="sctr">Step <b>0</b> / <b>10</b></div>
+    <div class="wm">© aiaccelerator.uk</div>
+  </div>
+</div>
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════
+
+const TOTAL = 1800;
+const DAMPING = 0.984;
+const JITTER = 0.0016;
+
+const PALETTE = [
+  '#00B1FF','#6161FF','#00FFBC','#5CD5FF','#17CE95',
+  '#FF5F5F','#C5B6F1','#EFACA8','#0084B2','#FFA726',
+  '#FFD93D','#E040FB','#7C4DFF','#00E5FF','#69F0AE',
+  '#FF8A65','#A1887F','#90A4AE','#CE93D8','#80CBC4'
+];
+
+// ═══════════════════════════════════════
+// CONSTRAINTS DATA
+// ═══════════════════════════════════════
+
+const STEPS = [
+  // ── Phase 1: Narrowing ──
+  {
+    name: 'No context', emoji: '🌌', type: 'default',
+    survivalRate: 1.0, zoneRadius: 1.0, colour: null,
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Wide open — anything goes',
+    text: 'With no context at all, the model draws on <strong>everything it was trained on</strong>. It could write poetry, code, a recipe, or gibberish. The entire solution space is active — billions of possible next tokens, no way to predict the output.',
+  },
+  {
+    name: 'System prompt', emoji: '🔧', type: 'narrow',
+    survivalRate: 0.45, zoneRadius: 0.72, colour: '#00FFBC',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'System prompt sets the boundaries',
+    text: 'A system prompt like <strong>"You are a marketing consultant"</strong> immediately kills off huge areas. No more code, recipes, or poetry. The model now operates within a professional marketing domain — but it\'s still a vast space.',
+  },
+  {
+    name: 'Role', emoji: '🎭', type: 'narrow',
+    survivalRate: 0.28, zoneRadius: 0.55, colour: '#00B1FF',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Role sharpens the voice',
+    text: '<strong>"Experienced brand strategist for sustainable products"</strong> — now the model isn\'t just marketing, it\'s a specific kind with a specific tone. Academic jargon, aggressive sales, generic advice — all eliminated.',
+  },
+  {
+    name: 'Task', emoji: '🎯', type: 'narrow',
+    survivalRate: 0.14, zoneRadius: 0.42, colour: '#6161FF',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Task defines the shape',
+    text: '<strong>"Create a 6-week social media campaign"</strong> — not a strategy deck, not a report, not a brainstorm. A specific deliverable with a specific format. The space collapses to campaign-shaped outputs.',
+  },
+  {
+    name: 'Constraints', emoji: '📏', type: 'narrow',
+    survivalRate: 0.065, zoneRadius: 0.30, colour: '#17CE95',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Constraints eliminate the wrong answers',
+    text: '<strong>"Budget £50k. Tone: warm, not preachy. Channels: Instagram, email, paid social."</strong> — each constraint is a wall. Every requirement eliminates thousands of outputs that would have been technically valid but wrong for you.',
+  },
+  {
+    name: 'Examples', emoji: '📎', type: 'narrow',
+    survivalRate: 0.030, zoneRadius: 0.20, colour: '#5CD5FF',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Examples calibrate the quality',
+    text: 'Showing the model <strong>what good looks like</strong> — a caption you loved, a tone you hate — is the most powerful constraint. It doesn\'t just narrow the space, it <strong>shifts the centre of gravity</strong> towards your taste.',
+  },
+  {
+    name: 'Format', emoji: '📐', type: 'narrow',
+    survivalRate: 0.012, zoneRadius: 0.13, colour: '#C5B6F1',
+    attractors: [{ x: 0.5, y: 0.5, strength: 1 }],
+    title: 'Format locks the structure',
+    text: '<strong>"Week-by-week table. Each row: platform, copy, visual brief, CTA."</strong> — the output is now almost fully constrained. The model\'s creativity operates within a very tight channel. This is where prompting becomes <strong>engineering</strong>.',
+  },
+  // ── Phase 2: Confusion ──
+  {
+    name: 'Conflicting tone', emoji: '⚡', type: 'conflict',
+    survivalRate: 0.10, zoneRadius: 0.40, colour: '#FF5F5F',
+    attractors: [
+      { x: 0.38, y: 0.42, strength: 0.7, label: '"Be formal\nand corporate"', col: '#00B1FF' },
+      { x: 0.62, y: 0.58, strength: 0.7, label: '"Keep it casual\nand fun"', col: '#FF5F5F' }
+    ],
+    title: '⚠ Conflicting tone — the space tears open',
+    text: 'You added <strong class="warn">"Be formal and corporate"</strong> after saying <strong>"warm, not preachy."</strong> The model now has two competing instructions. Watch the particles split — it\'s being <strong class="warn">pulled in two directions</strong>. The output becomes unpredictable.',
+  },
+  {
+    name: 'Contradictory task', emoji: '💥', type: 'conflict',
+    survivalRate: 0.22, zoneRadius: 0.55, colour: '#FF5F5F',
+    attractors: [
+      { x: 0.32, y: 0.38, strength: 0.6, label: '"Social media\ncampaign"', col: '#6161FF' },
+      { x: 0.68, y: 0.38, strength: 0.6, label: '"Actually, write\na whitepaper"', col: '#FF5F5F' },
+      { x: 0.50, y: 0.65, strength: 0.4, label: '"Or maybe\na blog post?"', col: '#FFA726' }
+    ],
+    title: '⚠ Contradictory task — three competing outputs',
+    text: '<strong class="warn">"Actually, make it a whitepaper. Or maybe a blog post?"</strong> — now there are <strong class="warn">three competing attractors</strong>. The model doesn\'t know which deliverable you want. All the careful narrowing you did? Undone. The space has exploded back open.',
+  },
+  {
+    name: 'Vague override', emoji: '🌫️', type: 'conflict',
+    survivalRate: 0.40, zoneRadius: 0.75, colour: '#FF5F5F',
+    attractors: [
+      { x: 0.35, y: 0.35, strength: 0.35, label: '"Just make\nit good"', col: '#FF5F5F' },
+      { x: 0.65, y: 0.35, strength: 0.35, col: '#FFA726' },
+      { x: 0.50, y: 0.65, strength: 0.35, col: '#C5B6F1' },
+      { x: 0.35, y: 0.60, strength: 0.2, col: '#5CD5FF' },
+      { x: 0.65, y: 0.60, strength: 0.2, col: '#EFACA8' },
+    ],
+    title: '⚠ Vague override — back to chaos',
+    text: '<strong class="warn">"Just make it good"</strong> — this overrides all previous structure with <strong class="warn">zero useful constraint</strong>. "Good" means everything and nothing. The model is now almost as lost as when you started. All that careful prompting, wasted by one vague instruction.',
+  },
+];
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+
+let particles = [];
+let active = 0; // index into STEPS
+let W = 0, H = 0, dpr = 1;
+let targetRadius = 1.0, currentRadius = 1.0;
+let currentAttractors = [{ x: 0.5, y: 0.5, strength: 1 }];
+let targetAttractors = [{ x: 0.5, y: 0.5, strength: 1 }];
+let confusionLevel = 0; // 0 = none, increases with conflict steps
+let frameId = null;
+let annOn = true, autoOn = false, autoTmr = null;
+
+// ═══════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════
+
+function createParticles() {
+  particles = [];
+  for (let i = 0; i < TOTAL; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.pow(Math.random(), 0.6) * 0.46;
+    particles.push({
+      x: 0.5 + Math.cos(angle) * dist,
+      y: 0.5 + Math.sin(angle) * dist,
+      vx: (Math.random() - 0.5) * 0.002,
+      vy: (Math.random() - 0.5) * 0.002,
+      col: PALETTE[i % PALETTE.length],
+      alive: true, opacity: 0.55 + Math.random() * 0.45,
+      size: 1.2 + Math.random() * 2.0,
+      dying: 0, phase: Math.random() * Math.PI * 2,
+      confused: false, // flickers red when confused
+    });
+  }
+}
+
+function aliveCount() {
+  let n = 0;
+  for (let i = 0; i < TOTAL; i++) if (particles[i].alive && particles[i].dying < 0.5) n++;
+  return n;
+}
+
+function applySurvival(rate, isConflict) {
+  const surviving = Math.round(TOTAL * rate);
+
+  if (isConflict) {
+    // For conflicts, RESURRECT dead particles (space expands)
+    // Sort all particles by distance to nearest attractor — closest survive
+    const ranked = particles.map((p, i) => {
+      let minD = 999;
+      for (const a of targetAttractors) {
+        const d = Math.hypot(p.x - a.x, p.y - a.y);
+        if (d < minD) minD = d;
+      }
+      return { idx: i, dist: minD };
+    }).sort((a, b) => a.dist - b.dist);
+
+    // Resurrect particles randomly (chaos returns)
+    let resurrected = 0;
+    for (let i = 0; i < TOTAL; i++) {
+      const p = particles[i];
+      if (!p.alive && resurrected < surviving - aliveCount()) {
+        p.alive = true;
+        p.dying = 0;
+        p.confused = true;
+        // Scatter resurrected particles outward
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 0.2 + Math.random() * 0.25;
+        p.x = 0.5 + Math.cos(angle) * dist;
+        p.y = 0.5 + Math.sin(angle) * dist;
+        p.vx = (Math.random() - 0.5) * 0.008;
+        p.vy = (Math.random() - 0.5) * 0.008;
+        resurrected++;
+      }
+    }
+    // Also mark some existing alive particles as confused
+    particles.forEach(p => {
+      if (p.alive) p.confused = Math.random() < 0.4;
+    });
+  } else {
+    // Normal narrowing — kill by distance from centre
+    const ranked = particles.map((p, i) => ({
+      idx: i, dist: Math.hypot(p.x - 0.5, p.y - 0.5)
+    })).sort((a, b) => a.dist - b.dist);
+
+    ranked.forEach((r, rank) => {
+      const p = particles[r.idx];
+      if (rank < surviving) {
+        p.alive = true;
+        p.confused = false;
+        if (p.dying > 0) p.dying = Math.max(0, p.dying - 0.05);
+      } else {
+        p.alive = false;
+      }
+    });
+  }
+}
+
+// ═══════════════════════════════════════
+// PHYSICS
+// ═══════════════════════════════════════
+
+function tick() {
+  const maxR = currentRadius * 0.46;
+  currentRadius += (targetRadius - currentRadius) * 0.035;
+
+  // Smooth attractor interpolation
+  for (let a = 0; a < currentAttractors.length; a++) {
+    const t = targetAttractors[a] || targetAttractors[0];
+    const c = currentAttractors[a];
+    c.x += (t.x - c.x) * 0.04;
+    c.y += (t.y - c.y) * 0.04;
+    c.strength += (t.strength - c.strength) * 0.04;
+  }
+  // Match attractor count
+  while (currentAttractors.length < targetAttractors.length) {
+    const t = targetAttractors[currentAttractors.length];
+    currentAttractors.push({ x: 0.5, y: 0.5, strength: 0 });
+  }
+  while (currentAttractors.length > targetAttractors.length) {
+    const last = currentAttractors[currentAttractors.length - 1];
+    if (Math.abs(last.strength) < 0.01) currentAttractors.pop();
+    else { last.strength *= 0.9; break; }
+  }
+
+  const jitterMul = 1 + confusionLevel * 3; // More chaos when confused
+
+  for (let i = 0; i < TOTAL; i++) {
+    const p = particles[i];
+
+    if (!p.alive) {
+      p.dying = Math.min(1, p.dying + 0.02);
+      if (p.dying >= 1) continue;
+      // Drift outward
+      const dx = p.x - 0.5, dy = p.y - 0.5;
+      const d = Math.hypot(dx, dy) || 0.001;
+      p.vx += (dx / d) * 0.0006;
+      p.vy += (dy / d) * 0.0006;
+    } else {
+      // Pull towards nearest attractor
+      let nearestDist = 999, nearestA = currentAttractors[0];
+      for (const a of currentAttractors) {
+        const d = Math.hypot(p.x - a.x, p.y - a.y);
+        if (d < nearestDist) { nearestDist = d; nearestA = a; }
+      }
+
+      const dx = p.x - nearestA.x, dy = p.y - nearestA.y;
+      const dist = Math.hypot(dx, dy) || 0.001;
+
+      // Gravity towards attractor
+      const grav = 0.0005 * nearestA.strength;
+      p.vx -= dx * grav;
+      p.vy -= dy * grav;
+
+      // Boundary push if too far from attractor
+      if (dist > maxR) {
+        const push = (dist - maxR) * 0.035;
+        p.vx -= (dx / dist) * push;
+        p.vy -= (dy / dist) * push;
+      }
+
+      // If multiple attractors, add pull from others too (weaker)
+      if (currentAttractors.length > 1) {
+        for (const a of currentAttractors) {
+          if (a === nearestA) continue;
+          const adx = p.x - a.x, ady = p.y - a.y;
+          const ad = Math.hypot(adx, ady) || 0.001;
+          p.vx -= (adx / ad) * 0.0002 * a.strength;
+          p.vy -= (ady / ad) * 0.0002 * a.strength;
+        }
+      }
+
+      // Jitter
+      p.vx += (Math.random() - 0.5) * JITTER * jitterMul;
+      p.vy += (Math.random() - 0.5) * JITTER * jitterMul;
+
+      // Confused particles get extra chaotic jitter
+      if (p.confused) {
+        p.vx += (Math.random() - 0.5) * 0.004;
+        p.vy += (Math.random() - 0.5) * 0.004;
+      }
+    }
+
+    p.vx *= DAMPING;
+    p.vy *= DAMPING;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.x = Math.max(0.01, Math.min(0.99, p.x));
+    p.y = Math.max(0.01, Math.min(0.99, p.y));
+  }
+}
+
+// ═══════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════
+
+function render() {
+  const canvas = document.getElementById('cv');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W * dpr, H * dpr);
+
+  const time = performance.now() * 0.001;
+  const step = STEPS[active];
+  const isConflict = step.type === 'conflict';
+
+  // ── Attractor zones + labels
+  for (let ai = 0; ai < currentAttractors.length; ai++) {
+    const a = currentAttractors[ai];
+    if (a.strength < 0.01) continue;
+    const ax = a.x * W * dpr, ay = a.y * H * dpr;
+    const r = currentRadius * 0.46 * Math.min(W, H) * dpr * (isConflict ? 0.55 : 1);
+
+    // Glow
+    const col = (targetAttractors[ai] && targetAttractors[ai].col) || step.colour || '#00FFBC';
+    const grd = ctx.createRadialGradient(ax, ay, r * 0.6, ax, ay, r * 1.2);
+    grd.addColorStop(0, col + '00');
+    grd.addColorStop(0.5, col + (isConflict ? '0A' : '0D'));
+    grd.addColorStop(1, col + '00');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W * dpr, H * dpr);
+
+    // Ring
+    ctx.beginPath();
+    ctx.arc(ax, ay, r, 0, Math.PI * 2);
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = (isConflict ? 0.12 : 0.16) + 0.05 * Math.sin(time * 1.5 + ai);
+    ctx.lineWidth = (isConflict ? 1.5 : 2) * dpr;
+    ctx.setLineDash([8 * dpr, 6 * dpr]);
+    ctx.lineDashOffset = -time * 20 * (ai % 2 === 0 ? 1 : -1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    // Attractor label (for conflict steps)
+    const ta = targetAttractors[ai];
+    if (ta && ta.label && a.strength > 0.1) {
+      const lines = ta.label.split('\n');
+      ctx.font = `600 ${9 * dpr}px Poppins`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = col;
+      ctx.globalAlpha = 0.45 * Math.min(1, a.strength);
+      lines.forEach((line, li) => {
+        ctx.fillText(line, ax, ay - r - (lines.length - li) * 12 * dpr - 2 * dpr);
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ── Ghost rings for previous narrowing constraints
+  if (!isConflict) {
+    for (let c = 1; c < active; c++) {
+      if (STEPS[c].type === 'conflict') continue;
+      const prevR = STEPS[c].zoneRadius * 0.46 * Math.min(W, H) * dpr;
+      ctx.beginPath();
+      ctx.arc(W * 0.5 * dpr, H * 0.5 * dpr, prevR, 0, Math.PI * 2);
+      ctx.strokeStyle = STEPS[c].colour || '#fff';
+      ctx.globalAlpha = 0.05;
+      ctx.lineWidth = 1 * dpr;
+      ctx.setLineDash([4 * dpr, 8 * dpr]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ── Confusion "cracks" between attractors
+  if (isConflict && currentAttractors.length >= 2) {
+    for (let i = 0; i < currentAttractors.length; i++) {
+      for (let j = i + 1; j < currentAttractors.length; j++) {
+        const a1 = currentAttractors[i], a2 = currentAttractors[j];
+        if (a1.strength < 0.05 || a2.strength < 0.05) continue;
+        const x1 = a1.x * W * dpr, y1 = a1.y * H * dpr;
+        const x2 = a2.x * W * dpr, y2 = a2.y * H * dpr;
+
+        // Jagged lightning line between attractors
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        const segs = 8;
+        for (let s = 1; s <= segs; s++) {
+          const t = s / segs;
+          const bx = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 20 * dpr;
+          const by = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 20 * dpr;
+          ctx.lineTo(bx, by);
+        }
+        ctx.strokeStyle = '#FF5F5F';
+        ctx.globalAlpha = 0.06 + 0.04 * Math.sin(time * 4);
+        ctx.lineWidth = 1.5 * dpr;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // ── Particles
+  for (let i = 0; i < TOTAL; i++) {
+    const p = particles[i];
+    if (p.dying >= 1) continue;
+
+    const px = p.x * W * dpr, py = p.y * H * dpr;
+    const twinkle = 0.65 + 0.35 * Math.sin(time * 2.5 + p.phase);
+
+    let alpha, size, colour;
+    if (p.alive) {
+      alpha = p.opacity * twinkle;
+      size = p.size * dpr;
+      colour = p.col;
+
+      // Tighter zone = brighter particles
+      if (active >= 5 && !isConflict) {
+        alpha = Math.min(1, alpha * 1.25);
+        size *= 1.1;
+      }
+
+      // Confused particles flicker between their colour and red
+      if (p.confused) {
+        const flicker = Math.sin(time * 8 + p.phase * 3);
+        if (flicker > 0.3) colour = '#FF5F5F';
+        alpha *= 0.7 + 0.3 * Math.abs(flicker);
+      }
+    } else {
+      alpha = p.opacity * (1 - p.dying) * 0.2;
+      size = p.size * dpr * (1 + p.dying * 1.8);
+      colour = '#FF5F5F';
+    }
+
+    if (alpha < 0.01) continue;
+
+    // Glow
+    if (p.alive && size > 1.6 * dpr) {
+      ctx.beginPath();
+      ctx.arc(px, py, size * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = colour;
+      ctx.globalAlpha = alpha * 0.06;
+      ctx.fill();
+    }
+
+    // Core
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fillStyle = colour;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Centre label when fully constrained
+  if (active === 6 && currentRadius < 0.18) {
+    const cx = W * 0.5 * dpr, cy = H * 0.5 * dpr;
+    const pulse = 0.85 + 0.15 * Math.sin(time * 2);
+    ctx.font = `700 ${13 * dpr}px Poppins`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#00FFBC';
+    ctx.globalAlpha = 0.5 * pulse;
+    ctx.fillText('YOUR OUTPUT', cx, cy - 5 * dpr);
+    ctx.font = `400 ${8.5 * dpr}px Poppins`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.globalAlpha = 0.3 * pulse;
+    ctx.fillText('Tightly constrained', cx, cy + 10 * dpr);
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Subtle edge vignette when conflicting (replaces full-screen flash)
+  if (isConflict) {
+    const grd = ctx.createRadialGradient(
+      W * dpr * 0.5, H * dpr * 0.5, Math.min(W, H) * dpr * 0.25,
+      W * dpr * 0.5, H * dpr * 0.5, Math.max(W, H) * dpr * 0.6
+    );
+    grd.addColorStop(0, 'rgba(255,95,95,0)');
+    grd.addColorStop(1, 'rgba(255,95,95,0.06)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W * dpr, H * dpr);
+  }
+}
+
+// ═══════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════
+
+function frame() {
+  tick();
+  render();
+  frameId = requestAnimationFrame(frame);
+}
+
+// ═══════════════════════════════════════
+// UI
+// ═══════════════════════════════════════
+
+function buildPills() {
+  const bar = document.getElementById('cbar');
+  let html = '';
+  let addedSep = false;
+  STEPS.forEach((s, i) => {
+    if (s.type === 'conflict' && !addedSep) {
+      html += '<div class="csep">then…</div>';
+      addedSep = true;
+    }
+    const cls = i === 0 ? 'cpill active' : 'cpill locked';
+    html += `<div class="${cls}" id="pill${i}" onclick="jumpTo(${i})">
+      <span class="cnum">${i === 0 ? '✓' : i}</span>
+      <span>${s.emoji} ${s.name}</span>
+    </div>`;
+  });
+  bar.innerHTML = html;
+}
+
+function updatePills() {
+  STEPS.forEach((s, i) => {
+    const el = document.getElementById('pill' + i);
+    const isAct = i <= active;
+    const isConf = s.type === 'conflict' && isAct;
+    el.className = 'cpill' + (isAct ? ' active' : '') + (isConf ? ' conflict' : '') + (i > active + 1 ? ' locked' : '');
+    el.querySelector('.cnum').textContent = isAct ? '✓' : i;
+  });
+}
+
+function updateStats() {
+  const alive = aliveCount();
+  const pct = Math.round((alive / TOTAL) * 100);
+  document.getElementById('statAlive').textContent = alive.toLocaleString();
+  document.getElementById('statPct').textContent = pct + '% of solution space';
+
+  const numEl = document.getElementById('statAlive');
+  const pctEl = document.getElementById('statPct');
+  if (STEPS[active].type === 'conflict') {
+    numEl.style.color = '#FF5F5F';
+    pctEl.style.color = '#FF5F5F';
+  } else if (pct > 50) {
+    numEl.style.color = '#00FFBC';
+    pctEl.style.color = '';
+  } else if (pct > 15) {
+    numEl.style.color = '#00B1FF';
+    pctEl.style.color = '';
+  } else if (pct > 5) {
+    numEl.style.color = '#5CD5FF';
+    pctEl.style.color = '';
+  } else {
+    numEl.style.color = '#C5B6F1';
+    pctEl.style.color = '';
+  }
+}
+
+function updatePhaseLabel() {
+  const tag = document.getElementById('phaseTag');
+  const isConf = STEPS[active].type === 'conflict';
+  tag.className = 'phase-tag ' + (isConf ? 'confused' : 'narrowing');
+  tag.textContent = isConf ? '⚠ CONFLICTING' : 'NARROWING';
+  document.getElementById('phaseLabel').style.opacity = active > 0 ? '1' : '0';
+}
+
+function showInsight() {
+  if (!annOn) { document.getElementById('insight').classList.remove('vis'); return; }
+  const s = STEPS[active];
+  const panel = document.getElementById('insight');
+  const titleEl = document.getElementById('insightTitle');
+  const textEl = document.getElementById('insightText');
+  titleEl.textContent = s.title;
+  titleEl.className = 'insight-title' + (s.type === 'conflict' ? ' warn' : '');
+  textEl.innerHTML = s.text;
+  panel.classList.add('vis');
+}
+
+function hideInsight() {
+  document.getElementById('insight').classList.remove('vis');
+}
+
+function updateButtons() {
+  const nextBtn = document.getElementById('nextBtn');
+  const removeBtn = document.getElementById('removeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  if (active >= STEPS.length - 1) {
+    nextBtn.textContent = 'Maximum confusion';
+    nextBtn.disabled = true;
+  } else {
+    const next = STEPS[active + 1];
+    nextBtn.textContent = (next.type === 'conflict' ? '⚡ Add: ' : 'Add: ') + next.name;
+    nextBtn.disabled = false;
+  }
+
+  removeBtn.style.display = active > 0 ? 'inline-flex' : 'none';
+  resetBtn.style.display = active > 0 ? 'inline-flex' : 'none';
+
+  const d = active;
+  document.getElementById('sctr').innerHTML = 'Step <b>' + d + '</b> / <b>' + (STEPS.length - 1) + '</b>';
+}
+
+// ═══════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════
+
+function applyStep(idx) {
+  const s = STEPS[idx];
+  targetRadius = s.zoneRadius;
+  targetAttractors = s.attractors.map(a => ({ ...a }));
+  confusionLevel = s.type === 'conflict' ? (idx - 6) * 0.3 : 0;
+
+  if (idx === 0) {
+    particles.forEach(p => { p.alive = true; p.dying = 0; p.confused = false; });
+  } else {
+    applySurvival(s.survivalRate, s.type === 'conflict');
+  }
+}
+
+function addNext() {
+  if (active >= STEPS.length - 1) return;
+  active++;
+  applyStep(active);
+  updatePills();
+  updateButtons();
+  updatePhaseLabel();
+  showInsight();
+  setTimeout(updateStats, 500);
+
+  if (autoOn && active < STEPS.length - 1) autoTmr = setTimeout(addNext, 2200);
+  logInteraction("add_constraint", { step: active });
+}
+
+function removeLast() {
+  if (active <= 0) return;
+  stopAuto();
+  active--;
+  applyStep(active);
+  updatePills();
+  updateButtons();
+  updatePhaseLabel();
+  if (active > 0) showInsight(); else hideInsight();
+  setTimeout(updateStats, 400);
+  logInteraction("remove_constraint", { step: active });
+}
+
+function resetAll() {
+  stopAuto();
+  active = 0;
+  targetRadius = 1.0;
+  currentRadius = 1.0;
+  confusionLevel = 0;
+  targetAttractors = [{ x: 0.5, y: 0.5, strength: 1 }];
+  currentAttractors = [{ x: 0.5, y: 0.5, strength: 1 }];
+  particles.forEach(p => { p.alive = true; p.dying = 0; p.confused = false; });
+  // Re-scatter
+  particles.forEach(p => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.pow(Math.random(), 0.6) * 0.46;
+    p.x = 0.5 + Math.cos(angle) * dist;
+    p.y = 0.5 + Math.sin(angle) * dist;
+    p.vx = (Math.random() - 0.5) * 0.003;
+    p.vy = (Math.random() - 0.5) * 0.003;
+  });
+  updatePills();
+  updateButtons();
+  updatePhaseLabel();
+  hideInsight();
+  setTimeout(updateStats, 300);
+  logInteraction("reset", {});
+}
+
+function jumpTo(idx) {
+  if (idx > active + 1 || idx === active) return;
+  stopAuto();
+  active = idx;
+  // Rebuild from scratch for accurate particle state
+  particles.forEach(p => { p.alive = true; p.dying = 0; p.confused = false; });
+  // Re-scatter first
+  particles.forEach(p => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.pow(Math.random(), 0.6) * 0.46;
+    p.x = 0.5 + Math.cos(angle) * dist;
+    p.y = 0.5 + Math.sin(angle) * dist;
+  });
+  // Apply each step in sequence up to target
+  for (let i = 1; i <= idx; i++) {
+    const s = STEPS[i];
+    if (s.type !== 'conflict') {
+      applySurvival(s.survivalRate, false);
+    }
+  }
+  // Apply final step
+  applyStep(idx);
+  updatePills();
+  updateButtons();
+  updatePhaseLabel();
+  if (idx > 0) showInsight(); else hideInsight();
+  setTimeout(updateStats, 400);
+}
+
+// ═══════════════════════════════════════
+// TOGGLES
+// ═══════════════════════════════════════
+
+function toggleAnn() {
+  annOn = !annOn;
+  document.getElementById('annT').classList.toggle('on', annOn);
+  if (annOn && active > 0) showInsight();
+  else hideInsight();
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  document.getElementById('autoT').classList.toggle('on', autoOn);
+  if (autoOn && active < STEPS.length - 1) {
+    autoTmr = setTimeout(addNext, 1000);
+  } else {
+    stopAuto();
+  }
+}
+
+function stopAuto() {
+  if (autoTmr) { clearTimeout(autoTmr); autoTmr = null; }
+  autoOn = false;
+  document.getElementById('autoT').classList.remove('on');
+}
+
+// ═══════════════════════════════════════
+// POSTMESSAGE PROTOCOL
+// ═══════════════════════════════════════
+
+function sendGraphicReady() {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+  }
+}
+
+function logInteraction(action, data) {
+  if (window.parent !== window) {
+    window.parent.postMessage({
+      type: 'LOG_INTERACTION',
+      action: action,
+      data: data || {},
+      timestamp: new Date().toISOString()
+    }, '*');
+  }
+}
+
+// Listen for incoming messages from parent frame
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  
+  if (e.data.type === 'RESET') {
+    // Reset graphic state
+    resetAll();
+  }
+  // Add more message handlers as needed
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+
+function resize() {
+  const wrap = document.getElementById('canvasWrap');
+  const cv = document.getElementById('cv');
+  dpr = window.devicePixelRatio || 1;
+  W = wrap.clientWidth;
+  H = wrap.clientHeight;
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+}
+
+function init() {
+  resize();
+  createParticles();
+  buildPills();
+  updateButtons();
+  updateStats();
+  updatePhaseLabel();
+  showInsight();
+  frame();
+  sendGraphicReady();
+}
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  {
+    target: () => document.getElementById('cbar'),
+    title: 'Track each constraint',
+    desc: 'Each pill represents a prompt element — system prompt, tone, examples, format. As you add them, they light up to show your progress through the narrowing process.',
+    pad: 8
+  },
+  {
+    target: () => document.querySelector('.bgrp'),
+    title: 'Add constraints step by step',
+    desc: 'Click this button to add the next prompt element and watch the solution space shrink. You can also remove steps or reset to start over.',
+    pad: 8
+  },
+  {
+    target: () => document.querySelector('.hdr-ctrls'),
+    title: 'Annotations & Auto-play',
+    desc: 'Turn on Annotations for explanatory labels on the canvas. Hit Auto-play to watch the entire narrowing sequence unfold automatically.',
+    pad: 8
+  },
+  {
+    target: () => document.getElementById('canvasWrap'),
+    title: 'The solution space',
+    desc: 'Each particle is a possible output. With no constraints the space is wide open. As you add prompt elements, the particles cluster tighter — fewer possible outputs, more predictable results.',
+    pad: 6
+  }
+];
+
+let tourStep = -1;
+let tourActive = false;
+let tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true;
+  tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext();
+  // Auto-dismiss after 30s of inactivity
+  resetTourTimer();
+}
+
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer();
+  positionTour();
+}
+
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer();
+  positionTour();
+}
+
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  const overlay = document.getElementById('tourOverlay');
+  const spot = document.getElementById('tourSpot');
+  const tip = document.getElementById('tourTip');
+  const layer = document.getElementById('tourClickLayer');
+  overlay.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    spot.style.display = 'none';
+    tip.style.display = 'none';
+    layer.style.display = 'none';
+    overlay.classList.remove('hiding');
+  }, 500);
+}
+
+function positionTour() {
+  const step = TOUR_STEPS[tourStep];
+  const el = step.target();
+  if (!el) { tourNext(); return; }
+
+  const r = el.getBoundingClientRect();
+  const pad = step.pad || 8;
+  const spot = document.getElementById('tourSpot');
+  const tip = document.getElementById('tourTip');
+
+  // Position spotlight
+  spot.style.top    = (r.top - pad) + 'px';
+  spot.style.left   = (r.left - pad) + 'px';
+  spot.style.width  = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+
+  // Build tooltip content
+  const totalSteps = TOUR_STEPS.length;
+  let dots = '';
+  for (let i = 0; i < totalSteps; i++) {
+    dots += `<div class="tour-dot${i === tourStep ? ' active' : ''}"></div>`;
+  }
+
+  const isLast = tourStep === totalSteps - 1;
+  const isFirst = tourStep === 0;
+
+  tip.innerHTML = `
+    <div class="tour-arrow" id="tourArrow"></div>
+    <div class="tour-step-num">Step ${tourStep + 1} of ${totalSteps}</div>
+    <div class="tour-title">${step.title}</div>
+    <div class="tour-desc">${step.desc}</div>
+    <div class="tour-footer">
+      <div class="tour-dots">${dots}</div>
+      <div class="tour-btns">
+        <button class="tour-btn" onclick="endTour()">Skip</button>
+        ${!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : ''}
+        <button class="tour-btn primary" onclick="tourNext()">${isLast ? 'Got it' : 'Next'}</button>
+      </div>
+    </div>
+  `;
+
+  // Position tooltip relative to spotlight
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+
+  // Decide placement: below if there's room, above if not, or to the side
+  requestAnimationFrame(() => {
+    const tipRect = tip.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const spotBottom = r.bottom + pad;
+    const spotTop = r.top - pad;
+    const arrow = document.getElementById('tourArrow');
+    const gap = 14;
+
+    let tipTop, tipLeft;
+
+    // Default: below the spotlight
+    if (spotBottom + tipRect.height + gap + 10 < vh) {
+      tipTop = spotBottom + gap;
+      arrow.className = 'tour-arrow up';
+      arrow.style.left = '28px';
+      arrow.style.right = '';
+    }
+    // Otherwise: above
+    else if (spotTop - tipRect.height - gap > 0) {
+      tipTop = spotTop - tipRect.height - gap;
+      arrow.className = 'tour-arrow down';
+      arrow.style.left = '28px';
+      arrow.style.right = '';
+    }
+    // Fallback: below anyway, clamped
+    else {
+      tipTop = Math.max(10, spotBottom + gap);
+      arrow.className = 'tour-arrow up';
+      arrow.style.left = '28px';
+    }
+
+    // Horizontal: align left edge with spotlight, but keep on screen
+    tipLeft = r.left - pad;
+    if (tipLeft + tipRect.width > vw - 16) tipLeft = vw - tipRect.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+
+    // Adjust arrow horizontal position to point at the spotlight centre
+    const spotCentreX = r.left + r.width / 2;
+    const arrowX = Math.max(16, Math.min(tipRect.width - 24, spotCentreX - tipLeft));
+    arrow.style.left = arrowX + 'px';
+
+    requestAnimationFrame(() => tip.classList.add('vis'));
+  });
+}
+
+// Clicking the dark area advances the tour
+document.getElementById('tourClickLayer').addEventListener('click', () => {
+  if (tourActive) tourNext();
+});
+
+window.addEventListener('load', () => {
+  init();
+  // Start tour after a brief moment for layout to settle
+  setTimeout(startTour, 600);
+});
+
+// Re-position on resize
+window.addEventListener('resize', () => {
+  resize();
+  if (tourActive) positionTour();
+});
+
+document.addEventListener('keydown', e => {
+  if (tourActive) {
+    if (e.code === 'Escape') { endTour(); return; }
+    if (e.code === 'ArrowRight' || e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); tourNext(); return; }
+    if (e.code === 'ArrowLeft') { e.preventDefault(); tourPrev(); return; }
+    return;
+  }
+  if (e.code === 'Space' || e.code === 'ArrowRight' || e.code === 'Enter') { e.preventDefault(); addNext(); }
+  if (e.code === 'ArrowLeft') { e.preventDefault(); removeLast(); }
+  if (e.code === 'KeyR') resetAll();
+  if (e.code === 'KeyA') toggleAnn();
+  if (e.code === 'KeyP') toggleAuto();
+});
+</script>
+</body>
+</html>

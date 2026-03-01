@@ -262,6 +262,54 @@ const SECTION_5_PROMPTING = [
     notes: `The practical example makes the abstraction real. The principle underneath — load first, act second — is the opposite of what most people do. Most people jump straight to the question and hope context carries. This technique matters because it's so simple. No complexity. No jargon. Just clarity.`,
   },
 
+  // ── 5.5c  Context Engineering Kitchen Interactive
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Try it: Context Engineering Kitchen',
+    subtitle: 'Drag ingredients to build effective prompts. See how context changes output.',
+    graphic: {
+      id: 'context-engineering',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive context block builder. Participants drag context ingredients (rules, examples, constraints, personas) into a kitchen to build prompts. See output quality change as context is added. Debrief: "Which ingredients made the biggest difference?"`,
+  },
+
+  // ── 5.5d  RAG Pipeline Interactive ─────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Explore: Retrieval Augmented Generation (RAG)',
+    subtitle: 'See how AI retrieves your knowledge before answering.',
+    graphic: {
+      id: 'rag',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive RAG visualisation. Watch the pipeline: user question → document retrieval → context augmentation → response generation. See how specific knowledge docs improve answer quality. Debrief: "What documents would you want in your RAG system?"`,
+  },
+
+  // ── 5.5e  Tool Use & Function Calling ──────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'PROMPTING',
+    title: 'Explore: How AI Uses Tools',
+    subtitle: 'Watch AI decide when and how to use external functions.',
+    graphic: {
+      id: 'tool-use',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive tool use explorer. See scenarios where AI decides to use external tools (APIs, calculators, databases). Watch it reason through: "I need real-time data, so I'll call the API." Each decision explained. Debrief: "What tools would your AI most need access to?"`,
+  },
+
   // ── 5.7  Prompting Summary ────────────────────
   {
     type: 'statement',

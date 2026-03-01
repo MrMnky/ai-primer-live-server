@@ -356,6 +356,54 @@ const SECTION_2_WHAT_IS_AI = [
     notes: `Quick anchor before the handoff. Don't linger — this is a checkpoint, not new content. The energy should say "we've covered a lot, and it all holds together."`,
   },
 
+  // ── 2.7b  AI Definition Interactive ──────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Try it: AI Definition Explorer',
+    subtitle: 'Test scenarios and see what counts as AI versus automation.',
+    graphic: {
+      id: 'ai-definition-v2',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive scenario explorer. Participants test real-world examples: Is this AI? Is this automation? Is this machine learning? Builds intuition for the boundary between AI and other technologies. Debrief: "What surprised you about what counts as AI?"`,
+  },
+
+  // ── 2.8  Foundation Models Landscape ────────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Explore: Foundation Model Landscape',
+    subtitle: 'Compare the major foundation models — capabilities, costs, trade-offs.',
+    graphic: {
+      id: 'foundation-models',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive landscape explorer. Participants compare GPT, Claude, Gemini, Llama and other foundation models. See capabilities by category, pricing tiers, and vendor trade-offs. Debrief: "Which model strengths align with your use cases?"`,
+  },
+
+  // ── 2.9  Capability Landscape Timeline ────────
+  {
+    type: 'graphic',
+    theme: 'dark',
+    sectionLabel: 'WHAT IS AI',
+    title: 'Explore: AI Capability Progression',
+    subtitle: 'Navigate the animated timeline of how capabilities have evolved.',
+    graphic: {
+      id: 'capability-landscape',
+      responsive: true,
+      preload: false,
+      height: '100%',
+    },
+    notes: `Interactive animated timeline of AI capability progression. See the milestones: transformers, large-scale training, emergence, multimodal, tool use, reasoning. Each era shows representative models and breakthroughs. Debrief: "Which capability jump has had the biggest impact on your work?"`,
+  },
+
   {
     type: 'statement',
     theme: 'dark',

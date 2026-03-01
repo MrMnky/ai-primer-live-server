@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Risks Radar — Interactive Risk Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Brand Colours */
+            --gable-green: #1B2F3C;
+            --bright-turquoise: #00FFBC;
+            --dodger-blue: #00B1FF;
+            --meadow-green: #17CE95;
+            --bittersweet-red: #FF5F5F;
+            --cornflower: #6161FF;
+            --moonraker: #C5B6F1;
+            --seapink: #EFACA8;
+
+            /* Text Colours */
+            --text-white: #FFFFFF;
+            --text-cloud: #D4DFE6;
+            --text-slate: #8FA4B3;
+
+            /* Semantic Colours */
+            --human-risk: var(--bittersweet-red);
+            --technical-risk: var(--cornflower);
+            --governance-risk: var(--dodger-blue);
+            --quality-risk: var(--meadow-green);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--gable-green);
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--gable-green);
+        }
+
+        header {
+            padding: 2rem 2rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+
+        .header-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-white);
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header-content p {
+            font-size: 0.95rem;
+            font-weight: 300;
+            color: var(--text-slate);
+            letter-spacing: 0.3px;
+        }
+
+        /* Main content grid */
+        .content {
+            display: grid;
+            grid-template-columns: 55% 45%;
+            gap: 2rem;
+            flex: 1;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        /* Radar container */
+        .radar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .radar-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 600px;
+            max-height: 600px;
+        }
+
+        canvas#radarCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Detail panel */
+        .detail-section {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 1rem;
+        }
+
+        .detail-panel {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-intro {
+            color: var(--text-cloud);
+            font-size: 1rem;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .risk-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .risk-icon {
+            font-size: 3rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .risk-title-block h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-white);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .risk-meta {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .risk-tag {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-cloud);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .risk-tag.category {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid;
+        }
+
+        .risk-tag.human {
+            border-color: var(--human-risk);
+            color: var(--human-risk);
+        }
+
+        .risk-tag.technical {
+            border-color: var(--technical-risk);
+            color: var(--technical-risk);
+        }
+
+        .risk-tag.governance {
+            border-color: var(--governance-risk);
+            color: var(--governance-risk);
+        }
+
+        .risk-tag.quality {
+            border-color: var(--quality-risk);
+            color: var(--quality-risk);
+        }
+
+        .risk-tag.ring {
+            border-color: var(--text-slate);
+            color: var(--text-slate);
+        }
+
+        .risk-description {
+            color: var(--text-cloud);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+
+        .risk-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-slate);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .risk-detail-text {
+            color: var(--text-cloud);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .risk-mitigations {
+            list-style: none;
+        }
+
+        .risk-mitigations li {
+            color: var(--text-cloud);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-weight: 300;
+        }
+
+        .risk-mitigations li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--quality-risk);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1rem 2rem;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            color: var(--text-slate);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-link {
+            color: var(--text-slate);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--text-cloud);
+        }
+
+        .footer-brand {
+            font-weight: 600;
+            color: var(--text-cloud);
+        }
+
+        /* Scrollbar styling */
+        .detail-section::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .detail-section::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .detail-section::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+
+        .detail-section::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .header-content h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                gap: 1.5rem;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .radar-container {
+                max-height: 60vh;
+            }
+
+            header {
+                padding: 1.5rem 1rem 1rem;
+            }
+
+            .header-content h1 {
+                font-size: 1.75rem;
+            }
+
+            footer {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .footer-left {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .detail-section {
+                max-height: 40vh;
+                overflow-y: auto;
+                padding-right: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            html, body {
+                font-size: 14px;
+            }
+
+            header {
+                padding: 1rem 0.75rem 0.75rem;
+            }
+
+            .header-content h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .header-content p {
+                font-size: 0.85rem;
+            }
+
+            .content {
+                gap: 0.75rem;
+                padding: 0.75rem;
+            }
+
+            .radar-container {
+                max-height: 50vh;
+                max-width: 90vw;
+            }
+
+            footer {
+                padding: 0.75rem;
+                font-size: 0.7rem;
+            }
+
+            footer .footer-left {
+                gap: 0.25rem;
+            }
+
+            .risk-icon {
+                font-size: 2rem;
+            }
+
+            .risk-title-block h2 {
+                font-size: 1.4rem;
+            }
+
+            .detail-section {
+                max-height: 35vh;
+                padding-right: 0.5rem;
+                padding-top: 0.75rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .header-content h1 {
+                font-size: 1.25rem;
+            }
+
+            .radar-container {
+                max-height: 45vh;
+                max-width: 85vw;
+            }
+
+            .risk-icon {
+                font-size: 1.8rem;
+            }
+
+            .risk-title-block h2 {
+                font-size: 1.2rem;
+            }
+
+            .detail-section {
+                max-height: 30vh;
+            }
+        }
+
+  /* ─── SPOTLIGHT TOUR ─── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 1; transition: opacity 0.5s;
+  }
+  .tour-overlay.hiding { opacity: 0; }
+  .tour-spot {
+    position: fixed; z-index: 501;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(8,16,22,0.82);
+    transition: top 0.45s ease, left 0.45s ease, width 0.45s ease, height 0.45s ease;
+    pointer-events: none;
+  }
+  .tour-spot::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border: 2px solid rgba(0,255,188,0.35);
+    border-radius: inherit;
+    animation: spotPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotPulse {
+    0%, 100% { border-color: rgba(0,255,188,0.2); }
+    50% { border-color: rgba(0,255,188,0.5); }
+  }
+  .tour-tip {
+    position: fixed; z-index: 502;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    border-radius: 12px;
+    padding: 16px 20px 14px;
+    max-width: 340px; width: max-content;
+    pointer-events: auto;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+  }
+  .tour-tip.vis { opacity: 1; transform: translateY(0); }
+  .tour-arrow {
+    position: absolute; width: 12px; height: 12px;
+    background: rgba(27,47,60,0.96);
+    border: 1px solid rgba(0,255,188,0.18);
+    transform: rotate(45deg);
+  }
+  .tour-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+  .tour-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+  .tour-step-num {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--turquoise); margin-bottom: 6px;
+  }
+  .tour-title {
+    font-size: 13px; font-weight: 700; color: var(--white);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .tour-desc {
+    font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.55;
+  }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 10px;
+  }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .tour-dot.active { background: var(--turquoise); width: 18px; border-radius: 3px; }
+  .tour-btns { display: flex; gap: 8px; }
+  .tour-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; padding: 5px 14px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s; min-height: 30px;
+  }
+  .tour-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+  .tour-btn.primary { background: var(--cerulean); border-color: var(--cerulean); color: var(--white); }
+  .tour-btn.primary:hover { background: var(--dodger); border-color: var(--dodger); }
+  .tour-click-layer { position: fixed; inset: 0; z-index: 500; cursor: pointer; }
+
+  /* ─── TOUR REPLAY BUTTON ─── */
+  .tour-replay {
+    position: fixed; bottom: 14px; left: 14px; z-index: 490;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--slate); font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-replay.vis { opacity: 1; pointer-events: auto; }
+  .tour-replay:hover {
+    background: rgba(0,255,188,0.1);
+    border-color: rgba(0,255,188,0.25);
+    color: var(--turquoise);
+  }
+
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>AI Risks</h1>
+                <p>Radar — tap a blip to investigate</p>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="radar-section">
+                <div class="radar-container">
+                    <canvas id="radarCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="detail-section" id="detailSection">
+                <div class="detail-intro">
+                    19 risks detected. Tap any blip on the radar to investigate.
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-left">
+                <a href="https://aiaccelerator.uk" class="footer-link">AI Accelerator</a>
+                <span>2 Appleby Yard, London SE10 0BJ</span>
+            </div>
+            <div class="footer-brand">hello@aiaccelerator.uk</div>
+        </footer>
+    </div>
+
+
+<!-- SPOTLIGHT TOUR -->
+<button class="tour-replay" id="tourReplay" onclick="startTour()" title="Replay tour">?</button>
+<div class="tour-click-layer" id="tourClickLayer"></div>
+<div class="tour-overlay" id="tourOverlay"></div>
+<div class="tour-spot" id="tourSpot"></div>
+<div class="tour-tip" id="tourTip"></div>
+
+<script>
+        // ============================================================================
+        // POSTMESSAGE PROTOCOL INITIALIZATION
+        // ============================================================================
+
+        // Signal to parent that this graphic has loaded and is ready
+        window.addEventListener('load', function() {
+            window.parent.postMessage({ type: 'GRAPHIC_READY' }, '*');
+        });
+
+        // Listen for incoming messages from parent
+        window.addEventListener('message', function(event) {
+            // Handle RESET message to reset graphic state
+            if (event.data && event.data.type === 'RESET') {
+                resetGraphicState();
+            }
+        });
+
+        // Helper function to reset graphic state
+        function resetGraphicState() {
+            selectedRiskId = null;
+            clearDetail();
+            sweepAngle = 0;
+        }
+
+        // Helper function to log interactions (optional, can be used for analytics)
+        function logInteraction(eventType, details) {
+            window.parent.postMessage({
+                type: 'LOG_INTERACTION',
+                eventType: eventType,
+                details: details,
+                timestamp: new Date().toISOString()
+            }, '*');
+        }
+
+        // ============================================================================
+        // RISK DATA
+        // ============================================================================
+
+        const RISKS = [
+            // INNER RING: Core Risks (Well-Known)
+            { id: 'over-trust', name: 'Over-Trust', emoji: '🤖', category: 'Human', ring: 'Core Risk', distance: 0.25, angle: 10, description: 'People accept AI output without verification or critical thinking, treating it as authoritative.', detail: 'Over-reliance creates blind spots. Teams may skip validation steps, missing hallucinations or contextual errors.', mitigations: ['Establish review checkpoints before using AI output', 'Train teams on AI limitations', 'Document assumptions made by AI systems', 'Cross-check critical decisions with domain experts'] },
+            { id: 'hallucination', name: 'Hallucination', emoji: '👻', category: 'Technical', ring: 'Core Risk', distance: 0.28, angle: 80, description: 'AI confidently generates false, misleading, or nonsensical information presented as fact.', detail: 'Models produce plausible-sounding but entirely fabricated data, citations, or analysis. Especially dangerous for research, legal, or medical contexts.', mitigations: ['Always verify factual claims independently', 'Use AI for ideation, not as a source of truth', 'Implement fact-checking workflows', 'Choose models with lower hallucination rates for critical tasks'] },
+            { id: 'data-leakage', name: 'Data Leakage', emoji: '🔓', category: 'Human+Tech', ring: 'Core Risk', distance: 0.26, angle: 150, description: 'Sensitive data shared with AI tools may be exposed, stored, or used for model training.', detail: 'Employees paste confidential emails, financial data, or customer info into public AI tools. This data enters training pipelines or is retained by vendors.', mitigations: ['Audit which AI tools your team uses', 'Establish data classification guidelines', 'Use enterprise AI with contractual data guarantees', 'Never paste PII, financial, or proprietary data into public tools'] },
+            { id: 'ip-copyright', name: 'IP & Copyright', emoji: '©️', category: 'Human+Tech', ring: 'Core Risk', distance: 0.27, angle: 220, description: 'AI-generated content may infringe existing intellectual property or copyright.', detail: 'Models trained on copyrighted works; generated code, images, or text may closely match protected works, creating legal liability.', mitigations: ['Review AI output for originality before use', 'Document the source and tool used for generated content', 'Use licensing agreements that indemnify your use', 'Maintain archives of training data sources'] },
+            { id: 'bias-fairness', name: 'Bias & Fairness', emoji: '⚖️', category: 'Technical', ring: 'Core Risk', distance: 0.29, angle: 290, description: 'Models reflect and amplify biases present in training data, leading to unfair outcomes.', detail: 'Biased data leads to biased predictions. Systems may discriminate by race, gender, age, or other protected attributes in hiring, lending, or criminal justice.', mitigations: ['Audit training data for representation', 'Test models across demographic groups', 'Use fairness metrics and thresholds', 'Involve domain experts in model evaluation'] },
+            { id: 'skill-erosion', name: 'Skill Erosion', emoji: '📉', category: 'Human', ring: 'Core Risk', distance: 0.24, angle: 350, description: 'Over-reliance on AI tools degrades employee judgement and domain expertise over time.', detail: 'Teams lose critical thinking skills, coding ability, or analytical depth. Leads to decreased adaptability and reduced capacity to solve novel problems.', mitigations: ['Rotate AI-assisted work with manual practice', 'Maintain "skill-building" time in project planning', 'Use AI as a learning aid, not a replacement', 'Regularly challenge teams to solve problems without AI'] },
+            { id: 'sustainability', name: 'Sustainability', emoji: '♻️', category: 'Technical', ring: 'Core Risk', distance: 0.25, angle: 120, description: 'Large AI models consume enormous energy and water, contributing to environmental impact.', detail: 'Training and inference require significant computational resources. Running large models at scale has measurable carbon and water footprints.', mitigations: ['Use smaller, optimised models where possible', 'Monitor and offset model carbon footprint', 'Choose vendors with renewable energy commitments', 'Batch requests and optimise inference efficiency'] },
+
+            // MIDDLE RING: Growing Concerns
+            { id: 'prompt-injection', name: 'Prompt Injection', emoji: '💉', category: 'Technical', ring: 'Growing Concern', distance: 0.48, angle: 45, description: 'Attackers embed hidden instructions in AI prompts to manipulate outputs or extract data.', detail: 'Users input text containing embedded instructions that override the intended prompt. Can be used to exfiltrate data, bypass safety guidelines, or cause unintended actions.', mitigations: ['Validate and sanitise user inputs before passing to AI', 'Use system prompts that are difficult to override', 'Monitor AI outputs for signs of injection attacks', 'Educate users about prompt injection risks'] },
+            { id: 'context-poisoning', name: 'Context Window Poisoning', emoji: '☠️', category: 'Technical', ring: 'Growing Concern', distance: 0.51, angle: 95, description: 'Malicious data injected into AI context windows to poison outputs or leak information.', detail: 'Attackers insert harmful content into documents, emails, or web pages that AI systems process. The model then generates outputs based on the poisoned context.', mitigations: ['Carefully vet sources before feeding to AI', 'Use content filters on input documents', 'Implement output review processes', 'Monitor for unusual patterns in AI behaviour'] },
+            { id: 'ai-laziness', name: 'AI Laziness', emoji: '😴', category: 'Quality', ring: 'Growing Concern', distance: 0.49, angle: 160, description: 'Models take shortcuts or produce low-effort outputs, especially when the task is ambiguous.', detail: 'AI generates surface-level responses, incomplete solutions, or vague placeholders instead of thoughtful, detailed work.', mitigations: ['Use detailed, specific prompts', 'Ask follow-up questions and request elaboration', 'Set quality standards in prompt instructions', 'Review and iterate on outputs'] },
+            { id: 'ai-slop', name: 'AI Slop & Aversion', emoji: '🚫', category: 'Human', ring: 'Growing Concern', distance: 0.50, angle: 210, description: 'Low-quality AI-generated content floods information spaces, creating fatigue and distrust.', detail: 'Proliferation of obvious, mediocre AI content (slop) erodes trust in information generally. Audiences become jaded and dismissive of all content.', mitigations: ['Curate and edit AI output carefully', 'Maintain human voice and authenticity', 'Be transparent about AI use', 'Focus on quality over volume'] },
+            { id: 'shadow-ai', name: 'Shadow AI', emoji: '👤', category: 'Governance', ring: 'Growing Concern', distance: 0.47, angle: 270, description: 'Employees use unapproved AI tools, creating security and compliance gaps.', detail: 'Teams adopt popular AI tools (ChatGPT, Claude, etc.) without IT oversight. Data, agreements, and security posture become unmanaged.', mitigations: ['Implement AI tool governance policy', 'Provide approved tools and training', 'Monitor for unauthorised tool use', 'Create transparent approval process for new tools'] },
+            { id: 'ai-washing', name: 'AI Washing', emoji: '🧼', category: 'Governance', ring: 'Growing Concern', distance: 0.46, angle: 330, description: 'Companies exaggerate or misrepresent their use of AI to attract customers or investors.', detail: 'Marketing claims of "AI-powered" features that are actually rule-based or minimal. Inflates valuations and sets false expectations.', mitigations: ['Audit internal claims about AI capabilities', 'Document what is actually AI vs. rule-based', 'Implement truth-in-advertising standards', 'Be honest about limitations'] },
+
+            // OUTER RING: Emerging Threats
+            { id: 'complacency', name: 'Automation Complacency', emoji: '😬', category: 'Human', ring: 'Emerging Threat', distance: 0.72, angle: 30, description: 'Over-trust in automated AI systems leads to reduced oversight and missed errors.', detail: 'Teams assume AI processes are infallible and skip verification. Critical failures slip through undetected.', mitigations: ['Maintain spot-check verification processes', 'Rotate oversight responsibilities', 'Log all automated decisions for audit', 'Set alert thresholds for anomalies'] },
+            { id: 'model-collapse', name: 'Model Collapse', emoji: '💥', category: 'Technical', ring: 'Emerging Threat', distance: 0.70, angle: 110, description: 'AI trained on AI-generated content degrades in quality, creating cascading failures.', detail: 'As AI-generated content becomes dominant in training sets, model quality deteriorates. Errors compound across generations.', mitigations: ['Preserve human-generated content in training sets', 'Periodically retrain on curated, high-quality data', 'Monitor model quality metrics over time', 'Use ensemble methods to reduce reliance on single model'] },
+            { id: 'deepfakes', name: 'Deepfakes', emoji: '🎬', category: 'Trust', ring: 'Emerging Threat', distance: 0.68, angle: 180, description: 'Synthetic media (video, audio, images) can convincingly impersonate people and events.', detail: 'Sophisticated generative models create deepfakes of executives, celebrities, or evidence. Harder to detect; erodes trust in visual/audio evidence.', mitigations: ['Implement media authentication standards', 'Train people to spot deepfakes', 'Use cryptographic verification for critical media', 'Establish crisis communication protocols'] },
+            { id: 'autonomous-decisions', name: 'Autonomous Decision-Making', emoji: '🤷', category: 'Governance', ring: 'Emerging Threat', distance: 0.74, angle: 250, description: 'AI systems make high-stakes decisions with insufficient human oversight or appeal mechanisms.', detail: 'Systems approve loans, deny healthcare, or make hiring decisions without clear human review or accountability. Hard to contest or appeal.', mitigations: ['Ensure humans remain in decision loop for high-stakes choices', 'Implement clear appeal and review processes', 'Require explainability for consequential decisions', 'Set guardrails on AI autonomy'] },
+            { id: 'economic-disruption', name: 'Economic Disruption', emoji: '📊', category: 'Human', ring: 'Emerging Threat', distance: 0.73, angle: 320, description: 'Large-scale job displacement and economic inequality driven by AI automation.', detail: 'Rapid productivity gains concentrate wealth; workers face rapid obsolescence. Social safety nets may lag behind disruption.', mitigations: ['Invest in workforce retraining programmes', 'Explore policy support for affected workers', 'Phase implementations to allow adjustment', 'Monitor and measure workforce impact'] },
+            { id: 'regulatory-uncertainty', name: 'Regulatory Uncertainty', emoji: '⚖️', category: 'Governance', ring: 'Emerging Threat', distance: 0.71, angle: 65, description: 'Rapidly evolving AI regulations create compliance challenges and operational uncertainty.', detail: 'Regulations differ by jurisdiction and change rapidly. Companies struggle to stay compliant; enforcement is inconsistent.', mitigations: ['Monitor regulatory developments in your jurisdictions', 'Build flexibility into AI systems for compliance', 'Engage with policy discussions and industry groups', 'Maintain audit trails for regulatory review'] }
+        ];
+
+        // ============================================================================
+        // CANVAS SETUP
+        // ============================================================================
+
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const detailSection = document.getElementById('detailSection');
+
+        // DPI scaling for crisp rendering
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = canvas.offsetWidth * dpr;
+        canvas.height = canvas.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+
+        const canvasWidth = canvas.offsetWidth;
+        const canvasHeight = canvas.offsetHeight;
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
+        const maxRadius = Math.min(canvasWidth, canvasHeight) / 2 - 40;
+
+        // Radar sweep
+        let sweepAngle = 0;
+        const sweepSpeed = (Math.PI * 2) / 4000; // One full rotation in 4 seconds
+
+        // Selected risk
+        let selectedRiskId = null;
+
+        // ============================================================================
+        // RADAR RENDERING
+        // ============================================================================
+
+        function drawRadar() {
+            // Clear canvas
+            ctx.fillStyle = '#1B2F3C';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw concentric rings
+            const rings = [
+                { distance: 0.33, label: 'Well-Known Risks' },
+                { distance: 0.66, label: 'Growing Concerns' },
+                { distance: 1, label: 'Emerging Threats' }
+            ];
+
+            rings.forEach(ring => {
+                const radius = maxRadius * ring.distance;
+
+                // Ring line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Ring label
+                ctx.fillStyle = 'rgba(143, 164, 179, 0.6)';
+                ctx.font = '500 11px "JetBrains Mono", monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(ring.label, centerX + radius + 15, centerY - radius - 10);
+            });
+
+            // Draw sector lines (4 sectors)
+            const sectors = 4;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < sectors; i++) {
+                const angle = (i / sectors) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * maxRadius;
+                const y = centerY + Math.sin(angle) * maxRadius;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            // Draw radar sweep
+            const sweepWidth = Math.PI / 3; // 60 degrees
+            const gradientAngle = sweepAngle;
+
+            // Sweep gradient (semi-transparent wedge)
+            const sweepGradient = ctx.createLinearGradient(
+                centerX + Math.cos(gradientAngle) * maxRadius, centerY + Math.sin(gradientAngle) * maxRadius,
+                centerX + Math.cos(gradientAngle + sweepWidth / 2) * maxRadius, centerY + Math.sin(gradientAngle + sweepWidth / 2) * maxRadius
+            );
+            sweepGradient.addColorStop(0, 'rgba(0, 255, 188, 0.35)');
+            sweepGradient.addColorStop(1, 'rgba(0, 255, 188, 0)');
+
+            ctx.fillStyle = sweepGradient;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, maxRadius, gradientAngle, gradientAngle + sweepWidth, false);
+            ctx.lineTo(centerX, centerY);
+            ctx.fill();
+
+            // Draw blips
+            RISKS.forEach(risk => {
+                const distance = risk.distance;
+                const angle = (risk.angle * Math.PI) / 180;
+                const x = centerX + Math.cos(angle) * maxRadius * distance;
+                const y = centerY + Math.sin(angle) * maxRadius * distance;
+
+                // Determine blip colour based on category
+                let colour;
+                switch (risk.category) {
+                    case 'Human':
+                    case 'Human+Tech':
+                        colour = '#FF5F5F'; // Bittersweet red
+                        break;
+                    case 'Technical':
+                        colour = '#6161FF'; // Cornflower
+                        break;
+                    case 'Governance':
+                        colour = '#00B1FF'; // Dodger blue
+                        break;
+                    case 'Quality':
+                    case 'Trust':
+                        colour = '#17CE95'; // Meadow green
+                        break;
+                    default:
+                        colour = '#D4DFE6'; // Cloud
+                }
+
+                // Pulse animation
+                const time = Date.now() / 1000;
+                const pulse = 0.5 + Math.sin(time * 3 + risk.id.length) * 0.3; // Vary by risk id
+                const baseRadius = 6 + (risk.ring === 'Core Risk' ? 2 : risk.ring === 'Growing Concern' ? 1 : 0);
+                const pulsingRadius = baseRadius * (1 + pulse * 0.4);
+
+                // Glow effect
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, pulsingRadius * 2);
+                gradient.addColorStop(0, colour + '80');
+                gradient.addColorStop(1, colour + '00');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, pulsingRadius * 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Blip core
+                ctx.fillStyle = colour;
+                ctx.beginPath();
+                ctx.arc(x, y, pulsingRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Highlight if selected
+                if (selectedRiskId === risk.id) {
+                    ctx.strokeStyle = colour;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, pulsingRadius + 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Store blip position for hit detection
+                risk.x = x;
+                risk.y = y;
+                risk.radius = pulsingRadius;
+            });
+        }
+
+        // ============================================================================
+        // DETAIL PANEL
+        // ============================================================================
+
+        function showRiskDetail(riskId) {
+            selectedRiskId = riskId;
+            const risk = RISKS.find(r => r.id === riskId);
+
+            if (!risk) return;
+
+            // Log interaction
+            logInteraction('RISK_SELECTED', { riskId: riskId, riskName: risk.name });
+
+            let categoryBadgeClass = 'governance';
+            if (risk.category.includes('Human')) categoryBadgeClass = 'human';
+            else if (risk.category.includes('Technical')) categoryBadgeClass = 'technical';
+            else if (risk.category.includes('Quality')) categoryBadgeClass = 'quality';
+            else if (risk.category.includes('Trust')) categoryBadgeClass = 'quality';
+            else if (risk.category.includes('Governance')) categoryBadgeClass = 'governance';
+
+            let html = `
+                <div class="detail-panel">
+                    <div class="risk-header">
+                        <div class="risk-icon">${risk.emoji}</div>
+                        <div class="risk-title-block">
+                            <h2>${risk.name}</h2>
+                            <div class="risk-meta">
+                                <span class="risk-tag category ${categoryBadgeClass}">${risk.category}</span>
+                                <span class="risk-tag ring">${risk.ring}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="risk-description">${risk.description}</div>
+                    <div class="risk-section-title">About This Risk</div>
+                    <div class="risk-detail-text">${risk.detail}</div>
+            `;
+
+            // Add mitigations if available
+            if (risk.mitigations && risk.mitigations.length > 0) {
+                html += `
+                    <div class="risk-section-title">Mitigation Strategies</div>
+                    <ul class="risk-mitigations">
+                        ${risk.mitigations.map(m => `<li>${m}</li>`).join('')}
+                    </ul>
+                `;
+            }
+
+            html += '</div>';
+            detailSection.innerHTML = html;
+        }
+
+        function clearDetail() {
+            selectedRiskId = null;
+            detailSection.innerHTML = '<div class="detail-intro">19 risks detected. Tap any blip on the radar to investigate.</div>';
+        }
+
+        // ============================================================================
+        // INTERACTION
+        // ============================================================================
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const dprScale = window.devicePixelRatio || 1;
+            return {
+                x: (e.clientX - rect.left) / dprScale,
+                y: (e.clientY - rect.top) / dprScale
+            };
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const pos = getMousePos(e);
+            let hit = false;
+
+            // Check hit detection in reverse order (top blips first)
+            for (let i = RISKS.length - 1; i >= 0; i--) {
+                const risk = RISKS[i];
+                const distance = Math.sqrt((pos.x - risk.x) ** 2 + (pos.y - risk.y) ** 2);
+                const hitRadius = Math.max(risk.radius + 8, 22); // Min 44px diameter
+
+                if (distance <= hitRadius) {
+                    showRiskDetail(risk.id);
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (!hit) {
+                clearDetail();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const dprScale = window.devicePixelRatio || 1;
+            const pos = {
+                x: (touch.clientX - rect.left) / dprScale,
+                y: (touch.clientY - rect.top) / dprScale
+            };
+
+            let hit = false;
+
+            for (let i = RISKS.length - 1; i >= 0; i--) {
+                const risk = RISKS[i];
+                const distance = Math.sqrt((pos.x - risk.x) ** 2 + (pos.y - risk.y) ** 2);
+                const hitRadius = Math.max(risk.radius + 8, 22);
+
+                if (distance <= hitRadius) {
+                    showRiskDetail(risk.id);
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (!hit) {
+                clearDetail();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.offsetWidth * dpr;
+            canvas.height = canvas.offsetHeight * dpr;
+            ctx.scale(dpr, dpr);
+        });
+
+        // ============================================================================
+        // ANIMATION LOOP
+        // ============================================================================
+
+        function animate() {
+            sweepAngle += sweepSpeed;
+            drawRadar();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+// ═══════════════════════════════════════
+// SPOTLIGHT TOUR
+// ═══════════════════════════════════════
+
+const TOUR_STEPS = [
+  { target: () => document.querySelector('canvas, .radar, [class*=radar]') || document.querySelector('.chart'),
+    title: 'Interactive risk radar',
+    desc: 'Each axis represents a category of AI risk. The shape shows how significant each risk area is.', pad: 6 },
+  { target: () => document.querySelector('.risk-tag, .tag, [class*=risk]') || document.querySelector('.tags'),
+    title: 'Click to explore risks',
+    desc: 'Click on any point of the radar or tag to dive into that risk category and see specific examples.', pad: 8 },
+  { target: () => document.querySelector('.detail-section, .detail, [class*=detail]') || document.querySelector('.right, aside'),
+    title: 'Risk details and mitigations',
+    desc: 'For each risk, see real-world examples and practical steps organisations can take to mitigate it.', pad: 8 }
+];
+
+let tourStep = -1, tourActive = false, tourAutoTimer = null;
+
+function startTour() {
+  tourActive = true; tourStep = -1;
+  document.getElementById('tourReplay').classList.remove('vis');
+  document.getElementById('tourClickLayer').style.display = 'block';
+  document.getElementById('tourOverlay').style.display = 'block';
+  document.getElementById('tourSpot').style.display = 'block';
+  tourNext(); resetTourTimer();
+}
+function resetTourTimer() {
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  tourAutoTimer = setTimeout(endTour, 20000);
+}
+function tourNext() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  resetTourTimer(); positionTour();
+}
+function tourPrev() {
+  if (tourStep > 0) tourStep--;
+  resetTourTimer(); positionTour();
+}
+function endTour() {
+  tourActive = false;
+  if (tourAutoTimer) clearTimeout(tourAutoTimer);
+  document.getElementById('tourReplay').classList.add('vis');
+  var ov = document.getElementById('tourOverlay');
+  var tip = document.getElementById('tourTip');
+  ov.classList.add('hiding');
+  tip.classList.remove('vis');
+  setTimeout(function() {
+    ['tourOverlay','tourSpot','tourTip','tourClickLayer'].forEach(function(id) {
+      document.getElementById(id).style.display = 'none';
+    });
+    ov.classList.remove('hiding');
+  }, 500);
+}
+function positionTour() {
+  var step = TOUR_STEPS[tourStep];
+  var el = step.target();
+  if (!el) { tourNext(); return; }
+  var r = el.getBoundingClientRect();
+  var pad = step.pad || 8;
+  var spot = document.getElementById('tourSpot');
+  var tip = document.getElementById('tourTip');
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+  var total = TOUR_STEPS.length;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="tour-dot' + (i === tourStep ? ' active' : '') + '"></div>';
+  var isLast = tourStep === total - 1;
+  var isFirst = tourStep === 0;
+  tip.innerHTML = '<div class="tour-arrow" id="tourArrow"></div>' +
+    '<div class="tour-step-num">Step ' + (tourStep+1) + ' of ' + total + '</div>' +
+    '<div class="tour-title">' + step.title + '</div>' +
+    '<div class="tour-desc">' + step.desc + '</div>' +
+    '<div class="tour-footer"><div class="tour-dots">' + dots + '</div>' +
+    '<div class="tour-btns"><button class="tour-btn" onclick="endTour()">Skip</button>' +
+    (!isFirst ? '<button class="tour-btn" onclick="tourPrev()">Back</button>' : '') +
+    '<button class="tour-btn primary" onclick="tourNext()">' + (isLast ? 'Got it' : 'Next') + '</button>' +
+    '</div></div>';
+  tip.style.display = 'block';
+  tip.classList.remove('vis');
+  requestAnimationFrame(function() {
+    var tr = tip.getBoundingClientRect();
+    var vh = window.innerHeight, vw = window.innerWidth;
+    var arrow = document.getElementById('tourArrow');
+    var gap = 14;
+    var tipTop, tipLeft;
+    if (r.bottom + pad + tr.height + gap + 10 < vh) {
+      tipTop = r.bottom + pad + gap;
+      arrow.className = 'tour-arrow up';
+    } else if (r.top - pad - tr.height - gap > 0) {
+      tipTop = r.top - pad - tr.height - gap;
+      arrow.className = 'tour-arrow down';
+    } else {
+      tipTop = Math.max(10, r.bottom + pad + gap);
+      arrow.className = 'tour-arrow up';
+    }
+    tipLeft = r.left - pad;
+    if (tipLeft + tr.width > vw - 16) tipLeft = vw - tr.width - 16;
+    if (tipLeft < 16) tipLeft = 16;
+    tip.style.top = tipTop + 'px';
+    tip.style.left = tipLeft + 'px';
+    var cx = Math.max(16, Math.min(tr.width - 24, r.left + r.width / 2 - tipLeft));
+    arrow.style.left = cx + 'px';
+    requestAnimationFrame(function() { tip.classList.add('vis'); });
+  });
+}
+document.getElementById('tourClickLayer').addEventListener('click', function() {
+  if (tourActive) tourNext();
+});
+
+
+window.addEventListener('load', function() { setTimeout(startTour, 600); });
+</script>
+</body>
+</html>

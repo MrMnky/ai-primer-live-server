@@ -168,14 +168,14 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // --- Health Check ---
 app.get('/api/health', (req, res) => {
@@ -596,6 +596,158 @@ app.delete('/api/courses/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Asset Upload (Supabase Storage) ---
+
+const ASSETS_BUCKET = 'assets';
+
+// Ensure the assets bucket exists
+async function ensureAssetsBucket() {
+  if (!SUPABASE_KEY) return;
+  try {
+    // Try to get bucket info — if it 404s, create it
+    const checkRes = await fetch(`${SUPABASE_URL}/storage/v1/bucket/${ASSETS_BUCKET}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+    });
+    if (checkRes.status === 404 || checkRes.status === 400) {
+      const createRes = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: ASSETS_BUCKET, name: ASSETS_BUCKET, public: true }),
+      });
+      if (createRes.ok) {
+        console.log(`  Storage bucket '${ASSETS_BUCKET}' created`);
+      } else {
+        const err = await createRes.text();
+        console.warn(`  Could not create bucket: ${err}`);
+      }
+    } else {
+      console.log(`  Storage bucket '${ASSETS_BUCKET}' exists`);
+    }
+  } catch (err) {
+    console.warn('  Storage bucket check failed:', err.message);
+  }
+}
+
+// Upload an asset
+app.post('/api/assets/upload', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
+
+  const { file, filename, contentType } = req.body;
+  if (!file || !filename) return res.status(400).json({ error: 'file (base64) and filename are required' });
+
+  // Sanitise filename: prefix with timestamp to avoid collisions
+  const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `${Date.now()}-${safeName}`;
+
+  try {
+    // Decode base64 to buffer
+    const buffer = Buffer.from(file, 'base64');
+    const mime = contentType || 'application/octet-stream';
+
+    // Upload to Supabase Storage
+    const uploadRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${ASSETS_BUCKET}/${storagePath}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': mime,
+          'x-upsert': 'true',
+        },
+        body: buffer,
+      }
+    );
+
+    if (!uploadRes.ok) {
+      const err = await uploadRes.text();
+      console.error('[Assets] Upload failed:', err);
+      return res.status(502).json({ error: 'Upload failed' });
+    }
+
+    // Build public URL
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${ASSETS_BUCKET}/${storagePath}`;
+    res.json({ url: publicUrl, path: storagePath, filename: safeName });
+  } catch (err) {
+    console.error('[Assets] Error:', err.message);
+    res.status(500).json({ error: 'Upload failed: ' + err.message });
+  }
+});
+
+// List assets
+app.get('/api/assets', async (req, res) => {
+  if (!SUPABASE_KEY) return res.json([]);
+
+  try {
+    const listRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/list/${ASSETS_BUCKET}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prefix: '', limit: 100, offset: 0, sortBy: { column: 'created_at', order: 'desc' } }),
+      }
+    );
+
+    if (!listRes.ok) {
+      const err = await listRes.text();
+      return res.status(502).json({ error: 'List failed: ' + err });
+    }
+
+    const files = await listRes.json();
+    // Add public URL to each file
+    const withUrls = (files || [])
+      .filter(f => f.name && !f.name.endsWith('/'))
+      .map(f => ({
+        name: f.name,
+        size: f.metadata?.size || 0,
+        contentType: f.metadata?.mimetype || '',
+        createdAt: f.created_at,
+        url: `${SUPABASE_URL}/storage/v1/object/public/${ASSETS_BUCKET}/${f.name}`,
+      }));
+    res.json(withUrls);
+  } catch (err) {
+    console.error('[Assets] List error:', err.message);
+    res.status(500).json({ error: 'List failed' });
+  }
+});
+
+// Delete an asset
+app.delete('/api/assets/:path', async (req, res) => {
+  if (!SUPABASE_KEY) return res.status(500).json({ error: 'No database configured' });
+
+  try {
+    const delRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${ASSETS_BUCKET}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prefixes: [req.params.path] }),
+      }
+    );
+
+    if (!delRes.ok) {
+      const err = await delRes.text();
+      return res.status(502).json({ error: 'Delete failed: ' + err });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
 // --- Socket.io ---
 io.on('connection', (socket) => {
   const { sessionCode, mode, participantName, participantId } = socket.handshake.query;
@@ -908,6 +1060,7 @@ io.on('connection', (socket) => {
 // --- Start ---
 async function start() {
   await loadActiveSessions();
+  await ensureAssetsBucket();
   server.listen(PORT, () => {
     console.log(`\n  AI Primer Live running on http://localhost:${PORT}`);
     console.log(`  Supabase: ${SUPABASE_KEY ? 'connected' : 'NOT configured (in-memory only)'}\n`);

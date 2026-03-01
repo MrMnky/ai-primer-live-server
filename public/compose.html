@@ -978,6 +978,202 @@
       min-height: 0;
     }
 
+    .compose-media-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .compose-media-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      background: rgba(0, 177, 255, 0.1);
+      border: 1px solid rgba(0, 177, 255, 0.3);
+      border-radius: 4px;
+      color: #00B1FF;
+      font-size: 0.72rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .compose-media-action-btn:hover {
+      background: rgba(0, 177, 255, 0.2);
+      border-color: rgba(0, 177, 255, 0.5);
+    }
+
+    .compose-media-action-btn--browse {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ccc;
+    }
+
+    .compose-media-action-btn--browse:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+
+    .compose-media-action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Asset Library Modal */
+    .asset-library-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .asset-library-overlay.open {
+      display: flex;
+    }
+
+    .asset-library {
+      background: #1a1a2e;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      width: 640px;
+      max-width: 95vw;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .asset-library__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .asset-library__title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .asset-library__close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .asset-library__close:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .asset-library__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .asset-library__item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.04);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .asset-library__item:hover {
+      border-color: rgba(0, 177, 255, 0.5);
+    }
+
+    .asset-library__item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .asset-library__item-name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 4px 6px;
+      background: rgba(0, 0, 0, 0.7);
+      font-size: 0.6rem;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asset-library__item-delete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 60, 60, 0.8);
+      color: #fff;
+      font-size: 0.6rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .asset-library__item:hover .asset-library__item-delete {
+      display: flex;
+    }
+
+    .asset-library__empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.85rem;
+    }
+
+    .asset-library__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .asset-upload-progress {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(0, 177, 255, 0.1);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #00B1FF;
+      margin-top: 6px;
+    }
+
+    .asset-upload-progress.active {
+      display: flex;
+    }
+
     .compose-form-field-reset {
       width: 24px;
       height: 24px;
@@ -1377,6 +1573,28 @@
 
   <!-- Toast -->
   <div class="compose-toast" id="toast"></div>
+
+  <!-- Hidden file input for uploads -->
+  <input type="file" id="assetFileInput" accept="image/*,video/*" style="display:none">
+
+  <!-- Asset Library Modal -->
+  <div class="asset-library-overlay" id="assetLibraryOverlay">
+    <div class="asset-library">
+      <div class="asset-library__header">
+        <span class="asset-library__title">Asset Library</span>
+        <button class="asset-library__close" onclick="closeAssetLibrary()">&times;</button>
+      </div>
+      <div class="asset-library__grid" id="assetLibraryGrid">
+        <div class="asset-library__empty">Loading assets...</div>
+      </div>
+      <div class="asset-library__footer">
+        <button class="compose-media-action-btn" onclick="uploadAsset()">
+          <span style="font-size:1rem;">⬆</span> Upload New
+        </button>
+        <small style="color:rgba(255,255,255,0.3);">Click an image to use it</small>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1989,7 +2207,20 @@
         { value: 'embed', label: 'Embed / iframe' },
       ];
       form.appendChild(createFormGroup('Media Type', 'media.type', '', overrides['media.type'] || existingMedia.type || '', mediaTypeOptions));
-      form.appendChild(createFormGroup('URL', 'media.src', existingMedia.src || '', overrides['media.src']));
+      // URL field with upload + browse buttons
+      const urlGroup = createFormGroup('URL', 'media.src', existingMedia.src || '', overrides['media.src']);
+      const urlActions = document.createElement('div');
+      urlActions.className = 'compose-media-actions';
+      urlActions.innerHTML = `
+        <button type="button" class="compose-media-action-btn" onclick="uploadAsset()" title="Upload image">
+          <span style="font-size:1rem;">⬆</span> Upload
+        </button>
+        <button type="button" class="compose-media-action-btn compose-media-action-btn--browse" onclick="openAssetLibrary()" title="Browse uploaded assets">
+          <span style="font-size:1rem;">📁</span> Library
+        </button>
+      `;
+      urlGroup.appendChild(urlActions);
+      form.appendChild(urlGroup);
       form.appendChild(createFormGroup('Alt Text', 'media.alt', existingMedia.alt || '', overrides['media.alt']));
 
       const positionOptions = [
@@ -2535,6 +2766,162 @@
 
       document.getElementById('modalCloseBtn').addEventListener('click', closeSlideEditor);
     }
+
+    // ─── Asset Upload & Library ──────────────
+    const SERVER_URL = CONFIG.SERVER_URL || '';
+
+    function uploadAsset() {
+      const fileInput = document.getElementById('assetFileInput');
+      fileInput.onchange = async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Validate size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('File too large — max 5 MB');
+          return;
+        }
+
+        // Show progress
+        showToast('Uploading ' + file.name + '...');
+
+        try {
+          // Read file as base64
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+
+          const res = await fetch(`${SERVER_URL}/api/assets/upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file: base64,
+              filename: file.name,
+              contentType: file.type,
+            }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Upload failed');
+          }
+
+          const data = await res.json();
+          showToast('Uploaded!');
+
+          // Set the URL in the media.src field
+          setMediaSrcField(data.url);
+
+          // Auto-set media type to image if it looks like one
+          if (file.type.startsWith('image/')) {
+            setMediaTypeField('image');
+          } else if (file.type.startsWith('video/')) {
+            setMediaTypeField('video');
+          }
+        } catch (err) {
+          console.error('Upload error:', err);
+          showToast('Upload failed: ' + err.message);
+        }
+
+        // Reset input so same file can be re-selected
+        fileInput.value = '';
+      };
+      fileInput.click();
+    }
+
+    function setMediaSrcField(url) {
+      const form = document.getElementById('modalForm');
+      if (!form) return;
+      const srcInput = form.querySelector('[data-key="media.src"]');
+      if (srcInput) {
+        srcInput.value = url;
+        srcInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    function setMediaTypeField(type) {
+      const form = document.getElementById('modalForm');
+      if (!form) return;
+      const typeInput = form.querySelector('[data-key="media.type"]');
+      if (typeInput) {
+        typeInput.value = type;
+        typeInput.dispatchEvent(new Event('input'));
+        typeInput.dispatchEvent(new Event('change'));
+      }
+    }
+
+    async function openAssetLibrary() {
+      const overlay = document.getElementById('assetLibraryOverlay');
+      const grid = document.getElementById('assetLibraryGrid');
+      overlay.classList.add('open');
+      grid.innerHTML = '<div class="asset-library__empty">Loading assets...</div>';
+
+      try {
+        const res = await fetch(`${SERVER_URL}/api/assets`);
+        if (!res.ok) throw new Error('Failed to load assets');
+        const assets = await res.json();
+
+        if (!assets.length) {
+          grid.innerHTML = '<div class="asset-library__empty">No assets uploaded yet. Click "Upload New" to add your first image.</div>';
+          return;
+        }
+
+        grid.innerHTML = assets.map(asset => {
+          const isImage = asset.contentType && asset.contentType.startsWith('image/');
+          const displayName = asset.name.replace(/^\d+-/, ''); // Strip timestamp prefix
+          const thumb = isImage
+            ? `<img src="${asset.url}" alt="${displayName}" loading="lazy">`
+            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2rem;color:rgba(255,255,255,0.3);">📄</div>`;
+          return `
+            <div class="asset-library__item" onclick="selectAsset('${asset.url}', '${asset.contentType}')" title="${displayName}">
+              ${thumb}
+              <div class="asset-library__item-name">${displayName}</div>
+              <button class="asset-library__item-delete" onclick="event.stopPropagation(); deleteAsset('${asset.name}')" title="Delete">&times;</button>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Asset library error:', err);
+        grid.innerHTML = '<div class="asset-library__empty">Failed to load assets. Check server connection.</div>';
+      }
+    }
+
+    function closeAssetLibrary() {
+      document.getElementById('assetLibraryOverlay').classList.remove('open');
+    }
+
+    function selectAsset(url, contentType) {
+      setMediaSrcField(url);
+      if (contentType && contentType.startsWith('image/')) {
+        setMediaTypeField('image');
+      } else if (contentType && contentType.startsWith('video/')) {
+        setMediaTypeField('video');
+      }
+      closeAssetLibrary();
+      showToast('Asset selected');
+    }
+
+    async function deleteAsset(assetPath) {
+      if (!confirm('Delete this asset? It will be removed from storage but any slides already using it will keep the URL.')) return;
+
+      try {
+        const res = await fetch(`${SERVER_URL}/api/assets/${encodeURIComponent(assetPath)}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        showToast('Asset deleted');
+        // Refresh library
+        openAssetLibrary();
+      } catch (err) {
+        showToast('Delete failed: ' + err.message);
+      }
+    }
+
+    // Close library on overlay click
+    document.getElementById('assetLibraryOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeAssetLibrary();
+    });
 
     // ─── Start App ────────────────────────────
     init();

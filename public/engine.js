@@ -473,7 +473,9 @@
 
     // Graphic (interactive iframe via GraphicContainer)
     if (slide.type === 'graphic' && slide.graphic) {
-      html += `<div class="slide__graphic-container" data-slide="${index}" data-graphic-id="${slide.graphic.id}"></div>`;
+      html += `<div class="slide__graphic-container" data-slide="${index}" data-graphic-id="${slide.graphic.id}">` +
+        `<div class="graphic-loading"><div class="graphic-loading__spinner"></div><span>Loading interactive&hellip;</span></div>` +
+        `</div>`;
     }
 
     // Results (aggregated responses display)
@@ -624,6 +626,15 @@
           (data) => { /* onComplete */ sendResponse(index, 'graphic', data); },
           (data) => { /* onInteraction */ addActivityItem('🎨', state.participantName || 'Participant', `interacted with graphic`); }
         );
+      }
+      // When following the presenter, disable iframe pointer events so
+      // swipe/touch navigation continues to work. Re-enabled when the
+      // participant enters free-browse mode.
+      if (containerEl && state.mode === 'participant') {
+        const iframe = containerEl.querySelector('iframe');
+        if (iframe) {
+          iframe.style.pointerEvents = state.freeBrowsing ? 'auto' : 'none';
+        }
       }
     }
 
@@ -2059,6 +2070,21 @@
   // PARTICIPANT FEATURES
   // ============================================
 
+  // --- Graphic Iframe Pointer-Event Toggle ---
+  // When following the presenter, iframes get pointer-events:none so swipe
+  // navigation keeps working. When free-browsing, interaction is restored.
+  function updateGraphicPointerEvents() {
+    if (state.mode !== 'participant') return;
+    const slide = state.slides[state.currentSlide];
+    if (!slide || slide.type !== 'graphic') return;
+    const containerEl = document.querySelector(`.slide__graphic-container[data-slide="${state.currentSlide}"]`);
+    if (!containerEl) return;
+    const iframe = containerEl.querySelector('iframe');
+    if (iframe) {
+      iframe.style.pointerEvents = state.freeBrowsing ? 'auto' : 'none';
+    }
+  }
+
   // --- Free-Browse Navigation ---
   function participantNext() {
     // Can go forward up to (but not past) presenter's current slide
@@ -2070,6 +2096,7 @@
       if (state.currentSlide >= state.presenterSlide) {
         state.freeBrowsing = false;
       }
+      updateGraphicPointerEvents();
       updateParticipantToolbar();
     }
   }
@@ -2078,6 +2105,7 @@
     if (state.currentSlide > 0) {
       state.freeBrowsing = true;
       goToSlide(state.currentSlide - 1);
+      updateGraphicPointerEvents();
       updateParticipantToolbar();
     }
   }
@@ -2085,6 +2113,7 @@
   function participantSnapToLive() {
     state.freeBrowsing = false;
     goToSlide(state.presenterSlide);
+    updateGraphicPointerEvents();
     updateParticipantToolbar();
   }
 

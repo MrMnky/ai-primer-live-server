@@ -2464,6 +2464,32 @@ html, body {
   border-radius: 0;
 }
 
+/* Loading indicator for graphic iframes */
+.graphic-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+.graphic-loading__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #00FFBC;
+  border-radius: 50%;
+  animation: graphic-spin 0.8s linear infinite;
+}
+@keyframes graphic-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* When graphic has a title, push iframe down */
 .slide--graphic .slide__title ~ .slide__graphic-container,
 .slide--graphic .slide__section-label ~ .slide__graphic-container {

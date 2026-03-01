@@ -66,6 +66,9 @@ const GraphicContainer = {
       switch (type) {
         case 'GRAPHIC_READY':
           instance.ready = true;
+          // Hide loading indicator
+          const loadingEl = containerEl.querySelector('.graphic-loading');
+          if (loadingEl) loadingEl.style.display = 'none';
           // Send init data to graphic
           iframe.contentWindow.postMessage({
             type: 'INIT',

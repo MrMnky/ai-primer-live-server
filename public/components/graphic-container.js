@@ -29,11 +29,8 @@ const GraphicContainer = {
     wrapper.style.cssText = `
       width: 100%;
       height: ${graphicDef.height || '100%'};
-      min-height: ${graphicDef.minHeight || '400px'};
       position: relative;
-      border-radius: 8px;
       overflow: hidden;
-      background: rgba(0,0,0,0.1);
     `;
     if (graphicDef.aspectRatio) {
       wrapper.style.aspectRatio = graphicDef.aspectRatio;

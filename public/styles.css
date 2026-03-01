@@ -2104,15 +2104,23 @@ html, body {
 /* --- Graphic Slides (interactive iframe containers) --- */
 .slide--graphic {
   padding: 0;
+  overflow: hidden;
 }
 
 .slide--graphic .slide__title {
   position: absolute;
   top: 24px;
   left: 32px;
+  right: 32px;
   z-index: 2;
   font-size: 1.2rem;
   pointer-events: none;
+  margin-bottom: 0;
+}
+
+/* Hide subtitle on graphic slides — the graphic provides its own content */
+.slide--graphic .slide__subtitle {
+  display: none;
 }
 
 .slide--graphic .slide__section-label {
@@ -2126,6 +2134,7 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 1;
+  overflow: hidden;
 }
 
 .slide__graphic-container iframe {
@@ -2138,22 +2147,24 @@ html, body {
 /* When graphic has a title, push iframe down */
 .slide--graphic .slide__title ~ .slide__graphic-container,
 .slide--graphic .slide__section-label ~ .slide__graphic-container {
-  top: 72px;
+  top: 60px;
 }
 
 @media (max-width: 768px) {
   .slide--graphic .slide__title {
-    font-size: 1rem;
-    top: 16px;
-    left: 20px;
+    font-size: 0.95rem;
+    top: 12px;
+    left: 16px;
+    right: 16px;
   }
   .slide--graphic .slide__section-label {
-    top: 4px;
-    left: 20px;
+    top: 2px;
+    left: 16px;
+    font-size: 0.55rem;
   }
   .slide--graphic .slide__title ~ .slide__graphic-container,
   .slide--graphic .slide__section-label ~ .slide__graphic-container {
-    top: 56px;
+    top: 44px;
   }
 }
 

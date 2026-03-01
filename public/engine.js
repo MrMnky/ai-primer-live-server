@@ -1134,7 +1134,10 @@
       state.socket.on('questions-update', (data) => {
         state.questions = data.questions || [];
         updatePresenterQAPanel();
-        addActivityItem('❓', data.latestFrom || 'Participant', 'asked a question');
+        updatePresenterQABadge();
+        if (data.latestFrom) {
+          addActivityItem('❓', data.latestFrom, 'asked a question');
+        }
       });
     }
 
@@ -1435,6 +1438,27 @@
       });
     } else {
       panel.classList.toggle('open');
+    }
+  }
+
+  function openQAPanel() {
+    // Open admin console if not open, then switch to Q&A tab
+    let panel = document.getElementById('admin-console');
+    if (!panel) {
+      panel = renderAdminConsole();
+      const layout = qs('.presenter-layout');
+      if (layout) layout.appendChild(panel);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          panel.classList.add('open');
+          switchAdminTab('qa');
+        });
+      });
+    } else if (!panel.classList.contains('open')) {
+      panel.classList.add('open');
+      switchAdminTab('qa');
+    } else {
+      switchAdminTab('qa');
     }
   }
 
@@ -1941,6 +1965,13 @@
               </svg>
               ${t('engine.presenter.console')}
             </button>
+            <button class="presenter-controls__session-btn presenter-controls__qa-btn" id="presenter-qa-btn" onclick="AIPrimer.openQAPanel()" title="Questions from participants">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Q&amp;A
+              <span class="presenter-qa-badge" id="presenter-qa-badge" style="display:none">0</span>
+            </button>
             <div class="presenter-controls__stat">
               <span class="presenter-controls__stat-dot"></span>
               <span><span class="presenter-controls__participant-count">0</span> ${t('engine.presenter.participants')}</span>
@@ -2250,12 +2281,28 @@
   function updatePresenterQAPanel() {
     const list = document.getElementById('ac-qa-list');
     if (list) list.innerHTML = renderPresenterQAList();
-    // Update badge
+    // Update admin console tab badge
     const badge = document.getElementById('ac-qa-badge');
     if (badge) {
       const unanswered = state.questions.filter(q => !q.answered && !q.dismissed).length;
       badge.textContent = unanswered;
       badge.style.display = unanswered > 0 ? 'inline' : 'none';
+    }
+  }
+
+  function updatePresenterQABadge() {
+    // Update the Q&A badge in the presenter controls bar
+    const badge = document.getElementById('presenter-qa-badge');
+    const btn = document.getElementById('presenter-qa-btn');
+    if (!badge) return;
+    const unanswered = state.questions.filter(q => !q.answered && !q.dismissed).length;
+    badge.textContent = unanswered;
+    badge.style.display = unanswered > 0 ? 'inline-flex' : 'none';
+    // Pulse the button to draw attention when new questions arrive
+    if (btn && unanswered > 0) {
+      btn.classList.add('has-questions');
+    } else if (btn) {
+      btn.classList.remove('has-questions');
     }
   }
 
@@ -2376,6 +2423,7 @@
   AIPrimer.getLanguage = () => state.language;
   AIPrimer.toggleSessionPanel = toggleSessionPanel;
   AIPrimer.toggleAdminConsole = toggleAdminConsole;
+  AIPrimer.openQAPanel = openQAPanel;
   AIPrimer.switchAdminTab = switchAdminTab;
   AIPrimer.toggleSectionNav = toggleSectionNav;
   AIPrimer.adminPause = function () {

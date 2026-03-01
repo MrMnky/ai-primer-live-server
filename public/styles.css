@@ -3840,7 +3840,7 @@ body:has(.participant-toolbar) .progress-bar {
   flex: 0 0 auto;
 }
 
-.ac-qa-item__content { flex: 1; min-width: 0; }
+.ac-qa-item__content { flex: 1; min-width: 0; overflow: hidden; }
 .ac-qa-item__text {
   font-family: var(--font-family);
   font-size: 0.78rem;
@@ -3882,9 +3882,11 @@ body:has(.participant-toolbar) .progress-bar {
   display: flex;
   gap: 6px;
   margin-top: 6px;
+  max-width: 100%;
 }
 .ac-qa-item__reply-input {
   flex: 1;
+  min-width: 0;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 4px;

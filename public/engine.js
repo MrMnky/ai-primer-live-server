@@ -229,10 +229,17 @@
       content = state.courseTranslations[contentKey][slideLanguage] || null;
     }
 
-    // Fall back to global i18n files
+    // Fall back to global i18n files — merge target language with English fallback
+    // so untranslated fields (e.g. callouts) still get English content
     if (!content) {
-      content = (state.i18n && state.i18n.slides && state.i18n.slides[contentKey]) ||
-                (state.i18nFallback && state.i18nFallback.slides && state.i18nFallback.slides[contentKey]);
+      var targetContent = (state.i18n && state.i18n.slides && state.i18n.slides[contentKey]) || null;
+      var fallbackContent = (state.i18nFallback && state.i18nFallback.slides && state.i18nFallback.slides[contentKey]) || null;
+      if (targetContent && fallbackContent && targetContent !== fallbackContent) {
+        // Merge: English base + target language overlay
+        content = Object.assign({}, fallbackContent, targetContent);
+      } else {
+        content = targetContent || fallbackContent || null;
+      }
     }
 
     if (!content) return slide; // no translation entry — use inline strings
@@ -669,6 +676,32 @@
     if (state.mode === 'participant') {
       updateParticipantToolbar();
     }
+
+    // Check if slide content overflows and show scroll hint
+    requestAnimationFrame(function () {
+      var activeSlide = document.querySelector('.slide.active');
+      if (activeSlide) {
+        activeSlide.classList.remove('scrolled');
+        activeSlide.scrollTop = 0;
+        // Remove old hints
+        var oldHint = activeSlide.querySelector('.slide__scroll-hint');
+        if (oldHint) oldHint.remove();
+        // Check overflow
+        if (activeSlide.scrollHeight > activeSlide.clientHeight + 40) {
+          var hint = document.createElement('div');
+          hint.className = 'slide__scroll-hint';
+          hint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg><span>Scroll</span>';
+          activeSlide.appendChild(hint);
+          // Hide hint on scroll
+          activeSlide.addEventListener('scroll', function onScroll() {
+            if (activeSlide.scrollTop > 20) {
+              activeSlide.classList.add('scrolled');
+              activeSlide.removeEventListener('scroll', onScroll);
+            }
+          });
+        }
+      }
+    });
   }
 
   function next() { goToSlide(state.currentSlide + 1); }
@@ -1087,9 +1120,20 @@
 
       // Q&A: receive questions list updates
       state.socket.on('questions-update', (data) => {
+        var oldQuestions = state.questions;
         state.questions = data.questions || [];
         updateQAPanel();
         updateQABadge();
+
+        // Detect newly answered questions — show toast notification
+        state.questions.forEach(function (q) {
+          if (!q.answered && !q.answerText) return;
+          var old = oldQuestions.find(function (oq) { return oq.id === q.id; });
+          var wasAnswered = old && (old.answered || old.answerText);
+          if (!wasAnswered && (q.answerText || q.answered)) {
+            showParticipantToast('Your question was answered!', q.answerText || '');
+          }
+        });
       });
 
       // Session ended
@@ -1939,7 +1983,7 @@
         <div class="presenter-main">
           <div class="slide-viewport"></div>
         </div>
-        <div class="presenter-sidebar">
+        <div class="presenter-sidebar" id="presenter-sidebar">
           <div class="presenter-next">
             <div class="presenter-next__label">${t('engine.presenter.nextSlide')}</div>
             <div class="presenter-next__preview"></div>
@@ -1952,6 +1996,9 @@
             <div class="response-stream__label">${t('engine.presenter.liveResponses')}</div>
           </div>
         </div>
+        <button class="presenter-sidebar__toggle" id="sidebar-toggle" onclick="AIPrimer.toggleSidebar()" title="Toggle sidebar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
         <div class="section-progress" id="section-progress"></div>
         <div class="presenter-controls">
           <div class="presenter-controls__nav">
@@ -2061,6 +2108,8 @@
         </button>
       </div>
       <div class="pt-right">
+        <button class="pt-btn pt-btn--a11y" onclick="AIPrimer.decreaseTextSize()" title="Smaller text (−)">A−</button>
+        <button class="pt-btn pt-btn--a11y" onclick="AIPrimer.increaseTextSize()" title="Larger text (+)">A+</button>
         <button class="pt-btn pt-btn--bookmark ${state.bookmarks.includes(state.currentSlide) ? 'active' : ''}" id="pt-bookmark-btn" onclick="AIPrimer.toggleBookmark(${state.currentSlide})" title="Bookmark (B)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="${state.bookmarks.includes(state.currentSlide) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </button>
@@ -2411,6 +2460,24 @@
   }
 
   // --- Session Ended (participant view) ---
+  function showParticipantToast(title, body) {
+    var toast = document.createElement('div');
+    toast.className = 'participant-toast';
+    toast.innerHTML = '<div class="participant-toast__icon">✓</div>' +
+      '<div class="participant-toast__content">' +
+        '<div class="participant-toast__title">' + escapeHtml(title) + '</div>' +
+        (body ? '<div class="participant-toast__body">' + escapeHtml(body).substring(0, 120) + '</div>' : '') +
+      '</div>';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { toast.classList.add('visible'); });
+    });
+    setTimeout(function () {
+      toast.classList.remove('visible');
+      setTimeout(function () { toast.remove(); }, 400);
+    }, 5000);
+  }
+
   function showParticipantSessionEnded() {
     const overlay = document.createElement('div');
     overlay.className = 'participant-ended-overlay';
@@ -2485,9 +2552,42 @@
   AIPrimer.submitQuestion = submitQuestion;
   AIPrimer.upvoteQuestion = upvoteQuestion;
   AIPrimer.toggleBookmark = toggleBookmark;
+  // --- Sidebar Toggle (responsive) ---
+  AIPrimer.toggleSidebar = function () {
+    var sidebar = document.getElementById('presenter-sidebar');
+    var toggle = document.getElementById('sidebar-toggle');
+    if (sidebar) {
+      sidebar.classList.toggle('open');
+      if (toggle) {
+        var svg = toggle.querySelector('svg');
+        if (svg) svg.style.transform = sidebar.classList.contains('open') ? 'rotate(180deg)' : '';
+      }
+    }
+  };
+
   AIPrimer.submitAnswer = submitAnswer;
   AIPrimer.markQuestionAnswered = markQuestionAnswered;
   AIPrimer.dismissQuestion = dismissQuestion;
+
+  // --- Accessibility: Text Size ---
+  var a11yScale = parseFloat(localStorage.getItem('aip_a11y_scale') || '1');
+  function applyTextScale() {
+    document.documentElement.style.setProperty('--a11y-scale', a11yScale);
+    try { localStorage.setItem('aip_a11y_scale', a11yScale); } catch (e) {}
+  }
+  applyTextScale(); // Apply on load
+  AIPrimer.increaseTextSize = function () {
+    a11yScale = Math.min(a11yScale + 0.1, 1.6);
+    applyTextScale();
+  };
+  AIPrimer.decreaseTextSize = function () {
+    a11yScale = Math.max(a11yScale - 0.1, 0.7);
+    applyTextScale();
+  };
+  AIPrimer.resetTextSize = function () {
+    a11yScale = 1;
+    applyTextScale();
+  };
 
   // --- Presenter Nav: Pause & Dashboard ---
   AIPrimer.pauseAndDashboard = function () {

@@ -611,8 +611,105 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    .compose-add-divider {
+    .compose-footer-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .compose-footer-actions .compose-add-divider {
+      flex: 1;
+    }
+
+    .compose-new-slide-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .compose-new-slide-btn {
       width: 100%;
+    }
+
+    .compose-template-picker {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: #1a1a1a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 8px;
+      z-index: 100;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .compose-template-picker.open {
+      display: block;
+    }
+
+    .compose-template-picker__header {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(255, 255, 255, 0.4);
+      padding: 6px 10px 8px;
+      font-weight: 600;
+    }
+
+    .compose-template-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: background 0.12s;
+    }
+
+    .compose-template-option:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .compose-template-option__icon {
+      font-size: 1.3rem;
+      width: 32px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .compose-template-option__info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .compose-template-option__info strong {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .compose-template-option__info small {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    /* Custom slide badge in course list */
+    .compose-course-slide__custom-badge {
+      font-size: 0.6rem;
+      color: var(--bright-turquoise, #00FFBC);
+      background: rgba(0, 255, 188, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
     }
 
     /* ─── Modal ─── */
@@ -1043,7 +1140,71 @@
           </div>
         </div>
         <div class="compose-builder__footer">
-          <button class="btn btn--secondary compose-add-divider" id="addDividerBtn">+ Add Section Divider</button>
+          <div class="compose-footer-actions">
+            <div class="compose-new-slide-wrapper">
+              <button class="btn btn--primary compose-new-slide-btn" id="newSlideBtn">+ New Slide</button>
+              <div class="compose-template-picker" id="templatePicker">
+                <div class="compose-template-picker__header">Choose a slide type</div>
+                <button class="compose-template-option" data-template="content">
+                  <span class="compose-template-option__icon">📄</span>
+                  <span class="compose-template-option__info">
+                    <strong>Content</strong>
+                    <small>Title, body text, optional callout</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="statement">
+                  <span class="compose-template-option__icon">💬</span>
+                  <span class="compose-template-option__info">
+                    <strong>Statement</strong>
+                    <small>Bold headline with supporting text</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="cover">
+                  <span class="compose-template-option__icon">🎬</span>
+                  <span class="compose-template-option__info">
+                    <strong>Cover</strong>
+                    <small>Title slide with subtitle</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="section">
+                  <span class="compose-template-option__icon">📑</span>
+                  <span class="compose-template-option__info">
+                    <strong>Section</strong>
+                    <small>Section opener with label and title</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="quiz">
+                  <span class="compose-template-option__icon">❓</span>
+                  <span class="compose-template-option__info">
+                    <strong>Quiz</strong>
+                    <small>Multiple-choice question with correct answer</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="poll">
+                  <span class="compose-template-option__icon">📊</span>
+                  <span class="compose-template-option__info">
+                    <strong>Poll</strong>
+                    <small>Audience poll with multiple options</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="text-input">
+                  <span class="compose-template-option__icon">✏️</span>
+                  <span class="compose-template-option__info">
+                    <strong>Text Input</strong>
+                    <small>Open-ended audience response</small>
+                  </span>
+                </button>
+                <button class="compose-template-option" data-template="split">
+                  <span class="compose-template-option__icon">◧</span>
+                  <span class="compose-template-option__info">
+                    <strong>Split</strong>
+                    <small>Content with side media panel</small>
+                  </span>
+                </button>
+              </div>
+            </div>
+            <button class="btn btn--secondary compose-add-divider" id="addDividerBtn">+ Section Divider</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1118,6 +1279,84 @@
     let filteredSlides = [];
     let draggedSlide = null;
     let draggedFrom = null;
+    let customSlides = {}; // { customId: { full slide data } } — for template-created slides
+
+    // ─── Slide Templates ────────────────────────
+    const SLIDE_TEMPLATES = {
+      content: {
+        type: 'content',
+        theme: 'dark',
+        sectionLabel: '',
+        title: 'Untitled Slide',
+        body: '<p>Add your content here.</p>',
+        notes: '',
+      },
+      statement: {
+        type: 'statement',
+        theme: 'dark',
+        sectionLabel: '',
+        title: 'Your headline goes here',
+        body: '<p>Supporting text that expands on the statement above.</p>',
+        notes: '',
+      },
+      cover: {
+        type: 'cover',
+        theme: 'gradient',
+        title: 'Presentation Title',
+        subtitle: 'A subtitle that sets the scene',
+        notes: '',
+      },
+      section: {
+        type: 'section',
+        theme: 'gradient',
+        sectionLabel: 'SECTION',
+        title: 'Section Title',
+        subtitle: 'Brief description of this section',
+        notes: '',
+      },
+      quiz: {
+        type: 'quiz',
+        theme: 'dark',
+        sectionLabel: '',
+        title: 'Knowledge Check',
+        quiz: {
+          question: 'What is the correct answer?',
+          options: ['Option A', 'Option B', 'Option C', 'Option D'],
+          correct: 0,
+        },
+        notes: '',
+      },
+      poll: {
+        type: 'poll',
+        theme: 'dark',
+        sectionLabel: '',
+        title: 'Audience Poll',
+        poll: {
+          question: 'What do you think?',
+          options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
+        },
+        notes: '',
+      },
+      'text-input': {
+        type: 'text-input',
+        theme: 'dark',
+        sectionLabel: '',
+        title: 'Your Turn',
+        textInput: {
+          prompt: 'Share your thoughts on this topic',
+          placeholder: 'Type your answer...',
+        },
+        notes: '',
+      },
+      split: {
+        type: 'split',
+        theme: 'light',
+        sectionLabel: '',
+        title: 'Split Layout',
+        body: '<p>Content on the left side, with a media panel on the right.</p>',
+        notes: '',
+      },
+    };
 
     // ─── Init ─────────────────────────────────
     async function init() {
@@ -1177,12 +1416,19 @@
         courseId = data.id;
         courseData = data;
 
-        // Parse overrides from course data
+        // Parse overrides and restore custom slides from course data
         slideOverrides = {};
+        customSlides = {};
         (courseData.slides || []).forEach(slide => {
           if (typeof slide === 'object' && slide.id) {
-            const { id, ...overrides } = slide;
+            const { id, _isCustom, ...overrides } = slide;
             slideOverrides[id] = overrides;
+
+            // Restore custom (template-created) slides that aren't in the registry
+            const isInRegistry = typeof SLIDE_REGISTRY !== 'undefined' && SLIDE_REGISTRY[id];
+            if (_isCustom || id.startsWith('custom-') || !isInRegistry) {
+              customSlides[id] = { ...overrides };
+            }
           }
         });
 
@@ -1260,8 +1506,12 @@
       filteredSlides = allSlides;
     }
 
-    // ─── Get Slide from Registry ───────────────
+    // ─── Get Slide from Registry or Custom ─────
     function getSlide(slideId) {
+      // Check custom slides first (template-created)
+      if (customSlides[slideId]) {
+        return { id: slideId, ...customSlides[slideId] };
+      }
       return allSlides.find(s => s.id === slideId);
     }
 
@@ -1297,6 +1547,13 @@
         const id = typeof s === 'string' ? s : s.id;
         return id !== slideId;
       });
+      // Clean up custom slide data
+      if (customSlides[slideId]) {
+        delete customSlides[slideId];
+      }
+      if (slideOverrides[slideId]) {
+        delete slideOverrides[slideId];
+      }
       renderCourse();
       updateStats();
     }
@@ -1425,12 +1682,17 @@
         rowEl.dataset.slideId = slideId;
         rowEl.dataset.index = index;
 
+        const isCustom = !!customSlides[slideId];
+        // For custom slides, use override title if set
+        const displayTitle = (hasOverrides && slideOverrides[slideId]?.title) || slide.title || 'Untitled';
+
         rowEl.innerHTML = `
           <div class="compose-course-slide__drag-handle">⋮⋮</div>
           <div class="compose-course-slide__number">${index + 1}</div>
-          <div class="compose-course-slide__title">${slide.title || 'Untitled'}</div>
+          <div class="compose-course-slide__title">${displayTitle}</div>
           <div class="compose-course-slide__badge ${(slide.type || 'content').toLowerCase()}">${(slide.type || 'content').toUpperCase()}</div>
-          ${hasOverrides ? '<div class="compose-course-slide__edited"></div>' : ''}
+          ${isCustom ? '<div class="compose-course-slide__custom-badge">CUSTOM</div>' : ''}
+          ${hasOverrides && !isCustom ? '<div class="compose-course-slide__edited"></div>' : ''}
           <div class="compose-course-slide__actions">
             <button class="compose-course-slide__btn" title="Edit">✎</button>
             <button class="compose-course-slide__btn" title="Remove">✕</button>
@@ -1617,6 +1879,22 @@
         } else {
           delete slideOverrides[currentEditingSlideId][key];
         }
+        // Sync custom slide data for template-created slides
+        if (customSlides[currentEditingSlideId]) {
+          if (key.includes('.')) {
+            const [parent, child] = key.split('.', 2);
+            if (!customSlides[currentEditingSlideId][parent]) customSlides[currentEditingSlideId][parent] = {};
+            const optMatch = child.match(/^option(\d+)$/);
+            if (optMatch) {
+              if (!customSlides[currentEditingSlideId][parent].options) customSlides[currentEditingSlideId][parent].options = [];
+              customSlides[currentEditingSlideId][parent].options[parseInt(optMatch[1])] = inputEl.value;
+            } else {
+              customSlides[currentEditingSlideId][parent][child] = inputEl.value;
+            }
+          } else {
+            customSlides[currentEditingSlideId][key] = inputEl.value;
+          }
+        }
         updatePreview();
       });
 
@@ -1759,6 +2037,40 @@
       }, duration);
     }
 
+    // ─── Add Slide from Template ────────────────
+    function addSlideFromTemplate(templateType) {
+      const template = SLIDE_TEMPLATES[templateType];
+      if (!template) return;
+
+      // Generate unique custom slide ID
+      const customId = `custom-${templateType}-${Date.now()}`;
+
+      // Store full slide data in customSlides (deep copy)
+      customSlides[customId] = JSON.parse(JSON.stringify(template));
+
+      // Add to course — store all properties as overrides so the server has the full data
+      const slideEntry = { id: customId, _isCustom: true, ...JSON.parse(JSON.stringify(template)) };
+      courseData.slides.push(slideEntry);
+
+      // Also track in slideOverrides for consistency
+      slideOverrides[customId] = JSON.parse(JSON.stringify(template));
+
+      renderCourse();
+      updateStats();
+
+      // Close the template picker
+      document.getElementById('templatePicker').classList.remove('open');
+
+      // Auto-open editor for the new slide
+      openSlideEditor(customId);
+    }
+
+    // ─── Toggle Template Picker ──────────────────
+    function toggleTemplatePicker() {
+      const picker = document.getElementById('templatePicker');
+      picker.classList.toggle('open');
+    }
+
     // ─── Setup Event Listeners ─────────────────
     function setupEventListeners() {
       document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -1779,6 +2091,24 @@
             startIndex: courseData.slides.length
           });
           renderCourse();
+        }
+      });
+
+      // Template picker
+      document.getElementById('newSlideBtn').addEventListener('click', toggleTemplatePicker);
+
+      document.querySelectorAll('.compose-template-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          addSlideFromTemplate(btn.dataset.template);
+        });
+      });
+
+      // Close template picker when clicking outside
+      document.addEventListener('click', (e) => {
+        const picker = document.getElementById('templatePicker');
+        const btn = document.getElementById('newSlideBtn');
+        if (!picker.contains(e.target) && e.target !== btn) {
+          picker.classList.remove('open');
         }
       });
 

@@ -169,12 +169,36 @@ const SlideRegistry = {
       const baseSlide = SLIDE_REGISTRY[slideId];
 
       if (!baseSlide) {
-        missing.push(slideId);
+        // No registry slide — might be a custom template slide
+        if (typeof ref === 'object') {
+          const { id: _id, _isCustom, ...flatOverrides } = ref;
+          // Unflatten dotted keys — overrides ARE the full slide data
+          const slide = {};
+          Object.entries(flatOverrides).forEach(([key, value]) => {
+            if (key.includes('.')) {
+              const [parent, child] = key.split('.', 2);
+              if (!slide[parent]) slide[parent] = {};
+              const optMatch = child.match(/^option(\d+)$/);
+              if (optMatch) {
+                if (!slide[parent].options) slide[parent].options = [];
+                slide[parent].options[parseInt(optMatch[1])] = value;
+              } else {
+                slide[parent][child] = value;
+              }
+            } else {
+              slide[key] = value;
+            }
+          });
+          slide.id = slideId;
+          slides.push(slide);
+        } else {
+          missing.push(slideId);
+        }
         return;
       }
 
       if (typeof ref === 'object') {
-        const { id: _id, ...flatOverrides } = ref;
+        const { id: _id, _isCustom, ...flatOverrides } = ref;
         // Unflatten dotted keys into nested objects
         const overrides = {};
         Object.entries(flatOverrides).forEach(([key, value]) => {

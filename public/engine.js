@@ -165,7 +165,6 @@
   // Render the language switcher dropdown for presenter controls
   function renderLanguageSwitcher() {
     var langs = getAvailableSessionLanguages();
-    if (langs.length <= 1) return ''; // No point showing switcher for English only
 
     var options = langs.map(function (code) {
       var selected = code === state.language ? ' selected' : '';
@@ -173,13 +172,28 @@
       return '<option value="' + code + '"' + selected + '>' + name + '</option>';
     }).join('');
 
-    return '<select class="presenter-controls__lang-select" onchange="AIPrimer.switchLanguage(this.value)" title="Change language">' + options + '</select>';
+    var singleClass = langs.length <= 1 ? ' presenter-controls__lang-select--single' : '';
+    return '<select class="presenter-controls__lang-select' + singleClass + '" onchange="AIPrimer.switchLanguage(this.value)" title="' + (langs.length > 1 ? 'Change language' : 'Language (add translations in course editor)') + '">' + options + '</select>';
   }
 
-  // Update the dropdown value without rebuilding
+  // Update the dropdown value and available options without full re-render
   function updateLanguageSwitcher() {
     var sel = document.querySelector('.presenter-controls__lang-select');
-    if (sel) sel.value = state.language;
+    if (!sel) return;
+    var langs = getAvailableSessionLanguages();
+    sel.innerHTML = langs.map(function (code) {
+      var selected = code === state.language ? ' selected' : '';
+      var name = LANG_NAMES[code] || code;
+      return '<option value="' + code + '"' + selected + '>' + name + '</option>';
+    }).join('');
+    sel.value = state.language;
+    if (langs.length > 1) {
+      sel.classList.remove('presenter-controls__lang-select--single');
+      sel.title = 'Change language';
+    } else {
+      sel.classList.add('presenter-controls__lang-select--single');
+      sel.title = 'Language (add translations in course editor)';
+    }
   }
 
   // Enrich a slide object with translated content (fallback to inline strings)

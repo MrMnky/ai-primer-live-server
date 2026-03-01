@@ -10,7 +10,7 @@
 
     /* --- Dashboard --- */
     .dashboard {
-      max-width: 720px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 32px 24px;
       color: #fff;
@@ -19,7 +19,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
     .dashboard__title {
       font-family: var(--font-family);
@@ -31,6 +31,114 @@
       opacity: 0.4;
       margin-top: 4px;
     }
+    .dashboard__stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .dashboard__stat {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .dashboard__stat-value {
+      font-family: var(--font-family);
+      font-weight: var(--fw-bold);
+      font-size: 1.5rem;
+      color: var(--dodger-blue);
+    }
+    .dashboard__stat-label {
+      font-size: 0.72rem;
+      opacity: 0.4;
+      margin-top: 2px;
+    }
+    .dashboard__section {
+      margin-bottom: 32px;
+    }
+    .dashboard__section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .dashboard__section-title {
+      font-family: var(--font-family);
+      font-weight: 600;
+      font-size: 0.95rem;
+      opacity: 0.7;
+    }
+    .dashboard__section-action {
+      font-family: var(--font-family);
+      font-size: 0.75rem;
+      color: var(--dodger-blue);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .dashboard__section-action:hover { opacity: 0.7; }
+    .dashboard__course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .dashboard__course-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .dashboard__course-card:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(0,177,255,0.3);
+    }
+    .dashboard__course-card--builtin {
+      border-color: rgba(0,177,255,0.2);
+      background: rgba(0,177,255,0.04);
+    }
+    .dashboard__course-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    .dashboard__course-meta {
+      font-size: 0.75rem;
+      opacity: 0.4;
+    }
+    .dashboard__course-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .dashboard__course-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .dashboard__course-btn {
+      font-family: var(--font-family);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .dashboard__course-btn:hover { opacity: 0.8; }
+    .dashboard__course-btn--launch { background: var(--bright-turquoise); color: #1B2F3C; }
+    .dashboard__course-btn--edit { background: rgba(255,255,255,0.1); color: #fff; }
     .session-list {
       display: flex;
       flex-direction: column;
@@ -263,12 +371,107 @@
             </div>
             <button class="btn btn--primary" onclick="showCoursePickerOrCreate()">+ New Session</button>
           </div>
-          <div id="session-list" class="session-list">
-            <div class="empty-state">Loading sessions...</div>
+
+          <div class="dashboard__stats" id="dashboard-stats">
+            <div class="dashboard__stat">
+              <div class="dashboard__stat-value" id="stat-active">—</div>
+              <div class="dashboard__stat-label">Active Sessions</div>
+            </div>
+            <div class="dashboard__stat">
+              <div class="dashboard__stat-value" id="stat-courses">—</div>
+              <div class="dashboard__stat-label">Courses</div>
+            </div>
+            <div class="dashboard__stat">
+              <div class="dashboard__stat-value" id="stat-total">—</div>
+              <div class="dashboard__stat-label">Total Sessions</div>
+            </div>
+          </div>
+
+          <div class="dashboard__section">
+            <div class="dashboard__section-header">
+              <div class="dashboard__section-title">Courses</div>
+              <button class="dashboard__section-action" onclick="window.location.href='compose.html'">+ New Course</button>
+            </div>
+            <div class="dashboard__course-grid" id="dashboard-courses">
+              <div class="empty-state">Loading courses...</div>
+            </div>
+          </div>
+
+          <div class="dashboard__section">
+            <div class="dashboard__section-header">
+              <div class="dashboard__section-title">Recent Sessions</div>
+            </div>
+            <div id="session-list" class="session-list">
+              <div class="empty-state">Loading sessions...</div>
+            </div>
           </div>
         </div>
       `;
-      await refreshSessionList();
+      await Promise.all([refreshDashboardCourses(), refreshSessionList()]);
+    }
+
+    async function refreshDashboardCourses() {
+      const grid = document.getElementById('dashboard-courses');
+      if (!grid) return;
+
+      // Get built-in courses
+      const builtInCourses = (typeof SlideRegistry !== 'undefined') ? SlideRegistry.listCourses() : [];
+
+      // Fetch custom courses
+      let customs = [];
+      try {
+        const res = await fetch(`${serverUrl}/api/courses?presenter_id=${currentUser?.id || ''}`);
+        if (res.ok) customs = await res.json();
+      } catch (e) { /* ignore */ }
+
+      // Update stats
+      const statCourses = document.getElementById('stat-courses');
+      if (statCourses) statCourses.textContent = builtInCourses.length + customs.length;
+
+      let html = '';
+
+      // Built-in courses
+      builtInCourses.forEach(c => {
+        const langCount = (typeof SlideRegistry !== 'undefined' && SlideRegistry.getAvailableLanguages)
+          ? SlideRegistry.getAvailableLanguages(c.id).length : 1;
+        html += `
+          <div class="dashboard__course-card dashboard__course-card--builtin">
+            <div class="dashboard__course-badge" style="background:rgba(0,177,255,0.2);color:#00B1FF;">Built-in</div>
+            <div class="dashboard__course-title">${c.title}</div>
+            <div class="dashboard__course-meta">${c.slideCount} slides · ${c.metadata?.duration || '~90 min'}${langCount > 1 ? ' · ' + langCount + ' languages' : ''}</div>
+            <div class="dashboard__course-actions">
+              <button class="dashboard__course-btn dashboard__course-btn--launch" onclick="quickLaunchSession('${c.id}', null)">Launch Session</button>
+              <button class="dashboard__course-btn dashboard__course-btn--edit" onclick="window.location.href='compose.html?duplicate=${c.id}'">Duplicate & Edit</button>
+            </div>
+          </div>`;
+      });
+
+      // Custom courses
+      customs.forEach(c => {
+        const slideCount = Array.isArray(c.slides) ? c.slides.length : 0;
+        const updated = c.updated_at ? new Date(c.updated_at).toLocaleDateString([], { day: 'numeric', month: 'short' }) : '';
+        html += `
+          <div class="dashboard__course-card">
+            <div class="dashboard__course-title">${c.title}</div>
+            <div class="dashboard__course-meta">${slideCount} slides${updated ? ' · Updated ' + updated : ''}</div>
+            <div class="dashboard__course-actions">
+              <button class="dashboard__course-btn dashboard__course-btn--launch" onclick="quickLaunchSession(null, '${c.id}')">Launch</button>
+              <button class="dashboard__course-btn dashboard__course-btn--edit" onclick="window.location.href='compose.html?id=${c.id}'">Edit</button>
+              <button class="dashboard__course-btn dashboard__course-btn--edit" onclick="duplicateCourse('${c.id}', '${(c.title || '').replace(/'/g, "\\'")}')">Duplicate</button>
+            </div>
+          </div>`;
+      });
+
+      if (!html) {
+        grid.innerHTML = '<div class="empty-state">No courses yet. Create one to get started.</div>';
+      } else {
+        grid.innerHTML = html;
+      }
+    }
+
+    function quickLaunchSession(courseId, customCourseId) {
+      const language = 'en'; // Default — the course picker allows language selection
+      createNewSession(courseId, language, customCourseId);
     }
 
     async function refreshSessionList() {
@@ -277,6 +480,13 @@
         const sessions = await res.json();
         const listEl = document.getElementById('session-list');
         if (!listEl) return;
+
+        // Update stats
+        const activeSessions = sessions.filter(s => s.status !== 'ended');
+        const statActive = document.getElementById('stat-active');
+        const statTotal = document.getElementById('stat-total');
+        if (statActive) statActive.textContent = activeSessions.length;
+        if (statTotal) statTotal.textContent = sessions.length;
 
         // Filter out sessions older than 24 hours that are ended
         const cutoff = Date.now() - (24 * 60 * 60 * 1000);

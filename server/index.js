@@ -231,7 +231,7 @@ app.get('/api/sessions', async (req, res) => {
 
 // Create session
 app.post('/api/sessions', async (req, res) => {
-  const { title, presenterName, slideCount, courseId, language, customCourseId } = req.body;
+  const { title, presenterName, slideCount, courseId, language, customCourseId, clientName } = req.body;
   let code = generateCode();
   while (sessionCache[code]) code = generateCode();
 
@@ -271,6 +271,7 @@ app.post('/api/sessions', async (req, res) => {
     courseId: session.course_id,
     customCourseId: session.custom_course_id,
     language: session.language || 'en',
+    clientName: clientName || '',
     revealedSlides: {},
     currentSlide: 0,
     status: 'active',
@@ -794,6 +795,21 @@ io.on('connection', (socket) => {
     if (presenterQuestions.length) {
       socket.emit('questions-update', { questions: presenterQuestions });
     }
+  }
+
+  if (mode === 'broadcast') {
+    socket.join(`${sessionCode}:broadcast`);
+    console.log(`Broadcast display connected: ${sessionCode}`);
+
+    // Send current state so broadcast can catch up
+    socket.emit('session-state', {
+      currentSlide: sessionCache[sessionCode].currentSlide,
+      status: sessionCache[sessionCode].status,
+      revealedSlides: sessionCache[sessionCode].revealedSlides || {},
+    });
+
+    // Send current slide position
+    socket.emit('slide-change', { slideIndex: sessionCache[sessionCode].currentSlide });
   }
 
   if (mode === 'participant') {
